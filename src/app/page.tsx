@@ -29,7 +29,7 @@ export default async function Home() {
               href="/demo"
               className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
             >
-              view demo
+              View Demo
             </Link>
           </div>
         </section>

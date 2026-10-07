@@ -54,8 +54,7 @@ export default async function Home() {
                 <span className="text-sm font-normal text-muted"> a month</span>
               </p>
               <p className="mt-4 text-sm leading-6 text-muted">
-                One site, scan, notes, and the widget. Card payments come later
-                — create an account to try it now.
+                One site, one assistant, and an increase in customers.
               </p>
               <Link
                 href={user ? "/dashboard" : "/signup"}

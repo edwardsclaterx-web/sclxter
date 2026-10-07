@@ -10,10 +10,10 @@ export default async function Home() {
       <main className="flex-1">
         <section className="mx-auto w-full max-w-3xl px-5 py-20 md:px-8 md:py-28">
           <p className="text-xs uppercase tracking-[0.22em] text-muted">
-            SCLXTER
+            for independent businesses
           </p>
           <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-6xl">
-            The most advanced AI assistant for independent businesses.
+            The most advanced AI assistant
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted">
             A script on your site. It learns your pages and the notes you type,

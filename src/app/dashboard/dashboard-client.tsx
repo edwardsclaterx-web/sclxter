@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { ChatPanel } from "@/components/chat-panel";
-import { SiteHeader } from "@/components/chrome";
+import { ProductNav, SiteHeader } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -127,13 +126,17 @@ export function Dashboard({ email, business, knowledge, leads }: Props) {
     <div className="flex min-h-full flex-col">
       <SiteHeader
         right={
-          <>
-            <span className="hidden sm:inline">{email}</span>
-            <Link href="/demo">Barber demo</Link>
-            <button type="button" onClick={() => void logout()} className="text-fg">
-              Sign out
-            </button>
-          </>
+          <ProductNav
+            signedIn
+            extra={
+              <>
+                <span className="hidden sm:inline text-muted">{email}</span>
+                <button type="button" onClick={() => void logout()} className="text-fg">
+                  Sign out
+                </button>
+              </>
+            }
+          />
         }
       />
 

@@ -1,60 +1,100 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/chrome";
+import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function Home() {
   const user = await getSessionUser();
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader
-        right={
-          <>
-            <Link href="/demo">Barber demo</Link>
-            {user ? (
-              <Link href="/dashboard" className="text-fg">
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link href="/login">Sign in</Link>
-                <Link href="/signup" className="text-fg">
-                  Start
+      <SiteHeader signedIn={Boolean(user)} />
+      <main className="flex-1">
+        <section className="mx-auto w-full max-w-3xl px-5 py-20 md:px-8 md:py-28">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted">
+            SCLXTER
+          </p>
+          <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-6xl">
+            The most advanced AI assistant for independent businesses.
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-7 text-muted">
+            A script on your site. It learns your pages and the notes you type,
+            then answers visitors in plain language — hours, prices, how you
+            take work. Nothing else.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link
+              href={user ? "/dashboard" : "/signup"}
+              className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
+            >
+              {user ? "Open dashboard" : "Buy SCLXTER"}
+            </Link>
+            <Link
+              href="/#pricing"
+              className="inline-flex h-11 items-center border border-line px-5 text-sm"
+            >
+              See pricing
+            </Link>
+          </div>
+        </section>
+
+        <section
+          id="pricing"
+          className="border-t border-line px-5 py-16 md:px-8 md:py-20"
+        >
+          <div className="mx-auto w-full max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.22em] text-muted">
+              Pricing
+            </p>
+            <h2 className="mt-4 text-2xl font-medium tracking-tight">
+              Two levels. Card payments later.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+              Figures below are placeholders. Stripe is not wired yet — create
+              an account to try the product.
+            </p>
+            <div className="mt-10 grid gap-4 md:grid-cols-2">
+              <article className="border border-line p-6">
+                <h3 className="text-sm tracking-[0.16em] uppercase text-muted">
+                  Independent
+                </h3>
+                <p className="mt-4 text-3xl font-medium tracking-tight">
+                  £29
+                  <span className="text-sm font-normal text-muted"> / month</span>
+                </p>
+                <p className="mt-4 text-sm leading-6 text-muted">
+                  Barbers, cafes, and small shops. One site, scan, notes, and
+                  the widget.
+                </p>
+                <Link
+                  href={user ? "/dashboard" : "/signup"}
+                  className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
+                >
+                  {user ? "Dashboard" : "Start"}
                 </Link>
-              </>
-            )}
-          </>
-        }
-      />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-5 py-20 md:px-8">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted">
-          For independents
-        </p>
-        <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-5xl">
-          An assistant that only knows your shop.
-        </h1>
-        <p className="mt-6 max-w-xl text-base leading-7 text-muted">
-          SCLXTER is a small script for your website. It reads your public
-          pages, plus notes you type — hours, prices, how you take bookings —
-          and answers visitors in plain language. Nothing else.
-        </p>
-        <div className="mt-10 flex flex-wrap gap-4">
-          <Link
-            href={user ? "/dashboard" : "/signup"}
-            className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
-          >
-            {user ? "Open dashboard" : "Create an account"}
-          </Link>
-          <Link
-            href="/demo"
-            className="inline-flex h-11 items-center border border-line px-5 text-sm"
-          >
-            See it on a barber shop
-          </Link>
-        </div>
+              </article>
+              <article className="border border-line p-6">
+                <h3 className="text-sm tracking-[0.16em] uppercase text-muted">
+                  Trade
+                </h3>
+                <p className="mt-4 text-3xl font-medium tracking-tight">
+                  £89
+                  <span className="text-sm font-normal text-muted"> / month</span>
+                </p>
+                <p className="mt-4 text-sm leading-6 text-muted">
+                  For businesses that can pay more. Same product today; higher
+                  plan when we turn on billing.
+                </p>
+                <Link
+                  href={user ? "/dashboard" : "/signup"}
+                  className="mt-8 inline-flex h-10 items-center border border-line px-4 text-sm"
+                >
+                  {user ? "Dashboard" : "Start"}
+                </Link>
+              </article>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer className="border-t border-line px-5 py-5 text-xs text-muted md:px-10">
-        Trial uses a server-side language model. No card required.
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

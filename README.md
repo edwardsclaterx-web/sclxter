@@ -19,10 +19,11 @@ npm run dev
 
 App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 
-- Landing `/`
+- Product homepage `/` (SCLXTER, pricing placeholders)
 - Sign up `/signup`
 - Dashboard `/dashboard`
-- Barber demo `/demo` (widget already on the page)
+- Demo `/demo` — fictional Northgate Barbers (not the homepage)
+- FAQ `/faq` and Contact `/contact` — coming soon
 
 In this environment the server also reads `GROQ_API_KEY` from the private secrets file if `.env.local` is empty.
 

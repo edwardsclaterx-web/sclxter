@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
@@ -9,13 +8,7 @@ export default async function SignupPage() {
   if (user) redirect("/dashboard");
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader
-        right={
-          <Link href="/login" className="text-fg">
-            Sign in
-          </Link>
-        }
-      />
+      <SiteHeader signedIn={false} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Create account</h1>
         <p className="mt-2 text-sm text-muted">

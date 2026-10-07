@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SCLXTER",
   description:
-    "The most advanced AI assistant for independent businesses. A script on your site that answers from your pages and notes.",
+    "The most advanced AI assistant. A mini software on your site. It learns your website and the information you have, then interacts with customers - times, prices and more. It's that simple.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

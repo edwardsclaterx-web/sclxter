@@ -16,9 +16,9 @@ export default async function Home() {
             The most advanced AI assistant
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted">
-            A mini software on your site. It learns your website and the
-            information you have, then interacts with customers - times, prices
-            and more. It&apos;s that simple.
+            An AI on your site. It learns your website and the information you
+            have, then interacts with customers - times, prices and more.
+            It&apos;s that simple.
           </p>
           <p className="mt-8 text-sm leading-6 text-muted">
             Setup £299.99, then £74.99 a month. One plan.

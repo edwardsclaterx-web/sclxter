@@ -1,16 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-export function Wordmark({
-  href = "/",
-  lowercase,
-}: {
-  href?: string;
-  lowercase?: boolean;
-}) {
+export function Wordmark({ href = "/" }: { href?: string }) {
   return (
     <Link href={href} className="text-sm tracking-[0.28em]">
-      {lowercase ? "sclxter" : "SCLXTER"}
+      sclxter
     </Link>
   );
 }
@@ -54,7 +48,6 @@ export function ProductNav({
 export function SiteHeader({
   right,
   signedIn,
-  lowercase,
   showPricing,
   showBuy,
 }: {
@@ -66,7 +59,7 @@ export function SiteHeader({
 }) {
   return (
     <header className="flex items-center justify-between border-b border-line px-5 py-4 md:px-10">
-      <Wordmark lowercase={lowercase} />
+      <Wordmark />
       {right ?? (
         <ProductNav
           signedIn={signedIn}
@@ -79,7 +72,6 @@ export function SiteHeader({
 }
 
 export function SiteFooter({
-  lowercase,
   showPricing = true,
 }: {
   lowercase?: boolean;
@@ -88,7 +80,7 @@ export function SiteFooter({
   return (
     <footer className="border-t border-line px-5 py-5 text-xs text-muted md:px-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span>{lowercase ? "sclxter" : "SCLXTER"}</span>
+        <span>sclxter</span>
         <span className="flex gap-5">
           {showPricing && <Link href="/#pricing">Pricing</Link>}
           <Link href="/demo">Demo</Link>

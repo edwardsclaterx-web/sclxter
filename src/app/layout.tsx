@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SCLXTER",
+  title: "sclxter",
   description:
     "The most advanced AI assistant. An AI on your site. It learns your website and the information you have, then interacts with customers - times, prices and more. It's that simple.",
 };

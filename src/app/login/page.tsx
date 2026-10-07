@@ -8,7 +8,7 @@ export default async function LoginPage() {
   if (user) redirect("/dashboard");
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader signedIn={false} />
+      <SiteHeader signedIn={false} showPricing={false} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Sign in</h1>
         <p className="mt-2 text-sm text-muted">

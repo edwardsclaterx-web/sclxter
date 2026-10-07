@@ -10,7 +10,7 @@ export function BarberHeader() {
         <Link href="/demo/cuts">Cuts</Link>
         <Link href="/demo/visit">Visit</Link>
         <Link href="/" className="hidden sm:inline">
-          SCLXTER
+          sclxter
         </Link>
       </nav>
     </header>
@@ -21,7 +21,7 @@ export function BarberFooter() {
   return (
     <footer className="border-t border-line px-5 py-5 text-xs text-muted md:px-10">
       Northgate Barbers · 14 Northgate, York · 01904 555 018 · fictional shop
-      for SCLXTER
+      for sclxter
     </footer>
   );
 }

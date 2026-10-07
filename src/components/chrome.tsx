@@ -48,11 +48,13 @@ export function ProductNav({
 export function SiteHeader({
   right,
   signedIn,
+  extra,
   showPricing,
   showBuy,
 }: {
   right?: ReactNode;
   signedIn?: boolean;
+  extra?: ReactNode;
   lowercase?: boolean;
   showPricing?: boolean;
   showBuy?: boolean;
@@ -63,6 +65,7 @@ export function SiteHeader({
       {right ?? (
         <ProductNav
           signedIn={signedIn}
+          extra={extra}
           showPricing={showPricing}
           showBuy={showBuy}
         />

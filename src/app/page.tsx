@@ -13,60 +13,86 @@ export default async function Home() {
         showBuy={false}
       />
       <main className="flex-1">
-        <section className="py-16 md:py-24 lg:py-28">
-          <div className="grid w-full grid-cols-2 items-center gap-x-6 gap-y-10 px-5 md:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,40rem)_minmax(0,1fr)]">
-            <div className="col-span-2 lg:col-start-2 lg:row-start-1">
-              <p className="text-xs tracking-[0.22em] text-muted">sclxter</p>
-              <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-6xl">
-                The most advanced AI assistant
-              </h1>
-              <p className="mt-3 text-sm text-muted">
-                for independent businesses
-              </p>
-              <p className="mt-6 max-w-xl text-base leading-7 text-muted">
-                An AI on your site. It learns your website and the information
-                you have, then interacts with customers - times, prices and
-                more. It&apos;s that simple.
-              </p>
-              <div className="mt-10 flex flex-wrap gap-4">
-                <Link
-                  href="/demo"
-                  className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
-                >
-                  View Demo
-                </Link>
-                <Link
-                  href="/faq"
-                  className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
-                >
-                  View FAQ
-                </Link>
-              </div>
+        <section className="relative">
+          <div className="mx-auto w-full max-w-3xl px-5 py-20 md:px-8 md:py-28">
+            <p className="text-xs tracking-[0.22em] text-muted">sclxter</p>
+            <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-6xl">
+              The most advanced AI assistant
+            </h1>
+            <p className="mt-3 text-sm text-muted">for independent businesses</p>
+            <p className="mt-6 max-w-xl text-base leading-7 text-muted">
+              An AI on your site. It learns your website and the information you
+              have, then interacts with customers - times, prices and more.
+              It&apos;s that simple.
+            </p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Link
+                href="/demo"
+                className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
+              >
+                View Demo
+              </Link>
+              <Link
+                href="/faq"
+                className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
+              >
+                View FAQ
+              </Link>
             </div>
-            <aside className="flex flex-col items-center justify-center text-center lg:col-start-1 lg:row-start-1">
+          </div>
+          <aside className="pointer-events-none absolute top-1/2 left-0 hidden w-[calc(50%-24rem)] -translate-y-1/2 justify-center px-3 lg:flex">
+            <div className="flex flex-col items-center text-center">
               <img
                 src="/hero-figure.png"
                 alt=""
                 width={80}
                 height={100}
-                className="h-16 w-auto sm:h-[4.5rem] lg:h-20"
+                className="h-16 w-auto lg:h-20"
               />
               <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 ChatGPT level performance
               </p>
-            </aside>
-            <aside className="flex flex-col items-center justify-center text-center lg:col-start-3 lg:row-start-1">
+            </div>
+          </aside>
+          <aside className="pointer-events-none absolute top-1/2 left-[calc(50%+24rem)] hidden w-[calc(50%-24rem)] -translate-y-1/2 justify-end pr-8 xl:pr-16 2xl:pr-24 lg:flex">
+            <div className="flex flex-col items-center text-center">
               <img
                 src="/hero-speed.png"
                 alt=""
                 width={120}
                 height={80}
-                className="h-16 w-auto sm:h-[4.5rem] lg:h-[4.75rem]"
+                className="h-16 w-auto lg:h-[4.75rem]"
               />
               <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 efficient processing and advanced conversations
               </p>
-            </aside>
+            </div>
+          </aside>
+          <div className="flex justify-around gap-6 px-5 pb-12 lg:hidden">
+            <div className="flex flex-col items-center text-center">
+              <img
+                src="/hero-figure.png"
+                alt=""
+                width={80}
+                height={100}
+                className="h-16 w-auto"
+              />
+              <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+                ChatGPT level performance
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <img
+                src="/hero-speed.png"
+                alt=""
+                width={120}
+                height={80}
+                className="h-16 w-auto"
+              />
+              <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+                efficient processing and advanced conversations
+              </p>
+            </div>
           </div>
         </section>
 

@@ -60,7 +60,7 @@ export default async function Home() {
                 href={user ? "/dashboard" : "/signup"}
                 className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
               >
-                {user ? "dashboard" : "buy"}
+                {user ? "Dashboard" : "Buy"}
               </Link>
             </article>
           </div>

@@ -19,7 +19,7 @@ npm run dev
 
 App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 
-- Product homepage `/` (SCLXTER, pricing placeholders)
+- Product homepage `/` (SCLXTER, one plan: £299.99 setup then £74.99/month)
 - Sign up `/signup`
 - Dashboard `/dashboard`
 - Demo `/demo` — fictional Northgate Barbers (not the homepage)

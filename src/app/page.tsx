@@ -20,7 +20,10 @@ export default async function Home() {
             then answers visitors in plain language — hours, prices, how you
             take work. Nothing else.
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <p className="mt-8 text-sm leading-6 text-muted">
+            Setup £299.99, then £74.99 a month. One plan.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4">
             <Link
               href={user ? "/dashboard" : "/signup"}
               className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
@@ -45,52 +48,31 @@ export default async function Home() {
               Pricing
             </p>
             <h2 className="mt-4 text-2xl font-medium tracking-tight">
-              Two levels. Card payments later.
+              One plan.
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-              Figures below are placeholders. Stripe is not wired yet — create
-              an account to try the product.
-            </p>
-            <div className="mt-10 grid gap-4 md:grid-cols-2">
-              <article className="border border-line p-6">
-                <h3 className="text-sm tracking-[0.16em] uppercase text-muted">
-                  Independent
-                </h3>
-                <p className="mt-4 text-3xl font-medium tracking-tight">
-                  £29
-                  <span className="text-sm font-normal text-muted"> / month</span>
-                </p>
-                <p className="mt-4 text-sm leading-6 text-muted">
-                  Barbers, cafes, and small shops. One site, scan, notes, and
-                  the widget.
-                </p>
-                <Link
-                  href={user ? "/dashboard" : "/signup"}
-                  className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
-                >
-                  {user ? "Dashboard" : "Start"}
-                </Link>
-              </article>
-              <article className="border border-line p-6">
-                <h3 className="text-sm tracking-[0.16em] uppercase text-muted">
-                  Trade
-                </h3>
-                <p className="mt-4 text-3xl font-medium tracking-tight">
-                  £89
-                  <span className="text-sm font-normal text-muted"> / month</span>
-                </p>
-                <p className="mt-4 text-sm leading-6 text-muted">
-                  For businesses that can pay more. Same product today; higher
-                  plan when we turn on billing.
-                </p>
-                <Link
-                  href={user ? "/dashboard" : "/signup"}
-                  className="mt-8 inline-flex h-10 items-center border border-line px-4 text-sm"
-                >
-                  {user ? "Dashboard" : "Start"}
-                </Link>
-              </article>
-            </div>
+            <article className="mt-10 max-w-md border border-line p-6">
+              <p className="text-sm tracking-[0.16em] uppercase text-muted">
+                SCLXTER
+              </p>
+              <p className="mt-6 text-3xl font-medium tracking-tight">
+                £299.99
+                <span className="text-sm font-normal text-muted"> setup</span>
+              </p>
+              <p className="mt-2 text-3xl font-medium tracking-tight">
+                £74.99
+                <span className="text-sm font-normal text-muted"> a month</span>
+              </p>
+              <p className="mt-4 text-sm leading-6 text-muted">
+                One site, scan, notes, and the widget. Card payments come later
+                — create an account to try it now.
+              </p>
+              <Link
+                href={user ? "/dashboard" : "/signup"}
+                className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
+              >
+                {user ? "Dashboard" : "Buy"}
+              </Link>
+            </article>
           </div>
         </section>
       </main>

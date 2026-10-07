@@ -45,26 +45,26 @@ export default async function Home() {
             </div>
             <aside className="flex flex-col items-center text-center lg:col-start-1 lg:row-start-1">
               <img
-                src="/hero-speed.png"
-                alt=""
-                width={120}
-                height={80}
-                className="h-12 w-auto sm:h-14 lg:h-16"
-              />
-              <p className="mt-3 max-w-[9.5rem] text-[11px] leading-4 text-muted">
-                efficient processing and advanced conversations
-              </p>
-            </aside>
-            <aside className="flex flex-col items-center text-center lg:col-start-3 lg:row-start-1">
-              <img
                 src="/hero-figure.png"
                 alt=""
                 width={80}
                 height={100}
-                className="h-14 w-auto sm:h-16 lg:h-[4.5rem]"
+                className="h-16 w-auto sm:h-[4.5rem] lg:h-20"
               />
-              <p className="mt-3 max-w-[8.5rem] text-[11px] leading-4 text-muted">
+              <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] leading-4 text-fg">
                 ChatGPT level performance
+              </p>
+            </aside>
+            <aside className="flex flex-col items-center text-center lg:col-start-3 lg:row-start-1">
+              <img
+                src="/hero-speed.png"
+                alt=""
+                width={120}
+                height={80}
+                className="h-16 w-auto sm:h-[4.5rem] lg:h-[4.75rem]"
+              />
+              <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] leading-4 text-fg">
+                efficient processing and advanced conversations
               </p>
             </aside>
           </div>

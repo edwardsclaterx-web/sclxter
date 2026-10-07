@@ -24,12 +24,18 @@ export default async function Home() {
             have, then interacts with customers - times, prices and more.
             It&apos;s that simple.
           </p>
-          <div className="mt-10">
+          <div className="mt-10 flex flex-wrap gap-4">
             <Link
               href="/demo"
               className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
             >
               View Demo
+            </Link>
+            <Link
+              href="/faq"
+              className="inline-flex h-11 items-center bg-accent px-5 text-sm text-accent-fg"
+            >
+              View FAQ
             </Link>
           </div>
         </section>

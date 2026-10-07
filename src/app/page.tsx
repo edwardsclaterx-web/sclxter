@@ -13,8 +13,8 @@ export default async function Home() {
         showBuy={false}
       />
       <main className="flex-1">
-        <section className="px-5 py-16 md:px-8 md:py-24 lg:py-28">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 items-center gap-x-6 gap-y-10 lg:grid-cols-[9rem_minmax(0,40rem)_9rem] lg:justify-center lg:gap-x-10">
+        <section className="py-16 md:py-24 lg:py-28">
+          <div className="grid w-full grid-cols-2 items-center gap-x-6 gap-y-10 px-5 md:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,40rem)_minmax(0,1fr)]">
             <div className="col-span-2 lg:col-start-2 lg:row-start-1">
               <p className="text-xs tracking-[0.22em] text-muted">sclxter</p>
               <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-6xl">
@@ -43,7 +43,7 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
-            <aside className="flex flex-col items-center text-center lg:col-start-1 lg:row-start-1">
+            <aside className="flex flex-col items-center justify-center text-center lg:col-start-1 lg:row-start-1">
               <img
                 src="/hero-figure.png"
                 alt=""
@@ -51,11 +51,11 @@ export default async function Home() {
                 height={100}
                 className="h-16 w-auto sm:h-[4.5rem] lg:h-20"
               />
-              <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] leading-4 text-fg">
+              <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 ChatGPT level performance
               </p>
             </aside>
-            <aside className="flex flex-col items-center text-center lg:col-start-3 lg:row-start-1">
+            <aside className="flex flex-col items-center justify-center text-center lg:col-start-3 lg:row-start-1">
               <img
                 src="/hero-speed.png"
                 alt=""
@@ -63,7 +63,7 @@ export default async function Home() {
                 height={80}
                 className="h-16 w-auto sm:h-[4.5rem] lg:h-[4.75rem]"
               />
-              <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] leading-4 text-fg">
+              <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 efficient processing and advanced conversations
               </p>
             </aside>

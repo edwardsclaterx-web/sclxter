@@ -101,10 +101,23 @@ export async function scanSite(
       pages.push({ url, title, body: body.slice(0, 4000) });
     }
 
+    const prefix = start.pathname.endsWith("/")
+      ? start.pathname
+      : `${start.pathname}/`;
+    const rootScan = start.pathname === "/" || start.pathname === "";
+
     for (const href of links) {
       try {
         const next = new URL(href);
         if (!sameOrigin(start, next)) continue;
+        if (!rootScan) {
+          const path = next.pathname.endsWith("/")
+            ? next.pathname
+            : `${next.pathname}/`;
+          const isStart = next.pathname === start.pathname;
+          const under = path.startsWith(prefix);
+          if (!isStart && !under) continue;
+        }
         if (seen.has(next.href) || queue.includes(next.href)) continue;
         if (queue.length + pages.length >= MAX_PAGES * 2) break;
         queue.push(next.href);

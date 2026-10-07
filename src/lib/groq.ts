@@ -2,7 +2,7 @@ import Groq from "groq-sdk";
 import { loadSecrets } from "./secrets";
 import type { Business, ChatMessage, KnowledgeItem } from "./types";
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "openai/gpt-oss-20b";
 
 function client() {
   loadSecrets();
@@ -34,7 +34,7 @@ When listing services or prices, give one to a few that match what they asked �
 
 Ask a short follow-up when it would help (for a barber: fade vs scissor cut, today vs Saturday, walk-in vs holding a time).
 
-If a fact is not in the knowledge, say you do not have it, and tell them how to contact the shop from the knowledge if that is there. Do not guess.
+If a fact is not in the knowledge, say you do not have it — not “I’m not sure”. Then tell them how to contact the shop from the knowledge if that is there. Do not guess.
 
 If they want a callback or to leave details, ask for a name and phone number (email optional) and a short note. When they give those, reply that you will pass it to the shop. Prefix that confirmation line with [[LEAD]] so the site can save it.
 
@@ -63,10 +63,14 @@ export async function answerChat(opts: {
     ],
   });
 
-  return (
-    completion.choices[0]?.message?.content?.trim() ||
-    "I could not get a reply just then. Try once more."
-  );
+  const message = completion.choices[0]?.message;
+  const content =
+    (typeof message?.content === "string" && message.content.trim()) ||
+    (typeof (message as { reasoning?: string } | undefined)?.reasoning ===
+      "string" &&
+      (message as { reasoning?: string }).reasoning?.trim()) ||
+    "";
+  return content || "I could not get a reply just then. Try once more.";
 }
 
 export function parseLeadFromReply(reply: string) {

@@ -1,5 +1,4 @@
 import { BarberFooter, BarberHeader } from "../barber-chrome";
-import { WidgetLoader } from "../widget-loader";
 
 export const metadata = { title: "Visit — Northgate Barbers" };
 
@@ -41,7 +40,6 @@ export default function VisitPage() {
         </dl>
       </main>
       <BarberFooter />
-      <WidgetLoader />
     </div>
   );
 }

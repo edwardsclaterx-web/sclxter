@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BarberFooter, BarberHeader } from "./barber-chrome";
-import { WidgetLoader } from "./widget-loader";
 
 export const metadata = {
   title: "Northgate Barbers",
@@ -40,7 +39,6 @@ export default function DemoHome() {
         </div>
       </main>
       <BarberFooter />
-      <WidgetLoader />
     </div>
   );
 }

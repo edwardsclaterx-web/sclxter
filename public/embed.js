@@ -1,18 +1,19 @@
 (function () {
-  var script = document.currentScript;
+  function findScript() {
+    if (document.currentScript) return document.currentScript;
+    var scripts = document.getElementsByTagName("script");
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      var src = scripts[i].getAttribute("src") || "";
+      if (src.indexOf("embed.js") !== -1) return scripts[i];
+    }
+    return null;
+  }
+
+  var script = findScript();
   if (!script) return;
   var id = script.getAttribute("data-id");
   if (!id) return;
-  var origin = new URL(script.src).origin;
-
-  if (!document.getElementById("sclxter-inter")) {
-    var font = document.createElement("link");
-    font.id = "sclxter-inter";
-    font.rel = "stylesheet";
-    font.href =
-      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
-    document.head.appendChild(font);
-  }
+  var origin = new URL(script.src, window.location.href).origin;
 
   fetch(origin + "/api/widget/" + encodeURIComponent(id)).catch(function () {});
 
@@ -21,11 +22,11 @@
   btn.setAttribute("aria-label", "Ask anything");
   btn.textContent = "Ask anything";
   btn.style.cssText =
-    "position:fixed;right:0;bottom:28%;z-index:2147483000;margin:0;padding:18px 10px;border:1px solid #222;border-right:0;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:0.14em;line-height:1.2;cursor:pointer;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);";
+    "position:fixed;right:20px;bottom:20px;z-index:2147483000;height:44px;padding:0 20px;border:0;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;letter-spacing:0.06em;cursor:pointer;";
 
   var frameWrap = document.createElement("div");
   frameWrap.style.cssText =
-    "display:none;position:fixed;right:48px;bottom:20px;z-index:2147483000;width:min(380px,calc(100vw - 64px));height:min(560px,calc(100vh - 40px));border:1px solid #222;background:#050505;";
+    "display:none;position:fixed;right:20px;bottom:76px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));border:1px solid #222;background:#050505;";
   var iframe = document.createElement("iframe");
   iframe.title = "Ask anything";
   iframe.src = origin + "/widget/" + encodeURIComponent(id);

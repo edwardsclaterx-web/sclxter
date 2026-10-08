@@ -1,5 +1,4 @@
 import { BarberFooter, BarberHeader } from "../barber-chrome";
-import { WidgetLoader } from "../widget-loader";
 
 const cuts = [
   { name: "Skin fade", price: "£18", note: "Tapered to skin, scissor on top." },
@@ -35,7 +34,6 @@ export default function CutsPage() {
         </ul>
       </main>
       <BarberFooter />
-      <WidgetLoader />
     </div>
   );
 }

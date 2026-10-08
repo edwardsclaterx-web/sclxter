@@ -21,6 +21,8 @@ const BOOT = `(function(){
     btn.textContent=open?'Minimise':'Ask anything';
     btn.setAttribute('aria-label',open?'Minimise':'Ask anything');
     btn.style.setProperty('border-radius','16px','important');
+    var h=document.getElementById(HINT_ID);
+    if(h) h.style.display=open?'none':'flex';
     try{ sessionStorage.setItem(OPEN_KEY, open?'1':'0'); }catch(e){}
   }
   function sync(){
@@ -44,9 +46,9 @@ const BOOT = `(function(){
       var p=document.getElementById(PANEL_ID);
       var b=document.getElementById(BTN_ID);
       var h=document.getElementById(HINT_ID);
-      if(p&&b) applyOpen(p,b,readOpen());
       if(p) p.style.bottom='144px';
       if(h) paintHint(h);
+      if(p&&b) applyOpen(p,b,readOpen());
       sync();
       return;
     }

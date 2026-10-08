@@ -76,20 +76,24 @@ export function SiteHeader({
 
 export function SiteFooter({
   showPricing = true,
+  showLinks = true,
 }: {
   lowercase?: boolean;
   showPricing?: boolean;
+  showLinks?: boolean;
 }) {
   return (
     <footer className="border-t border-line px-5 py-5 text-xs text-muted md:px-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span>sclxter</span>
-        <span className="flex gap-5">
-          {showPricing && <Link href="/#pricing">Pricing</Link>}
-          <Link href="/demo">Demo</Link>
-          <Link href="/faq">FAQ</Link>
-          <Link href="/contact">Contact</Link>
-        </span>
+        {showLinks ? (
+          <span className="flex gap-5">
+            {showPricing && <Link href="/#pricing">Pricing</Link>}
+            <Link href="/demo">Demo</Link>
+            <Link href="/faq">FAQ</Link>
+            <Link href="/contact">Contact</Link>
+          </span>
+        ) : null}
       </div>
     </footer>
   );

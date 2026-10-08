@@ -139,7 +139,7 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <SiteFooter lowercase showPricing={false} />
+      <SiteFooter lowercase showPricing={false} showLinks={false} />
     </div>
   );
 }

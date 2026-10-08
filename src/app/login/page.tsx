@@ -7,7 +7,7 @@ import { OwnerLoginForm } from "../owner-login-form";
 export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) redirect("/dashboard");
-  const secondStep = await hasOwnerStep2Pending();
+  if (await hasOwnerStep2Pending()) redirect("/in");
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader
@@ -21,12 +21,8 @@ export default async function LoginPage() {
       />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Sign in</h1>
-        <p className="mt-2 text-sm text-muted">
-          {secondStep
-            ? "Enter the second password to continue."
-            : "Email and first password."}
-        </p>
-        <OwnerLoginForm secondStep={secondStep} />
+        <p className="mt-2 text-sm text-muted">Email and password.</p>
+        <OwnerLoginForm />
       </main>
     </div>
   );

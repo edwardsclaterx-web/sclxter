@@ -5,26 +5,30 @@ import {
   ownerAuthReady,
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
+import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { email?: string; password?: string };
-  const email = body.email?.trim().toLowerCase() ?? "";
-  const password = body.password ?? "";
+  const { email, password } = await readLoginBody(request);
+  const html = wantsHtml(request);
+  const fail = (status: number, error: string) => {
+    if (html) {
+      return NextResponse.redirect(new URL("/login", request.url), 303);
+    }
+    return NextResponse.json({ error }, { status });
+  };
 
   if (!(await ownerAuthReady())) {
-    return NextResponse.json(
-      { error: "Sign in is not configured on this server." },
-      { status: 503 },
-    );
+    return fail(503, "Sign in is not configured on this server.");
   }
 
-  if (!isOwnerEmail(email) || !(await verifyOwnerPassword(1, password))) {
-    return NextResponse.json(
-      { error: "Those details did not match." },
-      { status: 401 },
-    );
+  const mail = email.trim().toLowerCase();
+  if (!isOwnerEmail(mail) || !(await verifyOwnerPassword(1, password))) {
+    return fail(401, "Those details did not match.");
   }
 
   await setOwnerStep2Cookie();
+  if (html) {
+    return NextResponse.redirect(new URL("/in", request.url), 303);
+  }
   return NextResponse.json({ ok: true, next: "second" });
 }

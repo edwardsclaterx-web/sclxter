@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { setOwnerStep2Cookie } from "@/lib/auth";
+import { redirectSeeOther } from "@/lib/http-redirect";
 import {
   isOwnerEmail,
   ownerAuthReady,
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   const html = wantsHtml(request);
   const fail = (status: number, error: string) => {
     if (html) {
-      return NextResponse.redirect(new URL("/login", request.url), 303);
+      return redirectSeeOther("/login");
     }
     return NextResponse.json({ error }, { status });
   };
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
 
   await setOwnerStep2Cookie();
   if (html) {
-    return NextResponse.redirect(new URL("/in", request.url), 303);
+    return redirectSeeOther("/in");
   }
   return NextResponse.json({ ok: true, next: "in" });
 }

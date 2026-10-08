@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { FieldError } from "@/components/chrome";
 import { PasswordField } from "@/components/password-field";
@@ -9,14 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function OwnerLoginForm() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    const data = new FormData(form);
+    const data = new FormData(e.currentTarget);
     const email = String(data.get("email") ?? "");
     const password = String(data.get("password") ?? "");
     setBusy(true);
@@ -30,13 +27,7 @@ export function OwnerLoginForm() {
         },
         body: JSON.stringify({ email, password }),
         credentials: "same-origin",
-        redirect: "manual",
       });
-      if (res.type === "opaqueredirect" || res.status === 0) {
-        router.push("/in");
-        router.refresh();
-        return;
-      }
       const ct = res.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const payload = (await res.json()) as { error?: string; ok?: boolean };
@@ -48,10 +39,9 @@ export function OwnerLoginForm() {
         setError("That did not work.");
         return;
       }
-      router.push("/in");
-      router.refresh();
+      window.location.assign("/in");
     } catch {
-      form.submit();
+      setError("Could not reach the server.");
     } finally {
       setBusy(false);
     }

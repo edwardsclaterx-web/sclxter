@@ -45,6 +45,18 @@ button {
   font-family: inherit;
 }
 
+input.password-entry::-ms-reveal,
+input.password-entry::-ms-clear {
+  display: none;
+}
+
+input.password-entry::-webkit-credentials-auto-fill-button,
+input.password-entry::-webkit-contacts-auto-fill-button {
+  visibility: hidden;
+  display: none;
+  pointer-events: none;
+}
+
 textarea {
   resize: vertical;
 }

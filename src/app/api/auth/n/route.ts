@@ -4,6 +4,7 @@ import {
   hasOwnerStep2Pending,
   setSessionCookie,
 } from "@/lib/auth";
+import { redirectSeeOther } from "@/lib/http-redirect";
 import {
   ensureOwnerUser,
   ownerAuthReady,
@@ -16,14 +17,14 @@ export async function POST(request: Request) {
   const html = wantsHtml(request);
   const fail = (status: number, error: string) => {
     if (html) {
-      return NextResponse.redirect(new URL("/in", request.url), 303);
+      return redirectSeeOther("/in");
     }
     return NextResponse.json({ error }, { status });
   };
 
   if (!(await hasOwnerStep2Pending())) {
     if (html) {
-      return NextResponse.redirect(new URL("/login", request.url), 303);
+      return redirectSeeOther("/login");
     }
     return NextResponse.json(
       { error: "Start again from the first sign-in step." },
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   await setSessionCookie(user.id);
   await getOrCreateBusiness(user);
   if (html) {
-    return NextResponse.redirect(new URL("/dashboard", request.url), 303);
+    return redirectSeeOther("/dashboard");
   }
   return NextResponse.json({ ok: true });
 }

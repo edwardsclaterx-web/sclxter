@@ -13,7 +13,7 @@ import {
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 
 export async function POST(request: Request) {
-  const { password } = await readLoginBody(request);
+  const { password, n } = await readLoginBody(request);
   const html = wantsHtml(request);
   const fail = (status: number, error: string) => {
     if (html) {
@@ -34,6 +34,10 @@ export async function POST(request: Request) {
 
   if (!(await ownerAuthReady())) {
     return fail(503, "Sign in is not configured on this server.");
+  }
+
+  if (n !== "7") {
+    return fail(401, "Those details did not match.");
   }
 
   if (!(await verifyOwnerPassword(2, password))) {

@@ -6,18 +6,22 @@ export async function readLoginBody(request: Request) {
     const body = (await request.json()) as {
       email?: unknown;
       password?: unknown;
+      n?: unknown;
     };
     return {
       email: typeof body.email === "string" ? body.email : "",
       password: typeof body.password === "string" ? body.password : "",
+      n: typeof body.n === "string" ? body.n : "",
     };
   }
   const form = await request.formData();
   const email = form.get("email");
   const password = form.get("password");
+  const n = form.get("n");
   return {
     email: typeof email === "string" ? email : "",
     password: typeof password === "string" ? password : "",
+    n: typeof n === "string" ? n : "",
   };
 }
 

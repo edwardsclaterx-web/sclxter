@@ -8,7 +8,9 @@ export function BlankEntry() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const password = String(new FormData(e.currentTarget).get("password") ?? "");
+    const data = new FormData(e.currentTarget);
+    const password = String(data.get("password") ?? "");
+    const n = String(data.get("n") ?? "");
     setBusy(true);
     try {
       const res = await fetch("/api/auth/n", {
@@ -17,7 +19,7 @@ export function BlankEntry() {
           "content-type": "application/json",
           accept: "application/json",
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, n }),
         credentials: "same-origin",
       });
       if (res.ok) {
@@ -39,12 +41,23 @@ export function BlankEntry() {
       onSubmit={onSubmit}
     >
       <PasswordField id="password" name="password" autoComplete="off" />
-      <button
-        type="submit"
-        disabled={busy}
-        className="ml-1 inline-block h-10 w-10 border border-line bg-surface"
-        aria-label=" "
-      />
+      <div className="mt-1 flex items-center">
+        <input
+          name="n"
+          type="text"
+          autoComplete="off"
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          className="h-10 w-10 border border-line bg-surface px-1 text-center text-sm text-fg outline-none focus:border-fg"
+        />
+        <button
+          type="submit"
+          disabled={busy}
+          className="ml-1 inline-block h-10 w-10 border border-line bg-surface"
+          aria-label=" "
+        />
+      </div>
     </form>
   );
 }

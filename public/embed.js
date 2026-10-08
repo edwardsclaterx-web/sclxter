@@ -33,7 +33,7 @@
   btn.setAttribute("aria-label", "Ask anything");
   btn.textContent = "Ask anything";
   btn.style.cssText =
-    "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:0;border-radius:10px;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;";
+    "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:0;border-radius:16px;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;";
 
   var frameWrap = document.createElement("div");
   frameWrap.id = hostId + "-panel";
@@ -53,7 +53,7 @@
     btn.setAttribute("aria-expanded", open ? "true" : "false");
     btn.textContent = open ? "Minimise" : "Ask anything";
     btn.setAttribute("aria-label", open ? "Minimise" : "Ask anything");
-    btn.style.setProperty("border-radius", "10px", "important");
+    btn.style.setProperty("border-radius", "16px", "important");
     try {
       sessionStorage.setItem(openKey, open ? "1" : "0");
     } catch (e) {}

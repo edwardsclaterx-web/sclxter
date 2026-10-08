@@ -17,7 +17,7 @@ const BOOT = `(function(){
     btn.setAttribute('aria-expanded',open?'true':'false');
     btn.textContent=open?'Minimise':'Ask anything';
     btn.setAttribute('aria-label',open?'Minimise':'Ask anything');
-    btn.style.setProperty('border-radius','10px','important');
+    btn.style.setProperty('border-radius','16px','important');
     try{ sessionStorage.setItem(OPEN_KEY, open?'1':'0'); }catch(e){}
   }
   var existing=document.getElementById(HOST_ID);
@@ -44,8 +44,8 @@ const BOOT = `(function(){
   btn.type='button';
   btn.setAttribute('aria-label','Ask anything');
   btn.textContent='Ask anything';
-  btn.style.cssText='position:relative;z-index:'+LAYER+';pointer-events:auto;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:0;border-radius:10px;background:#ffffff;color:#050505;font-family:inherit;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;';
-  btn.style.setProperty('border-radius','10px','important');
+  btn.style.cssText='position:relative;z-index:'+LAYER+';pointer-events:auto;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:0;border-radius:16px;background:#ffffff;color:#050505;font-family:inherit;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;';
+  btn.style.setProperty('border-radius','16px','important');
   applyOpen(panel,btn,readOpen());
   btn.addEventListener('click',function(e){
     e.preventDefault();

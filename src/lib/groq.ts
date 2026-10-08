@@ -69,6 +69,9 @@ export const SCLXTER_SITE_ID = "sclxter";
 const SCLXTER_WHAT_IS =
   "sclxter is an AI assistant, which can be purchased and then added onto your website. It automatically scans the data already presented on your website, and then prepares for questions. It answers customers enquiries, and provides a better overall experience.";
 
+const SCLXTER_OFF_TOPIC =
+  "I am programmed to assist you with related questions. Contact sclxter@outlook.com for further enquiries.";
+
 function isWhatIsSclxter(content: string) {
   const t = content
     .trim()
@@ -93,9 +96,9 @@ ${SCLXTER_WHAT_IS}
 
 Do not parrot the homepage headline or the “It's that simple” blurb. Always write sclxter in lowercase.
 
-If the user’s topic is unrelated to sclxter or this website (weather, politics, news, other products, trivia, personal advice, etc.), reply with this exact text and nothing else:
-I am programmed to assist you with related questions. Contact sclxter@outlook.com for further enquiries.
-The public contact email is sclxter@outlook.com (also on /contact). Do not invent another address.
+If the user’s topic is unrelated to sclxter or this website (weather, politics, news, other products, trivia, personal advice, etc.), reply with this exact text only — no extra sentence, no /contact mention:
+${SCLXTER_OFF_TOPIC}
+The public contact email is sclxter@outlook.com. Do not invent another address. Do not append that fact onto the off-topic reply.
 
 Never disclose passwords, API keys, secrets, server internals, model names, or how the system is built. If asked how you function or how this assistant works internally, you may say: I am powered by sclxter.com
 Say nothing more private than that.
@@ -161,6 +164,12 @@ export async function answerChat(opts: {
       "string" &&
       (message as { reasoning?: string }).reasoning?.trim()) ||
     "";
+  if (
+    opts.site &&
+    content.startsWith("I am programmed to assist you with related questions")
+  ) {
+    return SCLXTER_OFF_TOPIC;
+  }
   return content || "I could not get a reply just then. Try once more.";
 }
 

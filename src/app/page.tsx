@@ -67,10 +67,10 @@ export default async function Home() {
                     className="h-[4.16rem] w-auto lg:h-[4.94rem]"
                   />
                 </div>
-                <p className="mt-3 min-h-16 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
+                <p className="mt-3 min-h-16 font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
                   efficient processing,
                   <br />
-                  advanced conversations
+                  <span className="whitespace-nowrap">advanced conversations</span>
                 </p>
               </div>
             </aside>
@@ -98,10 +98,10 @@ export default async function Home() {
                   className="h-[4.16rem] w-auto"
                 />
               </div>
-              <p className="mt-3 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
+              <p className="mt-3 font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
                 efficient processing,
                 <br />
-                advanced conversations
+                <span className="whitespace-nowrap">advanced conversations</span>
               </p>
             </div>
           </div>

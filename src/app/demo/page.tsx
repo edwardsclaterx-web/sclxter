@@ -30,7 +30,7 @@ export default function DemoHome() {
               href="/demo/about"
               className="inline-flex h-11 items-center border border-line px-5 text-sm"
             >
-              Hours and booking
+              More information
             </Link>
           </div>
         </section>

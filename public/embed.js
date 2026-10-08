@@ -53,6 +53,7 @@
     btn.setAttribute("aria-expanded", open ? "true" : "false");
     btn.textContent = open ? "Minimise" : "Ask anything";
     btn.setAttribute("aria-label", open ? "Minimise" : "Ask anything");
+    btn.style.setProperty("border-radius", "10px", "important");
     try {
       sessionStorage.setItem(openKey, open ? "1" : "0");
     } catch (e) {}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SiteFooter, SiteHeader } from "@/components/chrome";
+import { SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 
 export const metadata = { title: "FAQ — sclxter" };
@@ -121,7 +121,6 @@ export default async function FaqPage() {
           ))}
         </dl>
       </main>
-      <SiteFooter showPricing={false} />
     </div>
   );
 }

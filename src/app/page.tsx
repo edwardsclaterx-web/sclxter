@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SiteFooter, SiteHeader } from "@/components/chrome";
+import { SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function Home() {
@@ -139,7 +139,6 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <SiteFooter lowercase showPricing={false} showLinks={false} />
     </div>
   );
 }

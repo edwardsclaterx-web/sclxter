@@ -1,4 +1,4 @@
-import { SiteFooter, SiteHeader } from "@/components/chrome";
+import { SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 
 export const metadata = { title: "Contact — sclxter" };
@@ -19,7 +19,6 @@ export default async function ContactPage() {
           {EMAIL}
         </a>
       </main>
-      <SiteFooter showPricing={false} />
     </div>
   );
 }

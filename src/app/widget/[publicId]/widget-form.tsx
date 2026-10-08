@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect } from "react";
+
 export function WidgetForm({
   publicId,
   welcome,
@@ -106,6 +110,10 @@ export function WidgetForm({
   });
 })();`;
 
+  useEffect(() => {
+    new Function(boot)();
+  }, [boot]);
+
   return (
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-3">
@@ -165,7 +173,6 @@ export function WidgetForm({
           Send
         </button>
       </form>
-      <script dangerouslySetInnerHTML={{ __html: boot }} />
     </div>
   );
 }

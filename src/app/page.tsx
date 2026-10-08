@@ -47,7 +47,7 @@ export default async function Home() {
                 alt=""
                 width={80}
                 height={100}
-                className="h-16 w-auto lg:h-20"
+                className="h-24 w-auto max-w-full lg:h-[7.5rem]"
               />
               <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 ChatGPT level performance
@@ -75,7 +75,7 @@ export default async function Home() {
                 alt=""
                 width={80}
                 height={100}
-                className="h-16 w-auto"
+                className="h-24 w-auto"
               />
               <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 ChatGPT level performance

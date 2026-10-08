@@ -42,12 +42,18 @@ export async function POST(request: Request) {
       );
     }
     business = await getOrCreateBusiness(user);
+    if (!business) {
+      return cors(
+        NextResponse.json({ error: "Unknown shop." }, { status: 404 }),
+      );
+    }
   }
 
   const lead = await updateStore((store) => {
     const row = {
       id: id("lead"),
       businessId: business!.id,
+      conversationId: null as string | null,
       name,
       phone,
       email: body.email?.trim() ?? "",

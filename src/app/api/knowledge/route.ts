@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   const biz = await getOrCreateBusiness(user);
+  if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const body = (await request.json()) as { title?: string; body?: string };
   const title = body.title?.trim() ?? "";
   const text = body.body?.trim() ?? "";

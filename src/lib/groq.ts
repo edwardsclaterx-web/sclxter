@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { loadSecrets } from "./secrets";
+import { toneById } from "./tones";
 import type { Business, ChatMessage, KnowledgeItem } from "./types";
 
 const MODEL = "openai/gpt-oss-20b";
@@ -23,12 +24,23 @@ function knowledgeBlock(items: KnowledgeItem[], notesOnly: boolean) {
     .join("\n\n");
 }
 
+function factsBlock(
+  business: Business,
+  items: KnowledgeItem[],
+  notesOnly: boolean,
+) {
+  const pad = (business.notepad || "").trim();
+  if (pad) return pad;
+  return knowledgeBlock(items, notesOnly);
+}
+
 function systemPrompt(
   business: Business,
   items: KnowledgeItem[],
   barber: boolean,
   notesOnly: boolean,
 ) {
+  const tone = toneById(business.tone);
   const barberScope = barber
     ? `
 You are on a demo of this barber shop’s website. You may talk about this shop’s knowledge and about hair and barbering (cuts, fades, beards, shaves, prices, hours, walk-in vs booking, products a barber would use, parking, kids’ cuts). Treat hours, prices, names, and the phone number as demo data — still answer those questions from the knowledge.
@@ -49,9 +61,14 @@ Off-topic (weather, politics, news, cars, sports, other shops, general trivia): 
 
 If asked whether you are a real person, staff, an employee, or “from” the business as a human, say clearly that you are an AI assistant for the shop. Never pretend to be a named person who works there.
 
+Tone: ${tone.label}. ${tone.instruction} Apply this tone on every reply.
+
 Speak plainly and helpfully. Short sentences. No sales script, no emoji dump. Do not volunteer “as an AI” on ordinary questions — only when they ask who or what you are.
 
-Use only the knowledge below (${notesOnly ? "notes the owner typed" : "notes the owner typed, and text from their public pages"}). Do not invent hours, prices, services, or policies.
+You do not have a live web search tool. Do not invent search results or claim you just looked something up online.
+
+Use only the knowledge below (the owner notepad and any stored notes). Do not invent hours, prices, services, or policies.
+Contact for this business, if present: phone ${business.contactPhone || "—"}, email ${business.contactEmail || "—"}, other ${business.contactOther || "—"}. Industry: ${business.industry || "—"}.
 ${barberScope}
 When listing services or prices, give one to a few that match what they asked — not the whole menu unless they ask for everything.
 
@@ -59,10 +76,10 @@ Ask a short follow-up when it would help (for a barber: fade vs scissor cut, tod
 
 If a shop fact is not in the knowledge, say you do not have it — not “I’m not sure”. Then tell them how to contact the shop from the knowledge if that is there. Do not guess.
 
-If they want a callback or to leave details, ask for a name and phone number (email optional) and a short note. When they give those, reply that you will pass it to the shop. Prefix that confirmation line with [[LEAD]] so the site can save it.
+Only if the visitor is clearly getting closer to buying — asking to book, buy, hold a time, or leave details in order to purchase — prefix that confirmation with [[LEAD]]. Do not flag ordinary questions as leads. When they give a name and phone for a callback to buy or book, reply that you will pass it to the shop and use [[LEAD]].
 
 Knowledge:
-${knowledgeBlock(items, notesOnly)}`;
+${factsBlock(business, items, notesOnly)}`;
 }
 
 export const SCLXTER_SITE_ID = "sclxter";

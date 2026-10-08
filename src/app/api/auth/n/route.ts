@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  getOrCreateBusiness,
-  hasOwnerStep2Pending,
-  setSessionCookie,
-} from "@/lib/auth";
+import { hasOwnerStep2Pending, setSessionCookie } from "@/lib/auth";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import {
   ensureOwnerUser,
@@ -46,7 +42,6 @@ export async function POST(request: Request) {
 
   const user = await ensureOwnerUser();
   await setSessionCookie(user.id);
-  await getOrCreateBusiness(user);
   if (html) {
     return redirectSeeOther("/dashboard");
   }

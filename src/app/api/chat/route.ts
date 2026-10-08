@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
+import {
+  isDemoBusiness,
+  nextConversationSeq,
+} from "@/lib/access";
 import { answerChat, parseLeadFromReply, SCLXTER_SITE_ID } from "@/lib/groq";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
@@ -31,7 +35,10 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   const publicId = url.searchParams.get("publicId");
   const site = url.searchParams.get("site");
-  const body = (await request.json()) as { messages?: ChatMessage[] };
+  const body = (await request.json()) as {
+    messages?: ChatMessage[];
+    conversationId?: unknown;
+  };
   const messages = (body.messages ?? []).filter(
     (m) => m && (m.role === "user" || m.role === "assistant") && m.content,
   );
@@ -83,12 +90,14 @@ export async function POST(request: Request) {
       );
     }
     business = await getOrCreateBusiness(user);
+    if (!business) {
+      return cors(
+        NextResponse.json({ error: "Unknown assistant." }, { status: 404 }),
+      );
+    }
   }
 
-  const knowledge = data.knowledge.filter(
-    (k) =>
-      k.businessId === business.id && (!ownerTest || k.source === "note"),
-  );
+  const knowledge = data.knowledge.filter((k) => k.businessId === business.id);
 
   try {
     const barber =
@@ -102,21 +111,61 @@ export async function POST(request: Request) {
       notesOnly: ownerTest,
     });
     const { text, lead } = parseLeadFromReply(raw);
-    if (lead) {
-      const lastUser = [...messages].reverse().find((m) => m.role === "user");
-      await updateStore((store) => {
-        store.leads.push({
-          id: id("lead"),
-          businessId: business!.id,
-          name: "From chat",
-          phone: "",
-          email: "",
-          message: lastUser?.content ?? text,
-          createdAt: new Date().toISOString(),
-        });
+    const thread = [...messages, { role: "assistant" as const, content: text }];
+    const persist = !isDemoBusiness(business) && !ownerTest;
+    let conversationId =
+      typeof body.conversationId === "string" ? body.conversationId : "";
+
+    if (persist) {
+      const now = new Date().toISOString();
+      const saved = await updateStore((store) => {
+        let convo = conversationId
+          ? store.conversations.find(
+              (c) =>
+                c.id === conversationId && c.businessId === business!.id,
+            )
+          : undefined;
+        if (!convo) {
+          convo = {
+            id: id("convo"),
+            businessId: business!.id,
+            seq: nextConversationSeq(store, business!.id),
+            messages: thread,
+            lead: Boolean(lead),
+            createdAt: now,
+            updatedAt: now,
+          };
+          store.conversations.push(convo);
+        } else {
+          convo.messages = thread;
+          convo.updatedAt = now;
+          if (lead) convo.lead = true;
+        }
+        if (lead) {
+          store.leads.push({
+            id: id("lead"),
+            businessId: business!.id,
+            conversationId: convo.id,
+            name: "From chat",
+            phone: "",
+            email: "",
+            message:
+              [...messages].reverse().find((m) => m.role === "user")
+                ?.content ?? text,
+            createdAt: now,
+          });
+        }
+        return convo.id;
       });
+      conversationId = saved;
     }
-    return cors(NextResponse.json({ reply: text }));
+
+    return cors(
+      NextResponse.json({
+        reply: text,
+        ...(conversationId ? { conversationId } : {}),
+      }),
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
     if (message === "GROQ_UNCONFIGURED") {

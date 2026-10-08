@@ -9,9 +9,16 @@ export function seedIfEmpty(data: StoreData) {
 
   data.businesses.push({
     id: "biz_northgate",
+    seq: 0,
     ownerId: null,
     name: "Northgate Barbers",
     websiteUrl: "/demo",
+    industry: "Barber",
+    contactPhone: "01904 555 018",
+    contactEmail: "",
+    contactOther: "14 Northgate, York YO1 7HH",
+    tone: "warm",
+    notepad: "",
     publicId: DEMO_PUBLIC_ID,
     appearance: {
       assistantName: "Northgate",

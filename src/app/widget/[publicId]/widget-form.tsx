@@ -26,6 +26,9 @@ export function WidgetForm({
   var publicId=${JSON.stringify(publicId)};
   var msgKey='sclxter:ask:'+publicId+':messages';
   var draftKey='sclxter:ask:'+publicId+':draft';
+  var cidKey='sclxter:ask:'+publicId+':cid';
+  var conversationId='';
+  try{ conversationId=sessionStorage.getItem(cidKey)||''; }catch(e){}
   if(form.dataset.bound==='1') return;
   form.dataset.bound='1';
   var name=${JSON.stringify(assistantName)};
@@ -74,9 +77,13 @@ export function WidgetForm({
     bubble('user', v);
     busy=true; send.textContent='…';
     send.removeAttribute('disabled');
-    fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:history})})
+    fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:history,conversationId:conversationId||undefined})})
       .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
       .then(function(x){
+        if(x.d&&x.d.conversationId){
+          conversationId=x.d.conversationId;
+          try{ sessionStorage.setItem(cidKey, conversationId); }catch(e3){}
+        }
         var reply=(x.d&&x.d.reply)||(x.d&&x.d.error)||'The assistant is unavailable.';
         history.push({role:'assistant', content:reply});
         save();
@@ -101,8 +108,9 @@ export function WidgetForm({
     e.preventDefault();
     e.stopPropagation();
     history=[];
+    conversationId='';
     save();
-    try{ sessionStorage.removeItem(draftKey); }catch(e2){}
+    try{ sessionStorage.removeItem(draftKey); sessionStorage.removeItem(cidKey); }catch(e2){}
     log.querySelectorAll('div').forEach(function(n){n.remove();});
     if(welcome) welcome.style.display='';
     input.value='';

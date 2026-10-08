@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  getOrCreateBusiness,
-  hashPassword,
-  setSessionCookie,
-} from "@/lib/auth";
+import { hashPassword, setSessionCookie } from "@/lib/auth";
+import { createBusinessForSignup } from "@/lib/access";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
 import { updateStore } from "@/lib/store";
@@ -46,6 +43,6 @@ export async function POST(request: Request) {
   }
 
   await setSessionCookie(user.id);
-  await getOrCreateBusiness(user);
+  await createBusinessForSignup(user);
   return NextResponse.json({ ok: true });
 }

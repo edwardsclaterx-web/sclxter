@@ -15,9 +15,16 @@ export type User = {
 
 export type Business = {
   id: string;
+  seq: number;
   ownerId: string | null;
   name: string;
   websiteUrl: string;
+  industry: string;
+  contactPhone: string;
+  contactEmail: string;
+  contactOther: string;
+  tone: string;
+  notepad: string;
   publicId: string;
   appearance: Appearance;
   widgetConnectedAt: string | null;
@@ -38,6 +45,7 @@ export type KnowledgeItem = {
 export type Lead = {
   id: string;
   businessId: string;
+  conversationId: string | null;
   name: string;
   phone: string;
   email: string;
@@ -45,14 +53,40 @@ export type Lead = {
   createdAt: string;
 };
 
+export type Conversation = {
+  id: string;
+  businessId: string;
+  seq: number;
+  messages: ChatMessage[];
+  lead: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoreData = {
   users: User[];
   businesses: Business[];
   knowledge: KnowledgeItem[];
   leads: Lead[];
+  conversations: Conversation[];
 };
 
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+};
+
+export type ClientBusiness = {
+  name: string;
+  websiteUrl: string;
+  industry: string;
+  contactPhone: string;
+  contactEmail: string;
+  contactOther: string;
+  tone: string;
+  notepad: string;
+  publicId: string;
+  createdAt: string;
+  seq?: number;
+  ownerEmail?: string;
 };

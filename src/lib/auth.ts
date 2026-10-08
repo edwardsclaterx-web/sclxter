@@ -1,10 +1,11 @@
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { isOwnerEmail } from "./owner-auth";
 import { loadSecrets } from "./secrets";
-import { id } from "./ids";
-import { readStore, updateStore } from "./store";
+import { readStore } from "./store";
 import type { Business, User } from "./types";
+import { createBusinessForSignup, getOwnedBusiness } from "./access";
 
 const COOKIE = "sclxter_session";
 const PENDING = "sclxter_login_pending";
@@ -99,29 +100,13 @@ export async function requireUser() {
   return user;
 }
 
-export async function getOrCreateBusiness(user: User): Promise<Business> {
-  return updateStore((data) => {
-    let biz = data.businesses.find((b) => b.ownerId === user.id);
-    if (!biz) {
-      const now = new Date().toISOString();
-      biz = {
-        id: id("biz"),
-        ownerId: user.id,
-        name: "",
-        websiteUrl: "",
-        publicId: id("w").replace("w_", ""),
-        appearance: {
-          assistantName: "Assistant",
-          colour: "#ffffff",
-          welcome: "Ask about hours, prices, or how to book.",
-        },
-        widgetConnectedAt: null,
-        createdAt: now,
-      };
-      data.businesses.push(biz);
-    }
-    return biz;
-  });
+export async function getOrCreateBusiness(user: User): Promise<Business | null> {
+  if (isOwnerEmail(user.email)) {
+    return getOwnedBusiness(user);
+  }
+  const existing = await getOwnedBusiness(user);
+  if (existing) return existing;
+  return createBusinessForSignup(user);
 }
 
 export function publicUser(user: User) {

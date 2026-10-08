@@ -1,13 +1,35 @@
 import { NextResponse } from "next/server";
-import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
-import { id } from "@/lib/ids";
+import { getSessionUser } from "@/lib/auth";
+import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
 import { resolveWebsiteUrl, scanSite } from "@/lib/scan";
-import { updateStore } from "@/lib/store";
+import { readStore, updateStore } from "@/lib/store";
+
+function compilePages(
+  pages: { url: string; title: string; body: string }[],
+  scannedAt: string,
+) {
+  const parts = pages.map(
+    (p) => `### ${p.title}\n${p.url}\n${p.body}`.trim(),
+  );
+  return `## Scan ${scannedAt}\n\n${parts.join("\n\n")}`;
+}
 
 export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
-  const biz = await getOrCreateBusiness(user);
+  const body = (await request.json().catch(() => ({}))) as {
+    seq?: number;
+    confirm?: boolean;
+  };
+  if (!body.confirm) {
+    return NextResponse.json(
+      { error: "Confirm the scan first." },
+      { status: 400 },
+    );
+  }
+  const seq = typeof body.seq === "number" ? body.seq : null;
+  const biz = await resolveBusiness(user, seq);
+  if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const origin = new URL(request.url).origin;
   const start = resolveWebsiteUrl(biz.websiteUrl, origin);
   if (!start) {
@@ -20,24 +42,23 @@ export async function POST(request: Request) {
   const { pages, error } = await scanSite(start);
   if (error) return NextResponse.json({ error }, { status: 422 });
 
-  const now = new Date().toISOString();
-  const items = await updateStore((data) => {
-    data.knowledge = data.knowledge.filter(
-      (k) => !(k.businessId === biz.id && k.source === "scan"),
-    );
-    const created = pages.map((page) => ({
-      id: id("know"),
-      businessId: biz.id,
-      source: "scan" as const,
-      title: page.title,
-      body: page.body,
-      url: page.url,
-      createdAt: now,
-      updatedAt: now,
-    }));
-    data.knowledge.push(...created);
-    return created;
+  const block = compilePages(pages, new Date().toISOString());
+  const updated = await updateStore((data) => {
+    const row = data.businesses.find((b) => b.id === biz.id);
+    if (!row) return biz;
+    const existing = (row.notepad || "").trim();
+    row.notepad = existing ? `${existing}\n\n${block}` : block;
+    return row;
   });
 
-  return NextResponse.json({ items, pages: items.length });
+  const data = await readStore();
+  const owner = data.users.find((u) => u.id === updated.ownerId);
+  const admin = isAdmin(user);
+  return NextResponse.json({
+    pages: pages.length,
+    business: toClientBusiness(updated, {
+      admin,
+      ownerEmail: admin ? owner?.email : undefined,
+    }),
+  });
 }

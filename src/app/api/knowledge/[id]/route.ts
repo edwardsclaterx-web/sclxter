@@ -8,6 +8,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   const biz = await getOrCreateBusiness(user);
+  if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const { id } = await ctx.params;
   const body = (await request.json()) as { title?: string; body?: string };
   const item = await updateStore((data) => {
@@ -28,6 +29,7 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   const biz = await getOrCreateBusiness(user);
+  if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const { id } = await ctx.params;
   const ok = await updateStore((data) => {
     const before = data.knowledge.length;

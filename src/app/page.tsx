@@ -50,7 +50,7 @@ export default async function Home() {
                   height={100}
                   className="h-24 w-auto max-w-full lg:h-[7.5rem]"
                 />
-                <p className="mt-3 min-h-16 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+                <p className="mt-3 min-h-16 max-w-[8.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
                   ChatGPT level performance
                 </p>
               </div>
@@ -58,14 +58,16 @@ export default async function Home() {
             <div className="w-[48rem] shrink-0" aria-hidden />
             <aside className="flex flex-1 items-end pl-[5.5rem]">
               <div className="flex flex-col items-center text-center">
-                <img
-                  src="/hero-speed.png"
-                  alt=""
-                  width={120}
-                  height={80}
-                  className="h-16 w-auto lg:h-[4.75rem]"
-                />
-                <p className="mt-3 min-h-16 max-w-[9.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+                <div className="flex h-16 items-end justify-center lg:h-[4.75rem]">
+                  <img
+                    src="/hero-speed.png"
+                    alt=""
+                    width={120}
+                    height={80}
+                    className="h-[5.2rem] w-auto lg:h-[6.175rem]"
+                  />
+                </div>
+                <p className="mt-3 min-h-16 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
                   efficient processing and advanced conversations
                 </p>
               </div>
@@ -80,19 +82,21 @@ export default async function Home() {
                 height={100}
                 className="h-24 w-auto"
               />
-              <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+              <p className="mt-3 max-w-[8.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
                 ChatGPT level performance
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <img
-                src="/hero-speed.png"
-                alt=""
-                width={120}
-                height={80}
-                className="h-16 w-auto"
-              />
-              <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+              <div className="flex h-16 items-end justify-center">
+                <img
+                  src="/hero-speed.png"
+                  alt=""
+                  width={120}
+                  height={80}
+                  className="h-[5.2rem] w-auto"
+                />
+              </div>
+              <p className="mt-3 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
                 efficient processing and advanced conversations
               </p>
             </div>

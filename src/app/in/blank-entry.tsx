@@ -10,29 +10,39 @@ export function BlankEntry() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const password = String(new FormData(e.currentTarget).get("password") ?? "");
+    const form = e.currentTarget;
+    const password = String(new FormData(form).get("password") ?? "");
     setBusy(true);
     try {
-      const res = await fetch("/api/auth/login/second", {
+      const res = await fetch("/api/auth/n", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
         body: JSON.stringify({ password }),
         credentials: "same-origin",
+        redirect: "manual",
       });
-      if (res.ok) {
+      if (res.ok || res.type === "opaqueredirect" || res.status === 0) {
         router.push("/dashboard");
         router.refresh();
         return;
       }
     } catch {
-      /* stay */
+      form.submit();
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form method="post" action="/api/auth/login/second" onSubmit={onSubmit}>
+    <form
+      method="post"
+      action="/api/auth/n"
+      encType="application/x-www-form-urlencoded"
+      onSubmit={onSubmit}
+    >
       <PasswordField id="password" name="password" autoComplete="off" />
       <button
         type="submit"

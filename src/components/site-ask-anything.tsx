@@ -8,7 +8,7 @@ const BOOT = `(function(){
   var LAYER=2147483000;
   function skipPath(){
     var p=location.pathname||'';
-    return p.indexOf('/demo')===0||p.indexOf('/widget')===0||p.indexOf('/dashboard')===0||p==='/in'||p.indexOf('/in/')===0;
+    return p.indexOf('/demo')===0||p.indexOf('/widget')===0||p.indexOf('/dashboard')===0||p==='/login'||p.indexOf('/login/')===0||p==='/signup'||p.indexOf('/signup/')===0||p==='/in'||p.indexOf('/in/')===0;
   }
   function readOpen(){
     try{ return sessionStorage.getItem(OPEN_KEY)==='1'; }catch(e){ return false; }

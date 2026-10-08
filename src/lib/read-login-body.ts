@@ -22,6 +22,8 @@ export async function readLoginBody(request: Request) {
 }
 
 export function wantsHtml(request: Request) {
+  const accept = request.headers.get("accept") || "";
+  if (accept.includes("application/json")) return false;
   const ct = request.headers.get("content-type") || "";
   return !ct.includes("application/json");
 }

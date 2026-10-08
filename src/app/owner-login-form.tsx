@@ -24,19 +24,34 @@ export function OwnerLoginForm() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
         body: JSON.stringify({ email, password }),
         credentials: "same-origin",
+        redirect: "manual",
       });
-      const payload = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        setError(payload.error || "That did not work.");
+      if (res.type === "opaqueredirect" || res.status === 0) {
+        router.push("/in");
+        router.refresh();
+        return;
+      }
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const payload = (await res.json()) as { error?: string; ok?: boolean };
+        if (!res.ok) {
+          setError(payload.error || "That did not work.");
+          return;
+        }
+      } else if (!res.ok) {
+        setError("That did not work.");
         return;
       }
       router.push("/in");
       router.refresh();
     } catch {
-      setError("Could not reach the server.");
+      form.submit();
     } finally {
       setBusy(false);
     }
@@ -46,6 +61,7 @@ export function OwnerLoginForm() {
     <form
       method="post"
       action="/api/auth/login"
+      encType="application/x-www-form-urlencoded"
       onSubmit={onSubmit}
       className="mt-8 space-y-5"
       autoComplete="on"

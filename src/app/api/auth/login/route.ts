@@ -30,5 +30,5 @@ export async function POST(request: Request) {
   if (html) {
     return NextResponse.redirect(new URL("/in", request.url), 303);
   }
-  return NextResponse.json({ ok: true, next: "second" });
+  return NextResponse.json({ ok: true, next: "in" });
 }

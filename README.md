@@ -2,7 +2,7 @@
 
 Embeddable site assistant for independent businesses. The owner scans public pages, types extra notes, and visitors ask in plain language. Answers come only from that shop’s pages and notes.
 
-This first slice is a local app: email and password (no Stripe), a dashboard, a HTML scan, a Groq-backed test chat on the server, and a fictional UK barber shop at `/demo`.
+This first slice is a local app: owner sign-in (two password steps, hashes on the server only), a dashboard, a HTML scan, a Groq-backed test chat on the server, and a fictional UK barber shop at `/demo`.
 
 The product UI and the barber demo share one look: black and white, Inter, quiet.
 
@@ -14,6 +14,7 @@ Needs Node 22+.
 npm install
 cp .env.example .env.local
 # Put GROQ_API_KEY in .env.local. Never commit it. Never put it on a customer website.
+# Owner passwords: SCLXTER_PASSWORD and SCLXTER_PASSWORD_2 — server only, never in the browser.
 npm run dev
 ```
 

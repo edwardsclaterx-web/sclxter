@@ -5,6 +5,7 @@ import {
   setSessionCookie,
 } from "@/lib/auth";
 import { id } from "@/lib/ids";
+import { isOwnerEmail } from "@/lib/owner-auth";
 import { updateStore } from "@/lib/store";
 
 export async function POST(request: Request) {
@@ -15,6 +16,12 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Use a real email and a password of at least 8 characters." },
       { status: 400 },
+    );
+  }
+  if (isOwnerEmail(email)) {
+    return NextResponse.json(
+      { error: "That email already has an account." },
+      { status: 409 },
     );
   }
 

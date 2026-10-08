@@ -7,6 +7,7 @@ import { readStore, updateStore } from "./store";
 import type { Business, User } from "./types";
 
 const COOKIE = "sclxter_session";
+const PENDING = "sclxter_login_pending";
 
 function secretKey() {
   loadSecrets();
@@ -38,11 +39,40 @@ export async function setSessionCookie(userId: string) {
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
+  store.delete(PENDING);
 }
 
 export async function clearSessionCookie() {
   const store = await cookies();
   store.delete(COOKIE);
+  store.delete(PENDING);
+}
+
+export async function setOwnerStep2Cookie() {
+  const token = await new SignJWT({ purpose: "owner-step2" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("15m")
+    .sign(secretKey());
+  const store = await cookies();
+  store.set(PENDING, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 15,
+  });
+}
+
+export async function hasOwnerStep2Pending() {
+  const jar = await cookies();
+  const token = jar.get(PENDING)?.value;
+  if (!token) return false;
+  try {
+    const { payload } = await jwtVerify(token, secretKey());
+    return payload.purpose === "owner-step2";
+  } catch {
+    return false;
+  }
 }
 
 export async function getUserIdFromToken(token: string | undefined) {

@@ -1,24 +1,30 @@
 import { NextResponse } from "next/server";
+import { setOwnerStep2Cookie } from "@/lib/auth";
 import {
-  checkPassword,
-  getOrCreateBusiness,
-  setSessionCookie,
-} from "@/lib/auth";
-import { readStore } from "@/lib/store";
+  isOwnerEmail,
+  ownerAuthReady,
+  verifyOwnerPassword,
+} from "@/lib/owner-auth";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; password?: string };
   const email = body.email?.trim().toLowerCase() ?? "";
   const password = body.password ?? "";
-  const data = await readStore();
-  const user = data.users.find((u) => u.email === email);
-  if (!user || !(await checkPassword(password, user.passwordHash))) {
+
+  if (!(await ownerAuthReady())) {
     return NextResponse.json(
-      { error: "Email or password is wrong." },
+      { error: "Sign in is not configured on this server." },
+      { status: 503 },
+    );
+  }
+
+  if (!isOwnerEmail(email) || !(await verifyOwnerPassword(1, password))) {
+    return NextResponse.json(
+      { error: "Those details did not match." },
       { status: 401 },
     );
   }
-  await setSessionCookie(user.id);
-  await getOrCreateBusiness(user);
-  return NextResponse.json({ ok: true });
+
+  await setOwnerStep2Cookie();
+  return NextResponse.json({ ok: true, next: "second" });
 }

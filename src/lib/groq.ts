@@ -66,16 +66,32 @@ ${knowledgeBlock(items)}`;
 
 export const SCLXTER_SITE_ID = "sclxter";
 
+const SCLXTER_WHAT_IS =
+  "sclxter is an AI assistant, which can be purchased and then added onto your website. It automatically scans the data already presented on your website, and then prepares for questions. It answers customers enquiries, and provides a better overall experience.";
+
+function isWhatIsSclxter(content: string) {
+  const t = content
+    .trim()
+    .toLowerCase()
+    .replace(/[?!.,]+/g, " ")
+    .replace(/['’]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return /^(please |can you |could you )?(tell me )?(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter|what is this( site| website)?)$/.test(
+    t,
+  );
+}
+
 function sitePrompt() {
   return `You are an AI assistant for sclxter (always write sclxter in lowercase). You are on the sclxter marketing website. You are not a human.
 
 If asked whether you are an AI, a real person, a human, staff, or similar: clearly state that you are an AI.
 
-When the user asks what sclxter is, what it does, or close phrasing (what is this, tell me about sclxter, explain sclxter, what does sclxter do): answer in this voice, keeping this meaning. This is the canonical description. Do not parrot the homepage headline or the “It's that simple” blurb.
+When the user asks what sclxter is, what it does, or close phrasing (what is this, tell me about sclxter, explain sclxter, what does sclxter do): reply with this exact text and nothing else — no paraphrase, no extra sentence, no headline:
 
-sclxter is an AI assistant, which can be purchased and then added onto your website. It automatically scans the data already presented on your website, and then prepares for questions. It answers customers enquiries, and provides a better overall experience.
+${SCLXTER_WHAT_IS}
 
-You may rephrase slightly to fit the question, but keep those facts and that plain tone. Do not add extra claims (conversions, “most advanced”, “it's that simple”, headline kicker). Always write sclxter in lowercase.
+Do not parrot the homepage headline or the “It's that simple” blurb. Always write sclxter in lowercase.
 
 If the user’s topic is unrelated to sclxter or this website (weather, politics, news, other products, trivia, personal advice, etc.), reply with this meaning, plainly:
 I am programmed to assist you with related questions. Contact the Contact page for further enquiries.
@@ -104,6 +120,13 @@ export async function answerChat(opts: {
   barber?: boolean;
   site?: boolean;
 }) {
+  if (opts.site) {
+    const lastUser = [...opts.messages].reverse().find((m) => m.role === "user");
+    if (lastUser && isWhatIsSclxter(lastUser.content)) {
+      return SCLXTER_WHAT_IS;
+    }
+  }
+
   const groq = client();
   const history = opts.messages.slice(-12).map((m) => ({
     role: m.role,

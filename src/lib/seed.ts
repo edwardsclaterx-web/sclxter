@@ -29,7 +29,7 @@ export function seedIfEmpty(data: StoreData) {
     },
     {
       title: "Cuts and prices",
-      body: "Skin fade £18. Classic cut £16. Beard trim £10. Cut and beard £26. Kids’ cut (under 12) £12. Hot towel shave £22. Cash and cards. Prices include a consultation.",
+      body: "Skin fade £21. Classic cut £18. Beard trim £12. Cut and beard £30. Kids’ cut (under 12) £14. Hot towel shave £25. Cash and cards. Prices include a consultation.",
     },
     {
       title: "Walk-in and booking",

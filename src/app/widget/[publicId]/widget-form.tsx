@@ -123,15 +123,23 @@ export function WidgetForm({
           {welcome}
         </p>
       </div>
-      <form id="wa-form" className="mt-4 flex gap-2 border-t border-line pt-4">
-        <input
-          id="wa-input"
-          name="message"
-          className="h-10 w-full border border-line bg-surface px-3 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
-          placeholder="Ask anything"
-          aria-label="Ask anything"
-          autoComplete="off"
-        />
+      <form
+        id="wa-form"
+        className="mt-4 flex items-start gap-2 border-t border-line pt-4 pb-1"
+      >
+        <div className="min-w-0 flex-1">
+          <input
+            id="wa-input"
+            name="message"
+            className="h-10 w-full border border-line bg-surface px-3 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
+            placeholder="Ask anything"
+            aria-label="Ask anything"
+            autoComplete="off"
+          />
+          <p className="mt-1.5 text-[10px] leading-4 tracking-wide text-muted opacity-45">
+            powered by sclxter.com
+          </p>
+        </div>
         <button
           id="wa-send"
           type="submit"

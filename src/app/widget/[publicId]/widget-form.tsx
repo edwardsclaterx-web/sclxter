@@ -7,7 +7,10 @@ export function WidgetForm({
   welcome: string;
   assistantName: string;
 }) {
-  const endpoint = `/api/chat?publicId=${encodeURIComponent(publicId)}`;
+  const endpoint =
+    publicId === "sclxter"
+      ? "/api/chat?site=sclxter"
+      : `/api/chat?publicId=${encodeURIComponent(publicId)}`;
   const boot = `(function(){
   var form=document.getElementById('wa-form');
   var input=document.getElementById('wa-input');

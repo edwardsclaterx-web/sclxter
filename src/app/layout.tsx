@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SiteAskAnything } from "@/components/site-ask-anything";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full bg-bg font-sans text-fg">{children}</body>
+      <body className="min-h-full bg-bg font-sans text-fg">
+        {children}
+        <SiteAskAnything />
+      </body>
     </html>
   );
 }

@@ -7,6 +7,10 @@ const BOOT = `(function(){
   var BTN_ID='northgate-ask-btn';
   var OPEN_KEY='sclxter:ask:'+PUBLIC_ID+':open';
   var LAYER=2147483000;
+  function onDemo(){
+    var p=location.pathname||'';
+    return p.indexOf('/demo')===0;
+  }
   function readOpen(){
     try{ return sessionStorage.getItem(OPEN_KEY)==='1'; }catch(e){ return false; }
   }
@@ -20,13 +24,20 @@ const BOOT = `(function(){
     btn.style.setProperty('border-radius','16px','important');
     try{ sessionStorage.setItem(OPEN_KEY, open?'1':'0'); }catch(e){}
   }
+  function syncDemo(){
+    var host=document.getElementById(HOST_ID);
+    if(!host) return;
+    host.style.display=onDemo()?'':'none';
+  }
   var existing=document.getElementById(HOST_ID);
   if(existing){
     var p=document.getElementById(PANEL_ID);
     var b=document.getElementById(BTN_ID);
     if(p&&b) applyOpen(p,b,readOpen());
+    syncDemo();
     return;
   }
+  if(!onDemo()) return;
   var root=document.createElement('div');
   root.id=HOST_ID;
   root.style.cssText='position:fixed;right:20px;bottom:20px;z-index:'+LAYER+';pointer-events:auto;';
@@ -62,6 +73,11 @@ const BOOT = `(function(){
   root.appendChild(panel);
   root.appendChild(btn);
   document.body.appendChild(root);
+  window.addEventListener('popstate',syncDemo);
+  var push=history.pushState;
+  history.pushState=function(){ push.apply(this,arguments); syncDemo(); };
+  var replace=history.replaceState;
+  history.replaceState=function(){ replace.apply(this,arguments); syncDemo(); };
 })();`;
 
 export function AskAnything() {

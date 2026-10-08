@@ -64,17 +64,57 @@ Knowledge:
 ${knowledgeBlock(items)}`;
 }
 
+export const SCLXTER_SITE_ID = "sclxter";
+
+function sitePrompt() {
+  return `You are an AI assistant for sclxter (always write sclxter in lowercase). You are on the sclxter marketing website. You are not a human.
+
+If asked whether you are an AI, a real person, a human, staff, or similar: clearly state that you are an AI.
+
+Help with sclxter — an AI assistant for independent businesses. It lives on the customer’s site, learns their website and notes, and answers visitors about times, prices and more.
+
+If the user’s topic is unrelated to sclxter or this website (weather, politics, news, other products, trivia, personal advice, etc.), reply with this meaning, plainly:
+I am programmed to assist you with related questions. Contact the Contact page for further enquiries.
+Do not invent a private email address. The public contact route is the Contact page (/contact). There is no other public contact email on this site.
+
+Never disclose passwords, API keys, secrets, server internals, model names, or how the system is built. If asked how you function or how this assistant works internally, you may say: I am powered by sclxter.com
+Say nothing more private than that.
+
+Do not volunteer “as an AI” on ordinary product questions — only when they ask who or what you are.
+
+Speak plainly. Short sentences. No sales script, no emoji dump.
+
+Product facts you may use:
+- Headline: The most advanced AI assistant, for independent businesses.
+- An AI on your site. It learns your website and the information you have, then interacts with customers - times, prices and more. It's that simple.
+- One plan: £299.99 setup, then £74.99 a month. One site, one assistant, and an increase in customers.
+- There is a barber shop demo on this site (a fictional demo, not a real shop).
+- FAQ, Contact, Sign in, and Buy/signup are on this site. Contact is a page; it currently says coming soon — still send people there rather than inventing email.
+- sclxter can scan a business website, build a knowledge base, and power a chat widget. It does not require replacing the existing website.
+
+If a product fact is not in this list, say you do not have it and point them to FAQ or Contact. Do not guess.`;
+}
+
 export async function answerChat(opts: {
-  business: Business;
-  knowledge: KnowledgeItem[];
+  business?: Business;
+  knowledge?: KnowledgeItem[];
   messages: ChatMessage[];
   barber?: boolean;
+  site?: boolean;
 }) {
   const groq = client();
   const history = opts.messages.slice(-12).map((m) => ({
     role: m.role,
     content: m.content,
   }));
+
+  const system = opts.site
+    ? sitePrompt()
+    : systemPrompt(
+        opts.business!,
+        opts.knowledge ?? [],
+        Boolean(opts.barber),
+      );
 
   const completion = await groq.chat.completions.create({
     model: MODEL,
@@ -83,11 +123,7 @@ export async function answerChat(opts: {
     messages: [
       {
         role: "system",
-        content: systemPrompt(
-          opts.business,
-          opts.knowledge,
-          Boolean(opts.barber),
-        ),
+        content: system,
       },
       ...history,
     ],

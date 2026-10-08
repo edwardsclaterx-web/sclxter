@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
-import { answerChat, parseLeadFromReply } from "@/lib/groq";
+import { answerChat, parseLeadFromReply, SCLXTER_SITE_ID } from "@/lib/groq";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
 import { DEMO_PUBLIC_ID } from "@/lib/seed";
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 
   const url = new URL(request.url);
   const publicId = url.searchParams.get("publicId");
+  const site = url.searchParams.get("site");
   const body = (await request.json()) as { messages?: ChatMessage[] };
   const messages = (body.messages ?? []).filter(
     (m) => m && (m.role === "user" || m.role === "assistant") && m.content,
@@ -38,6 +39,33 @@ export async function POST(request: Request) {
     return cors(
       NextResponse.json({ error: "Ask a question first." }, { status: 400 }),
     );
+  }
+
+  const isSite =
+    site === SCLXTER_SITE_ID || publicId === SCLXTER_SITE_ID;
+
+  if (isSite) {
+    try {
+      const raw = await answerChat({ messages, site: true });
+      const { text } = parseLeadFromReply(raw);
+      return cors(NextResponse.json({ reply: text }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message === "GROQ_UNCONFIGURED") {
+        return cors(
+          NextResponse.json(
+            { error: "The assistant is not configured on this server." },
+            { status: 503 },
+          ),
+        );
+      }
+      return cors(
+        NextResponse.json(
+          { error: "The assistant had a problem. Try again in a moment." },
+          { status: 502 },
+        ),
+      );
+    }
   }
 
   const data = await readStore();

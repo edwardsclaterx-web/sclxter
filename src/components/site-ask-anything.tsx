@@ -35,7 +35,13 @@ const BOOT = `(function(){
     if(existing){
       var p=document.getElementById(PANEL_ID);
       var b=document.getElementById(BTN_ID);
+      var h=document.getElementById(HINT_ID);
       if(p&&b) applyOpen(p,b,readOpen());
+      if(p) p.style.bottom='132px';
+      if(h){
+        h.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;color:#f4f4f4;font-family:inherit;';
+        h.innerHTML='<span style="font-size:11px;font-weight:600;letter-spacing:0.04em">AI assistant here</span><span aria-hidden="true" style="display:flex;flex-direction:column;align-items:center;line-height:0"><span style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid #f4f4f4"></span><span style="width:1px;height:30px;background:#f4f4f4"></span></span>';
+      }
       sync();
       return;
     }
@@ -45,7 +51,7 @@ const BOOT = `(function(){
     root.style.cssText='position:fixed;right:20px;bottom:20px;z-index:'+LAYER+';pointer-events:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px;';
     var panel=document.createElement('div');
     panel.id=PANEL_ID;
-    panel.style.cssText='position:absolute;right:0;bottom:108px;width:min(380px, calc(100vw - 32px));height:min(520px, calc(100vh - 140px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;z-index:'+LAYER+';';
+    panel.style.cssText='position:absolute;right:0;bottom:132px;width:min(380px, calc(100vw - 32px));height:min(520px, calc(100vh - 164px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;z-index:'+LAYER+';';
     var iframe=document.createElement('iframe');
     iframe.title='Ask anything';
     iframe.name='sclxter-site-ask-frame';
@@ -54,8 +60,8 @@ const BOOT = `(function(){
     panel.appendChild(iframe);
     var hint=document.createElement('div');
     hint.id=HINT_ID;
-    hint.style.cssText='display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;color:#f4f4f4;font-family:inherit;';
-    hint.innerHTML='<span style="font-size:12px;line-height:1;opacity:0.9" aria-hidden="true">▼</span><span style="font-size:11px;font-weight:600;letter-spacing:0.04em">AI assistant here</span>';
+    hint.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;color:#f4f4f4;font-family:inherit;';
+    hint.innerHTML='<span style="font-size:11px;font-weight:600;letter-spacing:0.04em">AI assistant here</span><span aria-hidden="true" style="display:flex;flex-direction:column;align-items:center;line-height:0"><span style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid #f4f4f4"></span><span style="width:1px;height:30px;background:#f4f4f4"></span></span>';
     var btn=document.createElement('button');
     btn.id=BTN_ID;
     btn.type='button';

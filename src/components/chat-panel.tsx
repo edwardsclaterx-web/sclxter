@@ -149,18 +149,22 @@ export function ChatPanel({
         className="mt-4 flex gap-2 border-t border-line pt-4"
         onSubmit={(e) => {
           e.preventDefault();
-          const v = text.trim();
+          const form = e.currentTarget;
+          const fromForm = String(new FormData(form).get("message") || "");
+          const v = (fromForm || text).trim();
           if (!v || busy) return;
           void send(v);
         }}
       >
         <Input
+          name="message"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onInput={(e) => setText((e.target as HTMLInputElement).value)}
           placeholder="Ask anything"
           aria-label="Ask anything"
         />
-        <Button type="submit" disabled={busy || !text.trim()}>
+        <Button type="submit" disabled={busy}>
           Send
         </Button>
       </form>

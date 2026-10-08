@@ -22,7 +22,7 @@
   btn.setAttribute("aria-label", "Ask anything");
   btn.textContent = "Ask anything";
   btn.style.cssText =
-    "position:fixed;right:20px;bottom:20px;z-index:2147483000;height:44px;padding:0 20px;border:0;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;letter-spacing:0.06em;cursor:pointer;";
+    "position:fixed;right:20px;bottom:20px;z-index:2147483000;height:44px;padding:0 22px;border:0;border-radius:9999px;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;letter-spacing:0.06em;cursor:pointer;";
 
   var frameWrap = document.createElement("div");
   frameWrap.style.cssText =

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { ChatPanel } from "@/components/chat-panel";
 import { readStore } from "@/lib/store";
+import { WidgetForm } from "./widget-form";
 
 export default async function WidgetPage({
   params,
@@ -15,13 +15,10 @@ export default async function WidgetPage({
   return (
     <div className="flex h-dvh flex-col bg-bg p-4">
       <div className="min-h-0 flex-1">
-        <ChatPanel
-          endpoint={`/api/chat?publicId=${encodeURIComponent(publicId)}`}
+        <WidgetForm
+          publicId={publicId}
           welcome={business.appearance.welcome}
           assistantName={business.appearance.assistantName}
-          title="Ask anything"
-          clearable
-          compact
         />
       </div>
     </div>

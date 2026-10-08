@@ -365,6 +365,8 @@ export function Dashboard({ email, business, knowledge, leads }: Props) {
             endpoint="/api/chat"
             welcome={biz.appearance.welcome}
             assistantName={biz.appearance.assistantName}
+            title="Ask anything"
+            clearable
             compact
             onLeadSaved={() => {
               void fetch("/api/me")

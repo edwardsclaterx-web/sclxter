@@ -14,12 +14,13 @@ export default async function WidgetPage({
 
   return (
     <div className="flex h-dvh flex-col bg-bg p-4">
-      <p className="mb-3 text-xs tracking-[0.2em]">{business.name || "SCLXTER"}</p>
       <div className="min-h-0 flex-1">
         <ChatPanel
           endpoint={`/api/chat?publicId=${encodeURIComponent(publicId)}`}
           welcome={business.appearance.welcome}
           assistantName={business.appearance.assistantName}
+          title="Ask anything"
+          clearable
           compact
         />
       </div>

@@ -10,6 +10,8 @@ type Props = {
   welcome: string;
   assistantName: string;
   compact?: boolean;
+  title?: string;
+  clearable?: boolean;
   onLeadSaved?: () => void;
 };
 
@@ -18,6 +20,8 @@ export function ChatPanel({
   welcome,
   assistantName,
   compact,
+  title,
+  clearable,
   onLeadSaved,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -37,6 +41,14 @@ export function ChatPanel({
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
+
+  function clearChat() {
+    setMessages([]);
+    setError(null);
+    setLeadOpen(false);
+    setLeadNote(null);
+    setText("");
+  }
 
   async function send(content: string) {
     const next = [...messages, { role: "user" as const, content }];
@@ -94,6 +106,20 @@ export function ChatPanel({
 
   return (
     <div className={`flex flex-col ${compact ? "h-full" : "h-[28rem]"}`}>
+      {(title || clearable) && (
+        <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-3">
+          <p className="text-xs tracking-[0.16em]">{title || "Ask anything"}</p>
+          {clearable && (
+            <button
+              type="button"
+              className="text-xs text-muted hover:text-fg"
+              onClick={clearChat}
+            >
+              Clear chat
+            </button>
+          )}
+        </div>
+      )}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {messages.length === 0 && (
           <p className="text-sm leading-6 text-muted">{welcome}</p>

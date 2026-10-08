@@ -19,9 +19,10 @@ export default function DemoHome() {
           Cuts that sit right.
         </h1>
         <p className="mt-6 max-w-xl text-base leading-7 text-muted">
-          Northgate Barbers is a small independent shop at 14 Northgate. Skin
-          fades, classic cuts, beards. Weekdays are walk-in. Saturday mornings
-          we hold times on the phone.
+          Northgate Barbers is a small independent shop at 14 Northgate, York.
+          Skin fades, classic cuts, beards. Weekdays are walk-in. Saturday
+          mornings we hold times on the phone. Use Ask anything on the tab if
+          you want hours or a price.
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <Link

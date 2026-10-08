@@ -3,6 +3,7 @@ import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
 import { answerChat, parseLeadFromReply } from "@/lib/groq";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
+import { DEMO_PUBLIC_ID } from "@/lib/seed";
 import { readStore, updateStore } from "@/lib/store";
 import type { ChatMessage } from "@/lib/types";
 
@@ -57,7 +58,9 @@ export async function POST(request: Request) {
   const knowledge = data.knowledge.filter((k) => k.businessId === business.id);
 
   try {
-    const raw = await answerChat({ business, knowledge, messages });
+    const barber =
+      business.publicId === DEMO_PUBLIC_ID || business.id === "biz_northgate";
+    const raw = await answerChat({ business, knowledge, messages, barber });
     const { text, lead } = parseLeadFromReply(raw);
     if (lead) {
       const lastUser = [...messages].reverse().find((m) => m.role === "user");

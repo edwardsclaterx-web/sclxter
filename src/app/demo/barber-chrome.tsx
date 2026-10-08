@@ -20,8 +20,8 @@ export function BarberHeader() {
 export function BarberFooter() {
   return (
     <footer className="border-t border-line px-5 py-5 text-xs text-muted md:px-10">
-      Northgate Barbers · 14 Northgate, York · 01904 555 018 · fictional shop
-      for sclxter
+      Northgate Barbers · 14 Northgate, York YO1 7HH · 01904 555 018 · Ask
+      anything on the tab
     </footer>
   );
 }

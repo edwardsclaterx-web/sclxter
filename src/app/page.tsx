@@ -68,7 +68,9 @@ export default async function Home() {
                   />
                 </div>
                 <p className="mt-3 min-h-16 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
-                  efficient processing and advanced conversations
+                  efficient processing,
+                  <br />
+                  advanced conversations
                 </p>
               </div>
             </aside>
@@ -97,7 +99,9 @@ export default async function Home() {
                 />
               </div>
               <p className="mt-3 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
-                efficient processing and advanced conversations
+                efficient processing,
+                <br />
+                advanced conversations
               </p>
             </div>
           </div>

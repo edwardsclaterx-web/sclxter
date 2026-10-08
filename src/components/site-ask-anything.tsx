@@ -17,6 +17,8 @@ const BOOT = `(function(){
     panel.style.visibility=open?'visible':'hidden';
     panel.style.opacity=open?'1':'0';
     panel.style.pointerEvents=open?'auto':'none';
+    panel.style.bottom='60px';
+    panel.style.height='min(520px, calc(100vh - 96px))';
     btn.setAttribute('aria-expanded',open?'true':'false');
     btn.textContent=open?'Minimise':'Ask anything';
     btn.setAttribute('aria-label',open?'Minimise':'Ask anything');
@@ -46,7 +48,6 @@ const BOOT = `(function(){
       var p=document.getElementById(PANEL_ID);
       var b=document.getElementById(BTN_ID);
       var h=document.getElementById(HINT_ID);
-      if(p) p.style.bottom='144px';
       if(h) paintHint(h);
       if(p&&b) applyOpen(p,b,readOpen());
       sync();
@@ -58,7 +59,7 @@ const BOOT = `(function(){
     root.style.cssText=HOST_CSS;
     var panel=document.createElement('div');
     panel.id=PANEL_ID;
-    panel.style.cssText='position:absolute;right:0;bottom:144px;width:min(380px, calc(100vw - 32px));height:min(520px, calc(100vh - 176px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;z-index:'+LAYER+';';
+    panel.style.cssText='position:absolute;right:0;bottom:60px;width:min(380px, calc(100vw - 32px));height:min(520px, calc(100vh - 96px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;z-index:'+LAYER+';';
     var iframe=document.createElement('iframe');
     iframe.title='Ask anything';
     iframe.name='sclxter-site-ask-frame';

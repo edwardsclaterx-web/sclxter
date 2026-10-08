@@ -18,6 +18,8 @@ const BOOT = `(function(){
     panel.style.visibility=open?'visible':'hidden';
     panel.style.opacity=open?'1':'0';
     panel.style.pointerEvents=open?'auto':'none';
+    panel.style.bottom='60px';
+    panel.style.height='min(520px, calc(100vh - 96px))';
     btn.setAttribute('aria-expanded',open?'true':'false');
     btn.textContent=open?'Minimise':'Ask anything';
     btn.setAttribute('aria-label',open?'Minimise':'Ask anything');

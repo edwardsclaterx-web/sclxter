@@ -52,7 +52,7 @@ textarea {
 #northgate-ask-btn {
   appearance: none !important;
   -webkit-appearance: none !important;
-  border-radius: 9999px !important;
+  border-radius: 10px !important;
   overflow: hidden;
 }
 

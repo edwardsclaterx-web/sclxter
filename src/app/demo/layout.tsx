@@ -4,7 +4,7 @@ import { AskAnything } from "./ask-anything";
 export default function DemoLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      {children}
+      <div className="relative z-0">{children}</div>
       <AskAnything />
     </>
   );

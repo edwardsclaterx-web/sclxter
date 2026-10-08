@@ -35,6 +35,20 @@ export default function DemoHome() {
               </Link>
             </div>
           </div>
+          <aside className="pointer-events-none absolute top-1/2 left-0 hidden w-[calc(50%-24rem)] -translate-y-1/2 justify-center px-3 lg:flex">
+            <div className="flex flex-col items-center text-center">
+              <img
+                src="/demo-scissors.png"
+                alt=""
+                width={120}
+                height={120}
+                className="h-16 w-auto lg:h-20"
+              />
+              <p className="mt-3 max-w-[9.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
+                skilled barbers performing their wonders
+              </p>
+            </div>
+          </aside>
           <aside className="pointer-events-none absolute top-1/2 left-[calc(50%+24rem+5.5rem)] hidden -translate-y-1/2 lg:flex">
             <div className="flex flex-col items-center text-center">
               <img
@@ -42,7 +56,7 @@ export default function DemoHome() {
                 alt=""
                 width={80}
                 height={120}
-                className="h-16 w-auto lg:h-20"
+                className="h-24 w-auto lg:h-[7.5rem]"
               />
               <p className="mt-3 max-w-[8.5rem] font-sans text-[11px] font-bold leading-4 text-fg">
                 elevating your appearance

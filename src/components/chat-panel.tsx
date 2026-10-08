@@ -12,6 +12,7 @@ type Props = {
   compact?: boolean;
   title?: string;
   clearable?: boolean;
+  showLead?: boolean;
   onLeadSaved?: () => void;
 };
 
@@ -22,6 +23,7 @@ export function ChatPanel({
   compact,
   title,
   clearable,
+  showLead = true,
   onLeadSaved,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -169,6 +171,7 @@ export function ChatPanel({
         </Button>
       </form>
 
+      {showLead && (
       <button
         type="button"
         className="mt-3 self-start text-xs tracking-wide text-muted hover:text-fg"
@@ -176,8 +179,9 @@ export function ChatPanel({
       >
         Leave a callback
       </button>
+      )}
 
-      {leadOpen && (
+      {showLead && leadOpen && (
         <form onSubmit={submitLead} className="mt-3 space-y-2 border border-line p-3">
           <Input
             placeholder="Name"
@@ -204,7 +208,9 @@ export function ChatPanel({
           <Button type="submit">Send details</Button>
         </form>
       )}
-      {leadNote && <p className="mt-2 text-sm text-muted">{leadNote}</p>}
+      {showLead && leadNote && (
+        <p className="mt-2 text-sm text-muted">{leadNote}</p>
+      )}
     </div>
   );
 }

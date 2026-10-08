@@ -73,8 +73,10 @@ export async function POST(request: Request) {
     ? data.businesses.find((b) => b.publicId === publicId)
     : null;
 
+  const user = !business ? await getSessionUser() : null;
+  const ownerTest = Boolean(user) && !publicId;
+
   if (!business) {
-    const user = await getSessionUser();
     if (!user) {
       return cors(
         NextResponse.json({ error: "Unknown assistant." }, { status: 404 }),
@@ -83,12 +85,22 @@ export async function POST(request: Request) {
     business = await getOrCreateBusiness(user);
   }
 
-  const knowledge = data.knowledge.filter((k) => k.businessId === business.id);
+  const knowledge = data.knowledge.filter(
+    (k) =>
+      k.businessId === business.id && (!ownerTest || k.source === "note"),
+  );
 
   try {
     const barber =
-      business.publicId === DEMO_PUBLIC_ID || business.id === "biz_northgate";
-    const raw = await answerChat({ business, knowledge, messages, barber });
+      !ownerTest &&
+      (business.publicId === DEMO_PUBLIC_ID || business.id === "biz_northgate");
+    const raw = await answerChat({
+      business,
+      knowledge,
+      messages,
+      barber,
+      notesOnly: ownerTest,
+    });
     const { text, lead } = parseLeadFromReply(raw);
     if (lead) {
       const lastUser = [...messages].reverse().find((m) => m.role === "user");

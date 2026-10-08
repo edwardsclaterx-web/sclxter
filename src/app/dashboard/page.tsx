@@ -8,16 +8,10 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
   const business = await getOrCreateBusiness(user);
   const data = await readStore();
-  const knowledge = data.knowledge.filter((k) => k.businessId === business.id);
-  const leads = data.leads
-    .filter((l) => l.businessId === business.id)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const notes = data.knowledge.filter(
+    (k) => k.businessId === business.id && k.source === "note",
+  );
   return (
-    <Dashboard
-      email={user.email}
-      business={business}
-      knowledge={knowledge}
-      leads={leads}
-    />
+    <Dashboard email={user.email} business={business} notes={notes} />
   );
 }

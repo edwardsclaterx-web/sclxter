@@ -1,115 +1,38 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { ChatPanel } from "@/components/chat-panel";
-import { ProductNav, SiteHeader } from "@/components/chrome";
+import { FieldError, SiteHeader } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Business, KnowledgeItem, Lead } from "@/lib/types";
+import type { Business, KnowledgeItem } from "@/lib/types";
 
 type Props = {
   email: string;
   business: Business;
-  knowledge: KnowledgeItem[];
-  leads: Lead[];
+  notes: KnowledgeItem[];
 };
 
-export function Dashboard({ email, business, knowledge, leads }: Props) {
+export function Dashboard({ email, business, notes }: Props) {
   const router = useRouter();
-  const [biz, setBiz] = useState(business);
-  const [items, setItems] = useState(knowledge);
-  const [leadList, setLeadList] = useState(leads);
+  const [name, setName] = useState(business.name);
+  const [websiteUrl, setWebsiteUrl] = useState(business.websiteUrl);
   const [saveNote, setSaveNote] = useState<string | null>(null);
-  const [scanNote, setScanNote] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const [items, setItems] = useState(notes);
   const [noteTitle, setNoteTitle] = useState("");
   const [noteBody, setNoteBody] = useState("");
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("");
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
-  const snippet = `<script src="${origin || "https://your-sclxter-host"}/embed.js" data-id="${biz.publicId}" async></script>`;
-
-  async function saveBusiness(e: FormEvent) {
-    e.preventDefault();
-    setSaveNote(null);
-    const res = await fetch("/api/business", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: biz.name,
-        websiteUrl: biz.websiteUrl,
-        appearance: biz.appearance,
-      }),
-    });
-    if (!res.ok) {
-      setSaveNote("Could not save.");
-      return;
-    }
-    setSaveNote("Saved.");
-    router.refresh();
-  }
-
-  async function scan() {
-    setScanning(true);
-    setScanNote(null);
-    try {
-      const res = await fetch("/api/scan", { method: "POST" });
-      const data = (await res.json()) as {
-        items?: KnowledgeItem[];
-        error?: string;
-        pages?: number;
-      };
-      if (!res.ok) {
-        setScanNote(data.error || "Scan failed.");
-        return;
-      }
-      setItems((prev) => [
-        ...prev.filter((k) => k.source !== "scan"),
-        ...(data.items ?? []),
-      ]);
-      setScanNote(`Kept ${data.pages} page${data.pages === 1 ? "" : "s"}. Review below.`);
-      router.refresh();
-    } finally {
-      setScanning(false);
-    }
-  }
-
-  async function addNote(e: FormEvent) {
-    e.preventDefault();
-    const res = await fetch("/api/knowledge", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: noteTitle, body: noteBody }),
-    });
-    const data = (await res.json()) as { item?: KnowledgeItem; error?: string };
-    if (!res.ok || !data.item) return;
-    setItems((prev) => [...prev, data.item!]);
-    setNoteTitle("");
-    setNoteBody("");
-  }
-
-  async function saveItem(item: KnowledgeItem) {
-    const res = await fetch(`/api/knowledge/${item.id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: item.title, body: item.body }),
-    });
-    if (!res.ok) return;
-    setEditing(null);
-  }
-
-  async function removeItem(id: string) {
-    const res = await fetch(`/api/knowledge/${id}`, { method: "DELETE" });
-    if (!res.ok) return;
-    setItems((prev) => prev.filter((k) => k.id !== id));
-  }
+  const [editTitle, setEditTitle] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -117,265 +40,251 @@ export function Dashboard({ email, business, knowledge, leads }: Props) {
     router.refresh();
   }
 
-  function copySnippet() {
-    void navigator.clipboard.writeText(snippet);
-    setSaveNote("Snippet copied.");
+  async function saveBusiness(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setSaveNote(null);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/business", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name, websiteUrl }),
+      });
+      if (!res.ok) {
+        setSaveError("Could not save the business.");
+        return;
+      }
+      setSaveNote("Saved.");
+      router.refresh();
+    } catch {
+      setSaveError("Could not reach the server.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addNote(e: FormEvent) {
+    e.preventDefault();
+    setAdding(true);
+    setNoteError(null);
+    try {
+      const res = await fetch("/api/knowledge", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: noteTitle, body: noteBody }),
+      });
+      const data = (await res.json()) as { item?: KnowledgeItem; error?: string };
+      if (!res.ok || !data.item) {
+        setNoteError(data.error || "Could not add that note.");
+        return;
+      }
+      setItems((prev) => [...prev, data.item!]);
+      setNoteTitle("");
+      setNoteBody("");
+      router.refresh();
+    } catch {
+      setNoteError("Could not reach the server.");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  function startEdit(item: KnowledgeItem) {
+    setEditing(item.id);
+    setEditTitle(item.title);
+    setEditBody(item.body);
+    setEditError(null);
+  }
+
+  async function saveEdit(id: string) {
+    setEditError(null);
+    try {
+      const res = await fetch(`/api/knowledge/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: editTitle, body: editBody }),
+      });
+      const data = (await res.json()) as { item?: KnowledgeItem; error?: string };
+      if (!res.ok || !data.item) {
+        setEditError(data.error || "Could not save that note.");
+        return;
+      }
+      setItems((prev) => prev.map((k) => (k.id === id ? data.item! : k)));
+      setEditing(null);
+      router.refresh();
+    } catch {
+      setEditError("Could not reach the server.");
+    }
+  }
+
+  async function removeItem(id: string) {
+    setEditError(null);
+    try {
+      const res = await fetch(`/api/knowledge/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setEditError("Could not delete that note.");
+        return;
+      }
+      setItems((prev) => prev.filter((k) => k.id !== id));
+      if (editing === id) setEditing(null);
+      router.refresh();
+    } catch {
+      setEditError("Could not reach the server.");
+    }
   }
 
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader
         right={
-          <ProductNav
-            signedIn
-            extra={
-              <>
-                <span className="hidden sm:inline text-muted">{email}</span>
-                <button type="button" onClick={() => void logout()} className="text-fg">
-                  Sign out
-                </button>
-              </>
-            }
-          />
+          <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
+            <span className="hidden sm:inline">{email}</span>
+            <button type="button" onClick={() => void logout()} className="text-fg">
+              Sign out
+            </button>
+          </nav>
         }
       />
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-5 py-10 lg:grid-cols-[1fr_22rem] md:px-8">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_22rem] md:px-8">
         <div className="space-y-12">
           <section>
-            <h1 className="text-2xl font-medium tracking-tight">Your shop</h1>
+            <h1 className="text-2xl font-medium tracking-tight">Your business</h1>
             <p className="mt-2 text-sm text-muted">
-              Name, site, and how the widget looks. Visitors only see answers
-              from notes and scanned pages.
+              Name and website. The assistant uses the notes you add below.
             </p>
-            <form onSubmit={saveBusiness} className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+            <form onSubmit={saveBusiness} className="mt-6 space-y-4">
+              <div>
                 <Label htmlFor="name">Business name</Label>
                 <Input
                   id="name"
-                  value={biz.name}
-                  onChange={(e) => setBiz({ ...biz, name: e.target.value })}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Northgate Barbers"
+                  autoComplete="organization"
                 />
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <Label htmlFor="url">Website URL</Label>
                 <Input
                   id="url"
-                  value={biz.websiteUrl}
-                  onChange={(e) => setBiz({ ...biz, websiteUrl: e.target.value })}
-                  placeholder="/demo or https://yourshop.example"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  placeholder="https://yourshop.example"
+                  autoComplete="url"
                 />
               </div>
-              <div>
-                <Label htmlFor="assistant">Assistant name</Label>
-                <Input
-                  id="assistant"
-                  value={biz.appearance.assistantName}
-                  onChange={(e) =>
-                    setBiz({
-                      ...biz,
-                      appearance: {
-                        ...biz.appearance,
-                        assistantName: e.target.value,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="colour">Accent colour</Label>
-                <Input
-                  id="colour"
-                  value={biz.appearance.colour}
-                  onChange={(e) =>
-                    setBiz({
-                      ...biz,
-                      appearance: { ...biz.appearance, colour: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Label htmlFor="welcome">Welcome line</Label>
-                <Input
-                  id="welcome"
-                  value={biz.appearance.welcome}
-                  onChange={(e) =>
-                    setBiz({
-                      ...biz,
-                      appearance: { ...biz.appearance, welcome: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="flex items-center gap-4 sm:col-span-2">
-                <Button type="submit">Save</Button>
+              <div className="flex flex-wrap items-center gap-4">
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving…" : "Save"}
+                </Button>
                 {saveNote && <span className="text-sm text-muted">{saveNote}</span>}
               </div>
+              <FieldError>{saveError}</FieldError>
             </form>
           </section>
 
           <section>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-medium tracking-tight">Website scan</h2>
-                <p className="mt-2 max-w-xl text-sm text-muted">
-                  Fetches public HTML on that address only, a few pages at a
-                  time. Review, keep, or delete what it finds.
-                </p>
-              </div>
-              <Button type="button" variant="ghost" onClick={() => void scan()} disabled={scanning}>
-                {scanning ? "Scanning…" : "Scan site"}
-              </Button>
-            </div>
-            {scanNote && <p className="mt-3 text-sm text-muted">{scanNote}</p>}
-          </section>
-
-          <section>
-            <h2 className="text-xl font-medium tracking-tight">Knowledge</h2>
+            <h2 className="text-xl font-medium tracking-tight">Notes</h2>
             <p className="mt-2 text-sm text-muted">
-              Typed notes work before you scan. Hours, prices, “always mention cash”.
+              Hours, prices, services, and extra facts the assistant should
+              learn. These stay on the server.
             </p>
             <form onSubmit={addNote} className="mt-5 space-y-3">
               <Input
-                placeholder="Title"
+                placeholder="Title — e.g. Saturday hours"
                 value={noteTitle}
                 onChange={(e) => setNoteTitle(e.target.value)}
                 required
               />
               <Textarea
-                placeholder="The fact"
+                placeholder="The fact — e.g. Open 9am–4pm Saturday. Walk-ins until 3:30."
                 value={noteBody}
                 onChange={(e) => setNoteBody(e.target.value)}
                 required
               />
-              <Button type="submit" variant="ghost">
-                Add note
+              <Button type="submit" variant="ghost" disabled={adding}>
+                {adding ? "Adding…" : "Add note"}
               </Button>
+              <FieldError>{noteError}</FieldError>
             </form>
             <ul className="mt-6 space-y-4">
               {items.length === 0 && (
-                <li className="text-sm text-muted">No notes yet.</li>
+                <li className="border border-dashed border-line px-4 py-8 text-sm text-muted">
+                  No notes yet. Add hours, prices, services, or anything the
+                  assistant should know.
+                </li>
               )}
               {items.map((item) => (
                 <li key={item.id} className="border border-line p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted">
-                      {item.source === "scan" ? "Scan" : "Note"}
-                    </p>
-                    <div className="flex gap-3 text-xs text-muted">
-                      <button type="button" onClick={() => setEditing(item.id)}>
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => void removeItem(item.id)}>
-                        Delete
-                      </button>
-                    </div>
+                  <div className="flex items-center justify-end gap-3 text-xs text-muted">
+                    <button type="button" onClick={() => startEdit(item)}>
+                      Edit
+                    </button>
+                    <button type="button" onClick={() => void removeItem(item.id)}>
+                      Delete
+                    </button>
                   </div>
                   {editing === item.id ? (
-                    <div className="mt-3 space-y-2">
+                    <div className="mt-2 space-y-2">
                       <Input
-                        value={item.title}
-                        onChange={(e) =>
-                          setItems((prev) =>
-                            prev.map((k) =>
-                              k.id === item.id ? { ...k, title: e.target.value } : k,
-                            ),
-                          )
-                        }
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        aria-label="Note title"
                       />
                       <Textarea
-                        value={item.body}
-                        onChange={(e) =>
-                          setItems((prev) =>
-                            prev.map((k) =>
-                              k.id === item.id ? { ...k, body: e.target.value } : k,
-                            ),
-                          )
-                        }
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        aria-label="Note body"
                       />
-                      <Button type="button" onClick={() => void saveItem(item)}>
-                        Save note
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" onClick={() => void saveEdit(item.id)}>
+                          Save note
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setEditing(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                      <FieldError>{editError}</FieldError>
                     </div>
                   ) : (
                     <>
-                      <h3 className="mt-2 text-sm">{item.title}</h3>
+                      <h3 className="text-sm">{item.title}</h3>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">
                         {item.body}
                       </p>
-                      {item.url && (
-                        <p className="mt-2 truncate text-xs text-muted">{item.url}</p>
-                      )}
                     </>
                   )}
                 </li>
               ))}
             </ul>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-medium tracking-tight">Widget snippet</h2>
-            <p className="mt-2 text-sm text-muted">
-              Paste before the closing body tag. Status:{" "}
-              {biz.widgetConnectedAt ? "connected" : "waiting for first load"}
-            </p>
-            <pre className="mt-4 overflow-x-auto border border-line bg-surface p-4 text-xs leading-6">
-              {snippet}
-            </pre>
-            <Button type="button" variant="ghost" className="mt-3" onClick={copySnippet}>
-              Copy snippet
-            </Button>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-medium tracking-tight">Leads</h2>
-            <ul className="mt-4 space-y-3">
-              {leadList.length === 0 && (
-                <li className="text-sm text-muted">No callbacks yet.</li>
-              )}
-              {leadList.map((lead) => (
-                <li key={lead.id} className="border border-line p-4 text-sm">
-                  <p>
-                    {lead.name}
-                    {lead.phone ? ` · ${lead.phone}` : ""}
-                    {lead.email ? ` · ${lead.email}` : ""}
-                  </p>
-                  {lead.message && (
-                    <p className="mt-2 text-muted">{lead.message}</p>
-                  )}
-                  <p className="mt-2 text-xs text-muted">
-                    {new Date(lead.createdAt).toLocaleString("en-GB")}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            {editing === null && <FieldError>{editError}</FieldError>}
           </section>
         </div>
 
-        <aside className="border border-line p-5 lg:sticky lg:top-8 lg:h-[calc(100vh-6rem)]">
+        <aside className="flex min-h-[28rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:h-[calc(100vh-6rem)]">
           <p className="text-xs uppercase tracking-[0.18em] text-muted">
             Test chat
           </p>
           <p className="mt-2 mb-4 text-sm text-muted">
-            Same path visitors use. Ask anything.
+            Answers from your notes only.
           </p>
-          <ChatPanel
-            endpoint="/api/chat"
-            welcome={biz.appearance.welcome}
-            assistantName={biz.appearance.assistantName}
-            title="Ask anything"
-            clearable
-            compact
-            onLeadSaved={() => {
-              void fetch("/api/me")
-                .then((r) => r.json())
-                .then((d: { leads?: Lead[] }) => {
-                  if (d.leads) setLeadList(d.leads);
-                });
-            }}
-          />
+          <div className="min-h-0 flex-1">
+            <ChatPanel
+              endpoint="/api/chat"
+              welcome="Ask about hours, prices, or a service you wrote in a note."
+              assistantName="Assistant"
+              title="Ask anything"
+              clearable
+              compact
+              showLead={false}
+            />
+          </div>
         </aside>
       </main>
     </div>

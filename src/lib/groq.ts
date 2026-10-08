@@ -11,9 +11,9 @@ function client() {
   return new Groq({ apiKey: key });
 }
 
-function knowledgeBlock(items: KnowledgeItem[]) {
+function knowledgeBlock(items: KnowledgeItem[], notesOnly: boolean) {
   if (!items.length) {
-    return "(No notes or scanned pages yet.)";
+    return notesOnly ? "(No notes yet.)" : "(No notes or scanned pages yet.)";
   }
   return items
     .map((item) => {
@@ -27,6 +27,7 @@ function systemPrompt(
   business: Business,
   items: KnowledgeItem[],
   barber: boolean,
+  notesOnly: boolean,
 ) {
   const barberScope = barber
     ? `
@@ -50,7 +51,7 @@ If asked whether you are a real person, staff, an employee, or “from” the bu
 
 Speak plainly and helpfully. Short sentences. No sales script, no emoji dump. Do not volunteer “as an AI” on ordinary questions — only when they ask who or what you are.
 
-Use only the knowledge below (notes the owner typed, and text from their public pages). Do not invent hours, prices, services, or policies.
+Use only the knowledge below (${notesOnly ? "notes the owner typed" : "notes the owner typed, and text from their public pages"}). Do not invent hours, prices, services, or policies.
 ${barberScope}
 When listing services or prices, give one to a few that match what they asked — not the whole menu unless they ask for everything.
 
@@ -61,7 +62,7 @@ If a shop fact is not in the knowledge, say you do not have it — not “I’m 
 If they want a callback or to leave details, ask for a name and phone number (email optional) and a short note. When they give those, reply that you will pass it to the shop. Prefix that confirmation line with [[LEAD]] so the site can save it.
 
 Knowledge:
-${knowledgeBlock(items)}`;
+${knowledgeBlock(items, notesOnly)}`;
 }
 
 export const SCLXTER_SITE_ID = "sclxter";
@@ -122,6 +123,7 @@ export async function answerChat(opts: {
   messages: ChatMessage[];
   barber?: boolean;
   site?: boolean;
+  notesOnly?: boolean;
 }) {
   if (opts.site) {
     const lastUser = [...opts.messages].reverse().find((m) => m.role === "user");
@@ -142,6 +144,7 @@ export async function answerChat(opts: {
         opts.business!,
         opts.knowledge ?? [],
         Boolean(opts.barber),
+        Boolean(opts.notesOnly),
       );
 
   const completion = await groq.chat.completions.create({

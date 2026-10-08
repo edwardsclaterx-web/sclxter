@@ -54,7 +54,7 @@ export default async function Home() {
               </p>
             </div>
           </aside>
-          <aside className="pointer-events-none absolute top-1/2 left-[calc(50%+24rem)] hidden w-[calc(50%-24rem)] -translate-y-1/2 justify-end pr-8 xl:pr-16 2xl:pr-24 lg:flex">
+          <aside className="pointer-events-none absolute top-1/2 left-[calc(50%+24rem+5.5rem)] hidden -translate-y-1/2 lg:flex">
             <div className="flex flex-col items-center text-center">
               <img
                 src="/hero-speed.png"

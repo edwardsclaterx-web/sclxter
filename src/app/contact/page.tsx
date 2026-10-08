@@ -3,6 +3,8 @@ import { getSessionUser } from "@/lib/auth";
 
 export const metadata = { title: "Contact — sclxter" };
 
+const EMAIL = "sclxter@outlook.com";
+
 export default async function ContactPage() {
   const user = await getSessionUser();
   return (
@@ -10,7 +12,12 @@ export default async function ContactPage() {
       <SiteHeader signedIn={Boolean(user)} showPricing={false} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-20 md:px-8">
         <h1 className="text-3xl font-medium tracking-tight">Contact</h1>
-        <p className="mt-4 text-sm leading-6 text-muted">Coming soon.</p>
+        <a
+          href={`mailto:${EMAIL}`}
+          className="mt-10 inline-block font-sans text-3xl font-medium tracking-tight text-fg md:text-4xl"
+        >
+          {EMAIL}
+        </a>
       </main>
       <SiteFooter showPricing={false} />
     </div>

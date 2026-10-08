@@ -23,7 +23,7 @@ App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 - Sign up `/signup`
 - Dashboard `/dashboard`
 - Demo `/demo` — fictional Northgate Barbers (not the homepage)
-- FAQ `/faq` and Contact `/contact` — coming soon
+- FAQ `/faq` and Contact `/contact` (`sclxter@outlook.com`)
 
 In this environment the server also reads `GROQ_API_KEY` from the private secrets file if `.env.local` is empty.
 

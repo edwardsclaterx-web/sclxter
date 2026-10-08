@@ -1,40 +1,3 @@
-"use client";
-
-import { useEffect, useLayoutEffect, useState, type FormEvent } from "react";
-import type { ChatMessage } from "@/lib/types";
-
-function messagesKey(id: string) {
-  return `sclxter:ask:${id}:messages`;
-}
-function draftKey(id: string) {
-  return `sclxter:ask:${id}:draft`;
-}
-
-function loadMessages(id: string): ChatMessage[] {
-  try {
-    const raw = sessionStorage.getItem(messagesKey(id));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as ChatMessage[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (m) =>
-        m &&
-        (m.role === "user" || m.role === "assistant") &&
-        typeof m.content === "string",
-    );
-  } catch {
-    return [];
-  }
-}
-
-function loadDraft(id: string) {
-  try {
-    return sessionStorage.getItem(draftKey(id)) || "";
-  } catch {
-    return "";
-  }
-}
-
 export function WidgetForm({
   publicId,
   welcome,
@@ -45,100 +8,100 @@ export function WidgetForm({
   assistantName: string;
 }) {
   const endpoint = `/api/chat?publicId=${encodeURIComponent(publicId)}`;
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-
-  useLayoutEffect(() => {
-    setMessages(loadMessages(publicId));
-    setText(loadDraft(publicId));
-    setHydrated(true);
-  }, [publicId]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      sessionStorage.setItem(messagesKey(publicId), JSON.stringify(messages));
-    } catch {
-      /* ignore quota */
-    }
-  }, [hydrated, messages, publicId]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      sessionStorage.setItem(draftKey(publicId), text);
-    } catch {
-      /* ignore quota */
-    }
-  }, [hydrated, text, publicId]);
-
-  async function send(content: string) {
-    const next: ChatMessage[] = [...messages, { role: "user", content }];
-    setMessages(next);
-    setText("");
-    setBusy(true);
-    setError(null);
-    try {
-      sessionStorage.setItem(draftKey(publicId), "");
-      sessionStorage.setItem(messagesKey(publicId), JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next }),
-      });
-      const data = (await res.json()) as { reply?: string; error?: string };
-      const reply = data.reply || data.error || "The assistant is unavailable.";
-      const withReply: ChatMessage[] = [
-        ...next,
-        { role: "assistant", content: reply },
-      ];
-      setMessages(withReply);
-      try {
-        sessionStorage.setItem(
-          messagesKey(publicId),
-          JSON.stringify(withReply),
-        );
-      } catch {
-        /* ignore */
-      }
-      if (!res.ok) setError(data.error || "The assistant is unavailable.");
-    } catch {
-      setError("Could not reach the assistant.");
-    } finally {
-      setBusy(false);
-    }
+  const boot = `(function(){
+  var form=document.getElementById('wa-form');
+  var input=document.getElementById('wa-input');
+  var send=document.getElementById('wa-send');
+  var log=document.getElementById('wa-log');
+  var welcome=document.getElementById('wa-welcome');
+  var clear=document.getElementById('wa-clear');
+  if(!form||!input||!send||!log) return;
+  var publicId=${JSON.stringify(publicId)};
+  var msgKey='sclxter:ask:'+publicId+':messages';
+  var draftKey='sclxter:ask:'+publicId+':draft';
+  if(form.dataset.bound==='1') return;
+  form.dataset.bound='1';
+  var name=${JSON.stringify(assistantName)};
+  var endpoint=${JSON.stringify(endpoint)};
+  var history=[];
+  var busy=false;
+  function load(){
+    try{
+      var raw=sessionStorage.getItem(msgKey);
+      if(!raw) return [];
+      var parsed=JSON.parse(raw);
+      return Array.isArray(parsed)?parsed.filter(function(m){
+        return m&&(m.role==='user'||m.role==='assistant')&&typeof m.content==='string';
+      }):[];
+    }catch(e){ return []; }
   }
-
-  function clearChat() {
-    setMessages([]);
-    setText("");
-    setError(null);
-    setBusy(false);
-    try {
-      sessionStorage.removeItem(messagesKey(publicId));
-      sessionStorage.removeItem(draftKey(publicId));
-    } catch {
-      /* ignore */
-    }
+  function save(){
+    try{ sessionStorage.setItem(msgKey, JSON.stringify(history)); }catch(e){}
   }
-
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  function bubble(role,text){
+    var wrap=document.createElement('div');
+    if(role==='user') wrap.style.textAlign='right';
+    var who=document.createElement('p');
+    who.className='mb-1 text-[10px] uppercase tracking-[0.16em] text-muted';
+    who.textContent=role==='user'?'You':name;
+    var body=document.createElement('p');
+    body.className=role==='user'
+      ? 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 bg-fg text-bg'
+      : 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 border border-line bg-surface';
+    body.textContent=text;
+    wrap.appendChild(who); wrap.appendChild(body);
+    if(welcome) welcome.style.display='none';
+    log.appendChild(wrap);
+    log.scrollTop=log.scrollHeight;
+  }
+  history=load();
+  history.forEach(function(m){ bubble(m.role,m.content); });
+  try{ input.value=sessionStorage.getItem(draftKey)||''; }catch(e){}
+  function go(){
+    var v=(input.value||'').trim();
+    if(!v||busy) return;
+    input.value='';
+    try{ sessionStorage.setItem(draftKey,''); }catch(e){}
+    history.push({role:'user', content:v});
+    save();
+    bubble('user', v);
+    busy=true; send.textContent='…';
+    send.removeAttribute('disabled');
+    fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:history})})
+      .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+      .then(function(x){
+        var reply=(x.d&&x.d.reply)||(x.d&&x.d.error)||'The assistant is unavailable.';
+        history.push({role:'assistant', content:reply});
+        save();
+        bubble('assistant', reply);
+      })
+      .catch(function(){ bubble('assistant','Could not reach the assistant.'); })
+      .then(function(){ busy=false; send.textContent='Send'; send.removeAttribute('disabled'); });
+  }
+  form.addEventListener('submit', function(e){ e.preventDefault(); e.stopPropagation(); go(); });
+  send.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); go(); });
+  input.addEventListener('input', function(){
+    send.removeAttribute('disabled');
+    try{ sessionStorage.setItem(draftKey, input.value); }catch(e){}
+  });
+  function stop(e){ e.stopPropagation(); }
+  form.addEventListener('mousedown', stop);
+  form.addEventListener('pointerdown', stop);
+  form.addEventListener('click', stop);
+  input.addEventListener('mousedown', stop);
+  input.addEventListener('pointerdown', stop);
+  clear&&clear.addEventListener('click', function(e){
     e.preventDefault();
     e.stopPropagation();
-    const fromForm = String(
-      new FormData(e.currentTarget).get("message") || "",
-    );
-    const v = (fromForm || text).trim();
-    if (!v || busy) return;
-    void send(v);
-  }
+    history=[];
+    save();
+    try{ sessionStorage.removeItem(draftKey); }catch(e2){}
+    log.querySelectorAll('div').forEach(function(n){n.remove();});
+    if(welcome) welcome.style.display='';
+    input.value='';
+    busy=false; send.removeAttribute('disabled'); send.textContent='Send';
+  });
+})();`;
 
   return (
     <div className="flex h-full flex-col">
@@ -148,47 +111,19 @@ export function WidgetForm({
           id="wa-clear"
           type="button"
           className="text-xs text-muted hover:text-fg"
-          onClick={clearChat}
         >
           Clear chat
         </button>
       </div>
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-        {messages.length === 0 && (
-          <p className="text-sm leading-6 text-muted">{welcome}</p>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={m.role === "user" ? "text-right" : ""}>
-            <p className="mb-1 text-[10px] uppercase tracking-[0.16em] text-muted">
-              {m.role === "user" ? "You" : assistantName}
-            </p>
-            <p
-              className={`inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 ${
-                m.role === "user"
-                  ? "bg-fg text-bg"
-                  : "border border-line bg-surface"
-              }`}
-            >
-              {m.content}
-            </p>
-          </div>
-        ))}
-        {busy && <p className="text-sm text-muted">Thinking…</p>}
-        {error && <p className="text-sm text-muted">{error}</p>}
+      <div id="wa-log" className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <p id="wa-welcome" className="text-sm leading-6 text-muted">
+          {welcome}
+        </p>
       </div>
-      <form
-        className="mt-4 flex gap-2 border-t border-line pt-4"
-        onSubmit={onSubmit}
-        onMouseDown={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <form id="wa-form" className="mt-4 flex gap-2 border-t border-line pt-4">
         <input
           id="wa-input"
           name="message"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onInput={(e) => setText((e.target as HTMLInputElement).value)}
           className="h-10 w-full border border-line bg-surface px-3 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
           placeholder="Ask anything"
           aria-label="Ask anything"
@@ -216,9 +151,10 @@ export function WidgetForm({
             pointerEvents: "auto",
           }}
         >
-          {busy ? "…" : "Send"}
+          Send
         </button>
       </form>
+      <script dangerouslySetInnerHTML={{ __html: boot }} />
     </div>
   );
 }

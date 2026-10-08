@@ -164,8 +164,8 @@ export function ChatPanel({
           placeholder="Ask anything"
           aria-label="Ask anything"
         />
-        <Button type="submit" disabled={busy}>
-          Send
+        <Button type="submit" aria-busy={busy}>
+          {busy ? "…" : "Send"}
         </Button>
       </form>
 

@@ -48,3 +48,18 @@ button {
 textarea {
   resize: vertical;
 }
+
+#northgate-ask-btn {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border-radius: 9999px !important;
+  overflow: hidden;
+}
+
+#wa-send {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}

@@ -37,7 +37,25 @@ export function WidgetForm({
         <button
           id="wa-send"
           type="submit"
-          className="inline-flex h-10 items-center justify-center bg-accent px-4 text-sm tracking-wide text-accent-fg"
+          aria-disabled="false"
+          style={{
+            display: "inline-flex",
+            height: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 16px",
+            border: 0,
+            borderRadius: 9999,
+            background: "#ffffff",
+            color: "#050505",
+            fontSize: 14,
+            letterSpacing: "0.04em",
+            cursor: "pointer",
+            appearance: "none",
+            WebkitAppearance: "none",
+            opacity: 1,
+            pointerEvents: "auto",
+          }}
         >
           Send
         </button>
@@ -73,14 +91,18 @@ export function WidgetForm({
     log.appendChild(wrap);
     log.scrollTop=log.scrollHeight;
   }
-  form.addEventListener('submit', function(e){
-    e.preventDefault();
+  function go(){
     var v=(input.value||'').trim();
     if(!v||busy) return;
     input.value='';
     history.push({role:'user', content:v});
     bubble('user', v);
-    busy=true; send.textContent='…';
+    busy=true;
+    send.textContent='…';
+    send.removeAttribute('disabled');
+    send.style.opacity='1';
+    send.style.pointerEvents='auto';
+    send.style.cursor='pointer';
     fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:history})})
       .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
       .then(function(x){
@@ -89,14 +111,36 @@ export function WidgetForm({
         bubble('assistant', reply);
       })
       .catch(function(){ bubble('assistant','Could not reach the assistant.'); })
-      .then(function(){ busy=false; send.textContent='Send'; send.disabled=false; });
+      .then(function(){
+        busy=false;
+        send.textContent='Send';
+        send.removeAttribute('disabled');
+        send.style.opacity='1';
+      });
+  }
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    go();
   });
+  send.addEventListener('click', function(e){
+    e.preventDefault();
+    go();
+  });
+  input.addEventListener('input', function(){
+    send.removeAttribute('disabled');
+    send.style.opacity='1';
+    send.style.cursor='pointer';
+  });
+  send.removeAttribute('disabled');
   clear&&clear.addEventListener('click', function(){
     history=[];
     log.querySelectorAll('div').forEach(function(n){n.remove();});
     if(welcome) welcome.style.display='';
     input.value='';
-    busy=false; send.disabled=false; send.textContent='Send';
+    busy=false;
+    send.removeAttribute('disabled');
+    send.textContent='Send';
+    send.style.opacity='1';
   });
 })();`,
         }}

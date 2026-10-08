@@ -22,11 +22,11 @@
   btn.setAttribute("aria-label", "Ask anything");
   btn.textContent = "Ask anything";
   btn.style.cssText =
-    "position:fixed;right:20px;bottom:20px;z-index:2147483000;height:44px;padding:0 22px;border:0;border-radius:9999px;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;letter-spacing:0.06em;cursor:pointer;";
+    "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:0;border-radius:9999px;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;";
 
   var frameWrap = document.createElement("div");
   frameWrap.style.cssText =
-    "display:none;position:fixed;right:20px;bottom:76px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));border:1px solid #222;background:#050505;";
+    "display:none;position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;";
   var iframe = document.createElement("iframe");
   iframe.title = "Ask anything";
   iframe.src = origin + "/widget/" + encodeURIComponent(id);

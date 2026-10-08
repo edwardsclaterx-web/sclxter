@@ -64,7 +64,7 @@ export default async function Home() {
                     alt=""
                     width={120}
                     height={80}
-                    className="h-[5.2rem] w-auto lg:h-[6.175rem]"
+                    className="h-[4.16rem] w-auto lg:h-[4.94rem]"
                   />
                 </div>
                 <p className="mt-3 min-h-16 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
@@ -93,7 +93,7 @@ export default async function Home() {
                   alt=""
                   width={120}
                   height={80}
-                  className="h-[5.2rem] w-auto"
+                  className="h-[4.16rem] w-auto"
                 />
               </div>
               <p className="mt-3 max-w-[9.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">

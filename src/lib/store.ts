@@ -42,6 +42,8 @@ function patchBusiness(b: Partial<Business> & { id: string }): Business {
     tone: b.tone ?? "plain",
     notepad: b.notepad ?? "",
     scannedAt: b.scannedAt ?? null,
+    industryBriefing: b.industryBriefing ?? "",
+    industryBriefingFor: b.industryBriefingFor ?? "",
     publicId: b.publicId ?? "",
     appearance: b.appearance ?? {
       assistantName: "Assistant",

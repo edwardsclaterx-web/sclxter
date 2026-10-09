@@ -46,6 +46,8 @@ export function newBusinessFields(
     tone: "plain",
     notepad: "",
     scannedAt: null,
+    industryBriefing: "",
+    industryBriefingFor: "",
     publicId: publicId(),
     appearance: {
       assistantName: "Assistant",

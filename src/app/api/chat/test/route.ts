@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { resolveBusiness } from "@/lib/access";
 import { answerChat, parseLeadFromReply } from "@/lib/groq";
 import { groqKeyPresent } from "@/lib/secrets";
+import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import type { ChatMessage } from "@/lib/types";
 
@@ -39,8 +40,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const ready = await ensureIndustryBriefing(biz);
     const raw = await answerChat({
-      business: biz,
+      business: ready,
       knowledge: [],
       messages,
       notesOnly: true,

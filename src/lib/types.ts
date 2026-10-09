@@ -26,6 +26,8 @@ export type Business = {
   tone: string;
   notepad: string;
   scannedAt: string | null;
+  industryBriefing: string;
+  industryBriefingFor: string;
   publicId: string;
   appearance: Appearance;
   widgetConnectedAt: string | null;

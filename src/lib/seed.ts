@@ -20,6 +20,8 @@ export function seedIfEmpty(data: StoreData) {
     tone: "warm",
     notepad: "",
     scannedAt: null,
+    industryBriefing: "",
+    industryBriefingFor: "",
     publicId: DEMO_PUBLIC_ID,
     appearance: {
       assistantName: "Northgate",

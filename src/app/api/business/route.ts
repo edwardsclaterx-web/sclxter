@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
+import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { readStore, updateStore } from "@/lib/store";
 import { TONES } from "@/lib/tones";
 
@@ -42,7 +43,7 @@ export async function PATCH(request: Request) {
   if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
   const tones = new Set(TONES.map((t) => t.id));
-  const updated = await updateStore((data) => {
+  let updated = await updateStore((data) => {
     const row = data.businesses.find((b) => b.id === biz.id);
     if (!row) return biz;
     if (typeof body.name === "string") row.name = body.name.trim();
@@ -57,6 +58,7 @@ export async function PATCH(request: Request) {
     if (typeof body.notepad === "string") row.notepad = body.notepad;
     return row;
   });
+  updated = await ensureIndustryBriefing(updated);
 
   const data = await readStore();
   const owner = data.users.find((u) => u.id === updated.ownerId);

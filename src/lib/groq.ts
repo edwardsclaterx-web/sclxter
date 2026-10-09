@@ -34,6 +34,23 @@ function factsBlock(
   return knowledgeBlock(items, notesOnly);
 }
 
+function contactLine(business: Business) {
+  const bits = [
+    business.contactPhone,
+    business.contactEmail,
+    business.contactOther,
+  ]
+    .map((v) => (v || "").trim())
+    .filter(Boolean);
+  return bits.length ? bits.join(" · ") : "the shop";
+}
+
+function briefingBlock(business: Business) {
+  const text = (business.industryBriefing || "").trim();
+  if (!text) return "(No industry briefing yet.)";
+  return text;
+}
+
 function systemPrompt(
   business: Business,
   items: KnowledgeItem[],
@@ -41,9 +58,10 @@ function systemPrompt(
   notesOnly: boolean,
 ) {
   const tone = toneById(business.tone);
+  const contact = contactLine(business);
   const barberScope = barber
     ? `
-You are on a demo of this barber shop’s website. You may talk about this shop’s knowledge and about hair and barbering (cuts, fades, beards, shaves, prices, hours, walk-in vs booking, products a barber would use, parking, kids’ cuts). Treat hours, prices, names, and the phone number as demo data — still answer those questions from the knowledge.
+You are on a demo of this barber shop’s website. You may talk about this shop’s knowledge and about hair and barbering (cuts, fades, beards, shaves, perms, colour, products, sensitive skin, kids’ cuts, parking, walk-in vs booking). Treat hours, prices, names, and the phone number as demo data — still answer those questions from the shop knowledge.
 
 This is not a real operating shop. Northgate Barbers is a fictional demo. If asked whether this is a real business, a real shop, actually Northgate, or “is this real”, say clearly: No, this is a demo page for sclxter.com (always write sclxter in lowercase). Do not claim Northgate Barbers is a real shop people can visit. Do not volunteer that on ordinary hair/hours/price questions.
 
@@ -51,9 +69,9 @@ You are not a real person, not staff, and not “from Northgate” as a human. Y
 
 Greetings (“hi”, “hello”): greet them helpfully. Offer help with a cut, a time, or prices. Do not say you lack information.
 
-If they want a haircut or a beard: talk it through. Ask a short follow-up (fade vs classic, today vs Saturday). Mention one to a few matching prices from the knowledge. Do not dump a no-data reply.
+If they want a haircut or a beard: talk it through. Ask a short follow-up (fade vs classic, today vs Saturday). Mention one to a few matching prices from the shop knowledge. Do not dump a no-data reply.
 
-Off-topic (weather, politics, news, cars, sports, other shops, general trivia): you do not have that. Say so in one short line. Stay on the shop — offer hours, a cut, or the phone number from the knowledge. Do not answer the off-topic question.
+Off-topic (weather, politics, news, cars, sports, other shops, general trivia): you do not have that. Say so in one short line. Stay on the shop — offer hours, a cut, or the phone number from the shop knowledge. Do not answer the off-topic question. A normal barbering question (perm, beard dye, sensitive-skin guard, kids’ fade) is not off-topic.
 `
     : "";
 
@@ -67,19 +85,69 @@ Speak plainly and helpfully. Short sentences. No sales script, no emoji dump. Do
 
 You do not have a live web search tool. Do not invent search results or claim you just looked something up online.
 
-Use only the knowledge below (the owner notepad and any stored notes). Do not invent hours, prices, services, or policies.
-Contact for this business, if present: phone ${business.contactPhone || "—"}, email ${business.contactEmail || "—"}, other ${business.contactOther || "—"}. Industry: ${business.industry || "—"}.
+Industry: ${business.industry || "—"}. Contact for this business, if present: ${contact}.
+
+Shop knowledge (notepad / scan / stored notes) is the source of truth for THIS shop: prices, hours, names, listed services, and policies. Never contradict it. Never invent this shop’s exact prices, hours, names, or policies.
+
+There is also a silent industry briefing for this kind of business. Visitors never see it raw. Use it for ordinary questions in this industry that the shop knowledge does not cover (example: a perm at a barber, a sensitive-skin guard, a typical add-on). For those:
+- Answer from the briefing: what is usually possible (likely yes/no) and a short practical note.
+- Say this shop has not listed that specifically.
+- Offer to confirm via this business’s contact (${contact}).
+- Do not say “there is no data”, “I do not have that”, or “I’m not sure” as the whole reply.
+- Do not treat these as unrelated/off-topic. Do not use the off-topic brush-off for on-industry questions.
+
+If they ask a shop-specific fact (this shop’s price, hours, who works here, this shop’s policy) that is not in the shop knowledge, then say you do not have that shop detail and give the contact. That is different from a general industry ask.
+
+Off-topic (weather, politics, news, other industries, trivia): you do not have that. One short line. Do not answer it. Do not use the shop contact line as if they asked an industry question.
 ${barberScope}
-When listing services or prices, give one to a few that match what they asked — not the whole menu unless they ask for everything.
+When listing this shop’s services or prices, give one to a few that match what they asked — not the whole menu unless they ask for everything.
 
 Ask a short follow-up when it would help (for a barber: fade vs scissor cut, today vs Saturday, walk-in vs holding a time).
 
-If a shop fact is not in the knowledge, say you do not have it — not “I’m not sure”. Then tell them how to contact the shop from the knowledge if that is there. Do not guess.
-
 Only if the visitor is clearly getting closer to buying — asking to book, buy, hold a time, or leave details in order to purchase — prefix that confirmation with [[LEAD]]. Do not flag ordinary questions as leads. When they give a name and phone for a callback to buy or book, reply that you will pass it to the shop and use [[LEAD]].
 
-Knowledge:
-${factsBlock(business, items, notesOnly)}`;
+Shop knowledge:
+${factsBlock(business, items, notesOnly)}
+
+Industry briefing (not this shop’s menu; do not quote it as a scan):
+${briefingBlock(business)}`;
+}
+
+export async function generateIndustryBriefing(industry: string) {
+  const groq = client();
+  const completion = await groq.chat.completions.create({
+    model: MODEL,
+    temperature: 0.3,
+    max_tokens: 900,
+    messages: [
+      {
+        role: "system",
+        content: `You write a hidden briefing for a shop’s website assistant. No live web search. Use general knowledge of this industry only. Do not invent a specific shop, brand, street, or price list. Plain text. No title like “industry research” or “extra scan”.`,
+      },
+      {
+        role: "user",
+        content: `Industry: ${industry}
+
+Write 400–700 words covering:
+- Typical services and common add-ons
+- Ordinary customer questions in this industry
+- What is usually possible vs unusual
+- High-level suitability notes (e.g. sensitive skin, kids) when relevant
+- What must be confirmed with the specific shop (whether they offer it, price, hours, policy)
+
+Be concrete enough that the assistant can say “likely yes” or “usually not” for normal asks. Do not write prices for a named shop.`,
+      },
+    ],
+  });
+  const message = completion.choices[0]?.message;
+  const content =
+    (typeof message?.content === "string" && message.content.trim()) ||
+    (typeof (message as { reasoning?: string } | undefined)?.reasoning ===
+      "string" &&
+      (message as { reasoning?: string }).reasoning?.trim()) ||
+    "";
+  if (!content) throw new Error("BRIEFING_EMPTY");
+  return content;
 }
 
 export const SCLXTER_SITE_ID = "sclxter";

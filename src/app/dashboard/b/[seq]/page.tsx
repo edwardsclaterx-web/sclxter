@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getBusinessBySeq, isAdmin, toClientBusiness } from "@/lib/access";
+import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { normalizeInstructions } from "@/lib/instructions";
 import { readStore } from "@/lib/store";
 import { BusinessScreen } from "../../business-screen";
@@ -17,8 +18,9 @@ export default async function AdminBusinessPage({
   const { seq: raw } = await params;
   const seq = Number(raw);
   if (!Number.isFinite(seq) || seq < 1) notFound();
-  const biz = await getBusinessBySeq(seq);
+  let biz = await getBusinessBySeq(seq);
   if (!biz) notFound();
+  biz = await ensureIndustryBriefing(biz);
 
   const data = await readStore();
   const owner = data.users.find((u) => u.id === biz.ownerId);

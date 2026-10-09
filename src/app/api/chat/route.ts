@@ -7,6 +7,7 @@ import {
 import { answerChat, parseLeadFromReply, SCLXTER_SITE_ID } from "@/lib/groq";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
+import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { DEMO_PUBLIC_ID } from "@/lib/seed";
 import { readStore, updateStore } from "@/lib/store";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
@@ -104,14 +105,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const knowledge = data.knowledge.filter((k) => k.businessId === business.id);
+  const shop = business;
+  const knowledge = data.knowledge.filter((k) => k.businessId === shop.id);
 
   try {
+    const ready = await ensureIndustryBriefing(shop);
     const barber =
       !ownerTest &&
-      (business.publicId === DEMO_PUBLIC_ID || business.id === "biz_northgate");
+      (ready.publicId === DEMO_PUBLIC_ID || ready.id === "biz_northgate");
     const raw = await answerChat({
-      business,
+      business: ready,
       knowledge,
       messages,
       barber,
@@ -119,7 +122,7 @@ export async function POST(request: Request) {
     });
     const { text, lead } = parseLeadFromReply(raw);
     const thread = [...messages, { role: "assistant" as const, content: text }];
-    const persist = !isDemoBusiness(business) && !ownerTest;
+    const persist = !isDemoBusiness(shop) && !ownerTest;
     let conversationId =
       typeof body.conversationId === "string" ? body.conversationId : "";
 
@@ -129,14 +132,14 @@ export async function POST(request: Request) {
         let convo = conversationId
           ? store.conversations.find(
               (c) =>
-                c.id === conversationId && c.businessId === business!.id,
+                c.id === conversationId && c.businessId === shop.id,
             )
           : undefined;
         if (!convo) {
           convo = {
             id: id("convo"),
-            businessId: business!.id,
-            seq: nextConversationSeq(store, business!.id),
+            businessId: shop.id,
+            seq: nextConversationSeq(store, shop.id),
             messages: thread,
             lead: Boolean(lead),
             createdAt: now,
@@ -151,7 +154,7 @@ export async function POST(request: Request) {
         if (lead) {
           store.leads.push({
             id: id("lead"),
-            businessId: business!.id,
+            businessId: shop.id,
             conversationId: convo.id,
             name: "From chat",
             phone: "",

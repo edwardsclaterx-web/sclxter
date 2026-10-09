@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getOwnedBusiness, isAdmin } from "@/lib/access";
+import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { readStore } from "@/lib/store";
 import { toClientBusiness } from "@/lib/access";
 import { normalizeInstructions } from "@/lib/instructions";
@@ -11,7 +12,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
   if (isAdmin(user)) redirect("/dashboard/businesses");
 
-  const biz = await getOwnedBusiness(user);
+  let biz = await getOwnedBusiness(user);
   if (!biz) {
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-16">
@@ -22,6 +23,8 @@ export default async function DashboardPage() {
       </main>
     );
   }
+
+  biz = await ensureIndustryBriefing(biz);
 
   const data = await readStore();
   const conversations = data.conversations

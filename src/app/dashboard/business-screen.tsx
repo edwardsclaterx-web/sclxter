@@ -80,7 +80,6 @@ export function BusinessScreen({
   const [pwError, setPwError] = useState<string | null>(null);
   const [openConvo, setOpenConvo] = useState<number | null>(null);
   const [period, setPeriod] = useState<Period>("week");
-  const [expanded, setExpanded] = useState(false);
   const [origin, setOrigin] = useState("");
 
   const hist = useRef<string[]>([business.notepad]);
@@ -264,10 +263,11 @@ export function BusinessScreen({
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <aside className="order-1 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
-        <p className="text-sm font-medium leading-6">
-          <strong>{NOTEPAD_NOTICE}</strong>
-        </p>
-        <p className="mt-2 text-xs text-muted">
+        <h2 className="text-xl font-bold tracking-tight text-fg">
+          Your website&apos;s data
+        </h2>
+        <p className="mt-2 text-sm text-muted">{NOTEPAD_NOTICE}</p>
+        <p className="mt-1 text-sm text-muted">
           This text feeds the assistant. Visitors do not see it raw.
         </p>
         <div className="mt-3 flex gap-2">
@@ -277,19 +277,13 @@ export function BusinessScreen({
           <Button type="button" variant="quiet" onClick={redo}>
             Redo
           </Button>
-          <Button
-            type="button"
-            variant="quiet"
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? "Shrink" : "Expand"}
-          </Button>
         </div>
         <Textarea
-          className={`mt-3 min-h-0 flex-1 text-[0.9375rem] leading-6 ${expanded ? "min-h-[70vh]" : "min-h-80"}`}
+          className="mt-3 min-h-0 flex-1 text-[0.9375rem] leading-6"
           value={notepad}
           onChange={(e) => patchPad(e.target.value)}
-          aria-label="Notepad"
+          placeholder="Scan website to fill"
+          aria-label="Your website's data"
         />
         <Button
           type="button"

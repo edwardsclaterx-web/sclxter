@@ -4,6 +4,13 @@ export const DEMO_PUBLIC_ID = "northgate";
 
 const now = "2026-10-01T09:00:00.000Z";
 
+export function ensureDemoIndustry(data: StoreData) {
+  const demo = data.businesses.find(
+    (b) => b.publicId === DEMO_PUBLIC_ID || b.id === "biz_northgate",
+  );
+  if (demo && !(demo.industry || "").trim()) demo.industry = "Barber";
+}
+
 export function seedIfEmpty(data: StoreData) {
   if (data.businesses.some((b) => b.publicId === DEMO_PUBLIC_ID)) return;
 

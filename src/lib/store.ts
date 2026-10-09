@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { seedIfEmpty } from "./seed";
+import { ensureDemoIndustry, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
 import { normalizeInstructions } from "./instructions";
 import type { Business, StoreData } from "./types";
@@ -67,6 +67,7 @@ function normalize(data: StoreData): StoreData {
     instructions: normalizeInstructions(data.settings?.instructions),
   };
   data.businesses = (data.businesses ?? []).map((b) => patchBusiness(b));
+  ensureDemoIndustry(data);
 
   const listed = data.businesses.filter(
     (b) => b.publicId !== DEMO_PUBLIC_ID && b.id !== "biz_northgate",
@@ -117,6 +118,8 @@ export async function readStore(): Promise<StoreData> {
       seedIfEmpty(cache);
       cache = normalize(cache);
       writeDisk(cache);
+    } else {
+      ensureDemoIndustry(cache);
     }
     return cache;
   });

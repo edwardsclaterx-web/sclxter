@@ -267,9 +267,6 @@ export function BusinessScreen({
           Your website&apos;s data
         </h2>
         <p className="mt-2 text-sm text-muted">{NOTEPAD_NOTICE}</p>
-        <p className="mt-1 text-sm text-muted">
-          This text feeds the assistant. Visitors do not see it raw.
-        </p>
         <div className="mt-3 flex gap-2">
           <Button type="button" variant="quiet" onClick={undo}>
             Undo

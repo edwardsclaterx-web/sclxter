@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getOwnedBusiness, isAdmin } from "@/lib/access";
 import { readStore } from "@/lib/store";
 import { toClientBusiness } from "@/lib/access";
+import { normalizeInstructions } from "@/lib/instructions";
 import { BusinessScreen } from "./business-screen";
 
 export default async function DashboardPage() {
@@ -45,6 +46,7 @@ export default async function DashboardPage() {
         createdAt: l.createdAt,
         message: l.message,
       }))}
+      instructions={normalizeInstructions(data.settings?.instructions)}
     />
   );
 }

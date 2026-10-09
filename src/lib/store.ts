@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
+import { normalizeInstructions } from "./instructions";
 import type { Business, StoreData } from "./types";
 
 const DATA_PATH = join(process.cwd(), "data", "store.json");
@@ -12,6 +13,7 @@ const empty = (): StoreData => ({
   knowledge: [],
   leads: [],
   conversations: [],
+  settings: { instructions: normalizeInstructions(null) },
 });
 
 let cache: StoreData | null = null;
@@ -58,6 +60,9 @@ function normalize(data: StoreData): StoreData {
     conversationId: l.conversationId ?? null,
   }));
   data.conversations = data.conversations ?? [];
+  data.settings = {
+    instructions: normalizeInstructions(data.settings?.instructions),
+  };
   data.businesses = (data.businesses ?? []).map((b) => patchBusiness(b));
 
   const listed = data.businesses.filter(
@@ -90,6 +95,7 @@ function readDisk(): StoreData {
       knowledge: parsed.knowledge ?? [],
       leads: parsed.leads ?? [],
       conversations: parsed.conversations ?? [],
+      settings: parsed.settings ?? { instructions: [] },
     });
   } catch {
     return empty();

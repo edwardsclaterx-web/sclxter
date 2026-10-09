@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getBusinessBySeq, isAdmin, toClientBusiness } from "@/lib/access";
+import { normalizeInstructions } from "@/lib/instructions";
 import { readStore } from "@/lib/store";
 import { BusinessScreen } from "../../business-screen";
 
@@ -46,6 +47,7 @@ export default async function AdminBusinessPage({
         createdAt: l.createdAt,
         message: l.message,
       }))}
+      instructions={normalizeInstructions(data.settings?.instructions)}
     />
   );
 }

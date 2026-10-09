@@ -63,12 +63,17 @@ export type Conversation = {
   updatedAt: string;
 };
 
+export type StoreSettings = {
+  instructions: string[];
+};
+
 export type StoreData = {
   users: User[];
   businesses: Business[];
   knowledge: KnowledgeItem[];
   leads: Lead[];
   conversations: Conversation[];
+  settings: StoreSettings;
 };
 
 export type ChatMessage = {

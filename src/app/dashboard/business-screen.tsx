@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ChatMessage, ClientBusiness } from "@/lib/types";
 import { NOTEPAD_NOTICE, TONES } from "@/lib/tones";
+import { InstructionsBanner } from "./instructions-banner";
 
 type Convo = {
   seq: number;
@@ -25,6 +26,7 @@ type Props = {
   business: ClientBusiness;
   conversations: Convo[];
   leads: LeadRow[];
+  instructions: string[];
 };
 
 type Period = "day" | "week" | "month";
@@ -46,6 +48,7 @@ export function BusinessScreen({
   business,
   conversations,
   leads,
+  instructions,
 }: Props) {
   const router = useRouter();
   const seq = admin ? business.seq : undefined;
@@ -234,7 +237,9 @@ export function BusinessScreen({
   );
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_22rem] md:px-8">
+    <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 md:px-8">
+      <InstructionsBanner steps={instructions} admin={admin} />
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-12">
         <section>
           <h1 className="text-2xl font-medium tracking-tight">
@@ -536,6 +541,7 @@ export function BusinessScreen({
           Save notepad
         </Button>
       </aside>
+      </div>
     </main>
   );
 }

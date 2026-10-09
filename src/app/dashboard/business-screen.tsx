@@ -33,6 +33,13 @@ type Props = {
 
 type Period = "day" | "week" | "month";
 
+function formatStamp(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+}
+
 function within(iso: string, period: Period) {
   const t = new Date(iso).getTime();
   const now = Date.now();
@@ -255,7 +262,7 @@ export function BusinessScreen({
   return (
     <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
       <InstructionsBanner steps={instructions} admin={admin} />
-      <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+      <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <aside className="order-1 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
         <p className="text-sm font-medium leading-6">
           <strong>{NOTEPAD_NOTICE}</strong>
@@ -456,7 +463,7 @@ export function BusinessScreen({
                     >
                       <span>id {c.seq}</span>
                       <span className="text-muted">
-                        {new Date(c.updatedAt).toLocaleString("en-GB")}
+                        {formatStamp(c.updatedAt)}
                         {c.lead ? " · lead" : ""}
                       </span>
                     </button>
@@ -507,7 +514,7 @@ export function BusinessScreen({
             <ul className="mt-3 space-y-2 text-sm text-muted">
               {periodLeads.map((l, i) => (
                 <li key={i}>
-                  {new Date(l.createdAt).toLocaleString("en-GB")} — {l.message}
+                  {formatStamp(l.createdAt)} — {l.message}
                 </li>
               ))}
             </ul>

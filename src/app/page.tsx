@@ -130,10 +130,10 @@ export default async function Home() {
                 One site, one assistant, and an increase in customers.
               </p>
               <Link
-                href={user ? "/dashboard" : "/signup"}
+                href="/signup"
                 className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
               >
-                {user ? "Dashboard" : "Buy"}
+                Buy
               </Link>
             </article>
           </div>

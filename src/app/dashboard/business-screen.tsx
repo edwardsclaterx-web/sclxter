@@ -240,11 +240,61 @@ export function BusinessScreen({
     [conversations, openConvo],
   );
 
+  const testBlocked = businessReadyForTest({
+    name,
+    websiteUrl,
+    industry,
+    contactPhone,
+    contactEmail,
+    contactOther,
+    scannedAt,
+  })
+    ? null
+    : TEST_AI_BLOCKED;
+
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 md:px-8">
+    <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
       <InstructionsBanner steps={instructions} admin={admin} />
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="space-y-12">
+      <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+      <aside className="order-1 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
+        <p className="text-sm font-medium leading-6">
+          <strong>{NOTEPAD_NOTICE}</strong>
+        </p>
+        <p className="mt-2 text-xs text-muted">
+          This text feeds the assistant. Visitors do not see it raw.
+        </p>
+        <div className="mt-3 flex gap-2">
+          <Button type="button" variant="quiet" onClick={undo}>
+            Undo
+          </Button>
+          <Button type="button" variant="quiet" onClick={redo}>
+            Redo
+          </Button>
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? "Shrink" : "Expand"}
+          </Button>
+        </div>
+        <Textarea
+          className={`mt-3 min-h-0 flex-1 text-[0.9375rem] leading-6 ${expanded ? "min-h-[70vh]" : "min-h-80"}`}
+          value={notepad}
+          onChange={(e) => patchPad(e.target.value)}
+          aria-label="Notepad"
+        />
+        <Button
+          type="button"
+          className="mt-3"
+          disabled={saving}
+          onClick={() => void saveFields({ notepad })}
+        >
+          Save notepad
+        </Button>
+      </aside>
+
+      <div className="order-3 space-y-12 lg:order-2">
         <section>
           <h1 className="text-2xl font-medium tracking-tight">
             {name || "Business"}
@@ -382,40 +432,6 @@ export function BusinessScreen({
         </section>
 
         <section>
-          <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
-          <p className="mt-2 text-sm text-muted">
-            Same assistant visitors get, using this business’s notepad and
-            tone. It will not chat until name, URL, industry, contact, and a
-            completed scan are in.
-          </p>
-          <div className="mt-5 min-h-72 border border-line p-4">
-            <ChatPanel
-              endpoint="/api/chat/test"
-              extraBody={admin && typeof seq === "number" ? { seq } : {}}
-              blocked={
-                businessReadyForTest({
-                  name,
-                  websiteUrl,
-                  industry,
-                  contactPhone,
-                  contactEmail,
-                  contactOther,
-                  scannedAt,
-                })
-                  ? null
-                  : TEST_AI_BLOCKED
-              }
-              welcome="Ask using the notepad and tone saved for this business."
-              assistantName="Assistant"
-              title="Test AI"
-              clearable
-              compact
-              showLead={false}
-            />
-          </div>
-        </section>
-
-        <section>
           <h2 className="text-xl font-medium tracking-tight">Conversations</h2>
           <p className="mt-2 text-sm text-muted">
             Visitor chats for this business. First chat is id 1.
@@ -542,42 +558,26 @@ export function BusinessScreen({
         </section>
       </div>
 
-      <aside className="flex min-h-[28rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:max-h-[calc(100vh-6rem)]">
-        <p className="text-sm font-medium leading-6">
-          <strong>{NOTEPAD_NOTICE}</strong>
+      <aside className="order-2 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
+        <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
+        <p className="mt-2 text-sm text-muted">
+          Same assistant visitors get, using this business’s notepad and
+          tone. It will not chat until name, URL, industry, contact, and a
+          completed scan are in.
         </p>
-        <p className="mt-2 text-xs text-muted">
-          This text feeds the assistant. Visitors do not see it raw.
-        </p>
-        <div className="mt-3 flex gap-2">
-          <Button type="button" variant="quiet" onClick={undo}>
-            Undo
-          </Button>
-          <Button type="button" variant="quiet" onClick={redo}>
-            Redo
-          </Button>
-          <Button
-            type="button"
-            variant="quiet"
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? "Shrink" : "Expand"}
-          </Button>
+        <div className="mt-4 flex min-h-[20rem] flex-1 flex-col">
+          <ChatPanel
+            endpoint="/api/chat/test"
+            extraBody={admin && typeof seq === "number" ? { seq } : {}}
+            blocked={testBlocked}
+            welcome="Ask using the notepad and tone saved for this business."
+            assistantName="Assistant"
+            title="Test AI"
+            clearable
+            compact
+            showLead={false}
+          />
         </div>
-        <Textarea
-          className={`mt-3 min-h-0 flex-1 ${expanded ? "min-h-[70vh]" : "min-h-64"}`}
-          value={notepad}
-          onChange={(e) => patchPad(e.target.value)}
-          aria-label="Notepad"
-        />
-        <Button
-          type="button"
-          className="mt-3"
-          disabled={saving}
-          onClick={() => void saveFields({ notepad })}
-        >
-          Save notepad
-        </Button>
       </aside>
       </div>
     </main>

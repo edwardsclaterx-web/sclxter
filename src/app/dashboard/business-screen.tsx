@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { ChatPanel } from "@/components/chat-panel";
 import { FieldError } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ChatMessage, ClientBusiness } from "@/lib/types";
 import { NOTEPAD_NOTICE, TONES } from "@/lib/tones";
+import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import { InstructionsBanner } from "./instructions-banner";
 
 type Convo = {
@@ -60,6 +62,7 @@ export function BusinessScreen({
   const [contactOther, setContactOther] = useState(business.contactOther);
   const [tone, setTone] = useState(business.tone || "plain");
   const [notepad, setNotepad] = useState(business.notepad);
+  const [scannedAt, setScannedAt] = useState(business.scannedAt);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -192,6 +195,7 @@ export function BusinessScreen({
       }
       if (data.business) {
         patchPad(data.business.notepad);
+        setScannedAt(data.business.scannedAt);
       }
       router.refresh();
     } catch {
@@ -375,6 +379,40 @@ export function BusinessScreen({
             {scanning ? "Scanning…" : "Scan site"}
           </Button>
           <FieldError>{scanError}</FieldError>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
+          <p className="mt-2 text-sm text-muted">
+            Same assistant visitors get, using this business’s notepad and
+            tone. It will not chat until name, URL, industry, contact, and a
+            completed scan are in.
+          </p>
+          <div className="mt-5 min-h-72 border border-line p-4">
+            <ChatPanel
+              endpoint="/api/chat/test"
+              extraBody={admin && typeof seq === "number" ? { seq } : {}}
+              blocked={
+                businessReadyForTest({
+                  name,
+                  websiteUrl,
+                  industry,
+                  contactPhone,
+                  contactEmail,
+                  contactOther,
+                  scannedAt,
+                })
+                  ? null
+                  : TEST_AI_BLOCKED
+              }
+              welcome="Ask using the notepad and tone saved for this business."
+              assistantName="Assistant"
+              title="Test AI"
+              clearable
+              compact
+              showLead={false}
+            />
+          </div>
         </section>
 
         <section>

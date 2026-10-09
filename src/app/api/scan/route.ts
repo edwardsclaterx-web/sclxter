@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     if (!row) return biz;
     const existing = (row.notepad || "").trim();
     row.notepad = existing ? `${existing}\n\n${block}` : block;
+    row.scannedAt = new Date().toISOString();
     return row;
   });
 

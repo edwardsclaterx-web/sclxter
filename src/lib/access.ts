@@ -45,6 +45,7 @@ export function newBusinessFields(
     contactOther: "",
     tone: "plain",
     notepad: "",
+    scannedAt: null,
     publicId: publicId(),
     appearance: {
       assistantName: "Assistant",
@@ -108,6 +109,7 @@ export function toClientBusiness(
     contactOther: b.contactOther,
     tone: b.tone,
     notepad: b.notepad,
+    scannedAt: b.scannedAt,
     publicId: b.publicId,
     createdAt: b.createdAt,
   };

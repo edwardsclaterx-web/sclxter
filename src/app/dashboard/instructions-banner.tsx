@@ -75,10 +75,14 @@ export function InstructionsBanner({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full border border-line bg-surface px-5 py-4 text-left"
+        className="w-full border border-line bg-surface px-[1.875rem] py-6 text-left"
       >
-        <p className="font-bold tracking-wide text-fg">{INSTRUCTIONS_TITLE}</p>
-        <p className="mt-1 text-sm text-muted">{INSTRUCTIONS_KICKER}</p>
+        <p className="text-2xl font-bold tracking-wide text-fg">
+          {INSTRUCTIONS_TITLE}
+        </p>
+        <p className="mt-2 text-[1.3125rem] leading-snug text-muted">
+          {INSTRUCTIONS_KICKER}
+        </p>
       </button>
 
       {open && (
@@ -89,7 +93,7 @@ export function InstructionsBanner({
           <div
             role="dialog"
             aria-labelledby="instructions-title"
-            className="relative h-[80vh] w-[80vw] overflow-auto border border-line bg-bg p-6 md:p-10"
+            className="relative h-[82vh] w-[82vw] overflow-auto border border-line bg-bg p-6 md:p-10"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -102,11 +106,11 @@ export function InstructionsBanner({
             </button>
             <h2
               id="instructions-title"
-              className="pr-12 font-bold tracking-wide text-fg"
+              className="pr-12 text-2xl font-bold tracking-wide text-fg"
             >
               {INSTRUCTIONS_TITLE}
             </h2>
-            <ol className="mt-6 list-decimal space-y-4 pl-5 text-sm leading-6 text-fg">
+            <ol className="mt-6 list-decimal space-y-4 pl-5 text-base leading-7 text-fg">
               {copy.map((step, i) => (
                 <li key={i}>{step}</li>
               ))}

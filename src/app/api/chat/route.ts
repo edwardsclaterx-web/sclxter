@@ -9,6 +9,7 @@ import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
 import { DEMO_PUBLIC_ID } from "@/lib/seed";
 import { readStore, updateStore } from "@/lib/store";
+import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import type { ChatMessage } from "@/lib/types";
 
 function cors(res: NextResponse) {
@@ -95,6 +96,12 @@ export async function POST(request: Request) {
         NextResponse.json({ error: "Unknown assistant." }, { status: 404 }),
       );
     }
+  }
+
+  if (ownerTest && !businessReadyForTest(business)) {
+    return cors(
+      NextResponse.json({ error: TEST_AI_BLOCKED }, { status: 400 }),
+    );
   }
 
   const knowledge = data.knowledge.filter((k) => k.businessId === business.id);

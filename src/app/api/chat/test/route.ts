@@ -1,0 +1,63 @@
+import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
+import { resolveBusiness } from "@/lib/access";
+import { answerChat, parseLeadFromReply } from "@/lib/groq";
+import { groqKeyPresent } from "@/lib/secrets";
+import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
+import type { ChatMessage } from "@/lib/types";
+
+export async function POST(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  }
+  const body = (await request.json()) as {
+    messages?: ChatMessage[];
+    seq?: number;
+  };
+  const seq = typeof body.seq === "number" ? body.seq : null;
+  const biz = await resolveBusiness(user, seq);
+  if (!biz) {
+    return NextResponse.json({ error: TEST_AI_BLOCKED }, { status: 400 });
+  }
+  if (!businessReadyForTest(biz)) {
+    return NextResponse.json({ error: TEST_AI_BLOCKED }, { status: 400 });
+  }
+
+  const messages = (body.messages ?? []).filter(
+    (m) => m && (m.role === "user" || m.role === "assistant") && m.content,
+  );
+  if (!messages.length) {
+    return NextResponse.json({ error: "Ask a question first." }, { status: 400 });
+  }
+
+  if (!groqKeyPresent()) {
+    return NextResponse.json(
+      { error: "The assistant is not configured on this server." },
+      { status: 503 },
+    );
+  }
+
+  try {
+    const raw = await answerChat({
+      business: biz,
+      knowledge: [],
+      messages,
+      notesOnly: true,
+    });
+    const { text } = parseLeadFromReply(raw);
+    return NextResponse.json({ reply: text });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    if (message === "GROQ_UNCONFIGURED") {
+      return NextResponse.json(
+        { error: "The assistant is not configured on this server." },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      { error: "The assistant had a problem. Try again in a moment." },
+      { status: 502 },
+    );
+  }
+}

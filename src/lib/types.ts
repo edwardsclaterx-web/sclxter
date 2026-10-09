@@ -25,6 +25,7 @@ export type Business = {
   contactOther: string;
   tone: string;
   notepad: string;
+  scannedAt: string | null;
   publicId: string;
   appearance: Appearance;
   widgetConnectedAt: string | null;
@@ -90,6 +91,7 @@ export type ClientBusiness = {
   contactOther: string;
   tone: string;
   notepad: string;
+  scannedAt: string | null;
   publicId: string;
   createdAt: string;
   seq?: number;

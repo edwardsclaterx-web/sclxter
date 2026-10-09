@@ -13,6 +13,8 @@ type Props = {
   title?: string;
   clearable?: boolean;
   showLead?: boolean;
+  extraBody?: Record<string, unknown>;
+  blocked?: string | null;
   onLeadSaved?: () => void;
 };
 
@@ -24,6 +26,8 @@ export function ChatPanel({
   title,
   clearable,
   showLead = true,
+  extraBody,
+  blocked,
   onLeadSaved,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -53,6 +57,10 @@ export function ChatPanel({
   }
 
   async function send(content: string) {
+    if (blocked) {
+      setError(blocked);
+      return;
+    }
     const next = [...messages, { role: "user" as const, content }];
     setMessages(next);
     setText("");
@@ -62,7 +70,7 @@ export function ChatPanel({
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: next, ...extraBody }),
       });
       const data = (await res.json()) as {
         reply?: string;
@@ -123,7 +131,10 @@ export function ChatPanel({
         </div>
       )}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-        {messages.length === 0 && (
+        {blocked && (
+          <p className="text-sm leading-6 text-fg">{blocked}</p>
+        )}
+        {!blocked && messages.length === 0 && (
           <p className="text-sm leading-6 text-muted">{welcome}</p>
         )}
         {messages.map((m, i) => (
@@ -165,8 +176,9 @@ export function ChatPanel({
           onInput={(e) => setText((e.target as HTMLInputElement).value)}
           placeholder="Ask anything"
           aria-label="Ask anything"
+          disabled={Boolean(blocked)}
         />
-        <Button type="submit" aria-busy={busy}>
+        <Button type="submit" aria-busy={busy} disabled={Boolean(blocked) || busy}>
           {busy ? "…" : "Send"}
         </Button>
       </form>

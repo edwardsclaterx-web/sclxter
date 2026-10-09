@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ChatMessage, ClientBusiness } from "@/lib/types";
 import { NOTEPAD_NOTICE, TONES } from "@/lib/tones";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
+import { EmbedGuide } from "./embed-guide";
 import { InstructionsBanner } from "./instructions-banner";
 
 type Convo = {
@@ -69,7 +70,6 @@ export function BusinessScreen({
   const [contactOther, setContactOther] = useState(business.contactOther);
   const [tone, setTone] = useState(business.tone || "plain");
   const [notepad, setNotepad] = useState(business.notepad);
-  const [scannedAt, setScannedAt] = useState(business.scannedAt);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -201,7 +201,6 @@ export function BusinessScreen({
       }
       if (data.business) {
         patchPad(data.business.notepad);
-        setScannedAt(data.business.scannedAt);
       }
       router.refresh();
     } catch {
@@ -253,7 +252,6 @@ export function BusinessScreen({
     contactPhone,
     contactEmail,
     contactOther,
-    scannedAt,
   })
     ? null
     : TEST_AI_BLOCKED;
@@ -526,30 +524,7 @@ export function BusinessScreen({
           >
             Copy snippet
           </Button>
-          <ol className="mt-6 list-decimal space-y-3 pl-5 text-sm leading-6 text-muted">
-            <li>
-              <span className="text-fg">HTML.</span> Paste the snippet into
-              your template, just before <code className="text-fg">&lt;/body&gt;</code>.
-            </li>
-            <li>
-              <span className="text-fg">WordPress.</span> Appearance → Theme
-              File Editor → footer.php, or a “header/footer scripts” plugin.
-              Paste the same snippet.
-            </li>
-            <li>
-              <span className="text-fg">Squarespace.</span> Settings → Developer
-              tools / Code injection → Footer. Paste the snippet.
-            </li>
-            <li>
-              <span className="text-fg">Wix.</span> Settings → Custom code →
-              Add code → Body end. Paste the snippet.
-            </li>
-            <li>
-              <span className="text-fg">Shopify.</span> Online Store → Themes →
-              Edit code → theme.liquid, before{" "}
-              <code className="text-fg">&lt;/body&gt;</code>. Paste the snippet.
-            </li>
-          </ol>
+          <EmbedGuide />
         </section>
       </div>
 
@@ -557,8 +532,8 @@ export function BusinessScreen({
         <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
         <p className="mt-2 text-sm text-muted">
           Same assistant visitors get, using this business’s notepad and
-          tone. It will not chat until name, URL, industry, contact, and a
-          completed scan are in.
+          tone. It will not chat until name, URL, industry, and at least one
+          contact field are filled.
         </p>
         <div className="mt-4 flex min-h-[20rem] flex-1 flex-col">
           <ChatPanel

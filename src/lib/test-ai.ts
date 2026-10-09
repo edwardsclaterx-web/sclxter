@@ -7,7 +7,6 @@ export function businessReadyForTest(b: {
   contactPhone: string;
   contactEmail: string;
   contactOther: string;
-  scannedAt?: string | null;
 }) {
   const contact = [b.contactPhone, b.contactEmail, b.contactOther].some(
     (v) => (v || "").trim().length > 0,
@@ -16,7 +15,6 @@ export function businessReadyForTest(b: {
     (b.name || "").trim() &&
       (b.websiteUrl || "").trim() &&
       (b.industry || "").trim() &&
-      contact &&
-      b.scannedAt,
+      contact,
   );
 }

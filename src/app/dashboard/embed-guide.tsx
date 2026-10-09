@@ -51,6 +51,36 @@ const TYPES: { name: string; steps: string[]; extra: string }[] = [
     extra:
       "Paste on an unpublished duplicate first if you want a safe check. After an app or theme update, confirm theme.liquid still has the snippet. Checkout pages do not use theme.liquid, so the assistant will not appear there — that is expected.",
   },
+  {
+    name: "Webflow",
+    steps: [
+      "Open Site settings → Custom code.",
+      "Paste the snippet into Footer code so it loads on every published page.",
+      "Save, then Publish to the live domain. Designer preview often hides custom code.",
+    ],
+    extra:
+      "Custom code needs a paid Webflow site plan, not the free Starter plan. If you use a cookie/consent banner, allow this script. Do not add the same snippet on a single page’s custom code if it is already in Footer code, or Ask anything will appear twice.",
+  },
+  {
+    name: "Google Sites",
+    steps: [
+      "Google Sites does not let you paste a raw footer script on every page the way a normal host does.",
+      "On each page where you want Ask anything, Insert → Embed → Embed code, and paste the snippet.",
+      "Publish the site, then open the public URL (not the Sites editor).",
+    ],
+    extra:
+      "The embed is per page — copy it onto any other page that should show the assistant. Some Google Workspace policies block third-party embeds; if the box stays empty, check that embeds are allowed for the site. After you change the snippet, republish.",
+  },
+  {
+    name: "Framer",
+    steps: [
+      "In the Framer project open Site settings → General → Custom code.",
+      "Paste the snippet into End of <body> so it runs on all pages.",
+      "Publish (or update the live site). The canvas preview may not show the button until you open the published URL.",
+    ],
+    extra:
+      "Custom code is available on Framer site plans that include it. If you only add a Code component on one frame, the assistant will not appear site-wide — use End of <body> instead. After publishing, hard-refresh in case the CDN is still serving the previous build.",
+  },
 ];
 
 export function EmbedGuide() {

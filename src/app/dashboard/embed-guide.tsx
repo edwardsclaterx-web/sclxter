@@ -1,6 +1,6 @@
 const TYPES: { name: string; steps: string[]; extra: string }[] = [
   {
-    name: "custom HTML",
+    name: "Custom HTML",
     steps: [
       "Copy the snippet above in one piece, including the data-id attribute.",
       "Open the layout or footer file that wraps every page.",
@@ -88,8 +88,14 @@ export function EmbedGuide() {
     <div className="mt-6 divide-y divide-line border border-line">
       {TYPES.map((t) => (
         <details key={t.name} className="group bg-bg">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm text-fg marker:content-none [&::-webkit-details-marker]:hidden">
-            {t.name}
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm text-fg marker:content-none [&::-webkit-details-marker]:hidden">
+            <span>{t.name}</span>
+            <span
+              aria-hidden
+              className="text-xs leading-none text-muted transition-transform group-open:rotate-180"
+            >
+              ▾
+            </span>
           </summary>
           <div className="space-y-3 px-4 pb-5 text-sm leading-6 text-muted">
             <ol className="list-decimal space-y-2 pl-5">

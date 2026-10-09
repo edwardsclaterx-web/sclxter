@@ -434,9 +434,6 @@ export function BusinessScreen({
 
         <section>
           <h2 className="text-xl font-medium tracking-tight">Conversations</h2>
-          <p className="mt-2 text-sm text-muted">
-            Visitor chats for this business. First chat is id 1.
-          </p>
           {conversations.length === 0 ? (
             <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
               No conversations yet.

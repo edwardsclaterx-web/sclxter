@@ -17,7 +17,55 @@
   var hostId = "sclxter-ask-host-" + id;
   if (document.getElementById(hostId)) return;
 
-  fetch(origin + "/api/widget/" + encodeURIComponent(id)).catch(function () {});
+  var theme = { outline: "#222222", primary: "#ffffff", text: "#000000" };
+
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Ask anything");
+  btn.textContent = "Ask anything";
+
+  var frameWrap = document.createElement("div");
+  frameWrap.id = hostId + "-panel";
+  var iframe = document.createElement("iframe");
+  iframe.title = "Ask anything";
+  iframe.name = "sclxter-ask-frame-" + id;
+  iframe.src = origin + "/widget/" + encodeURIComponent(id);
+
+  function paintTheme() {
+    btn.style.cssText =
+      "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:1px solid " +
+      theme.outline +
+      ";border-radius:16px;background:" +
+      theme.primary +
+      ";color:" +
+      theme.text +
+      ";font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;";
+    btn.style.setProperty("border-radius", "16px", "important");
+    frameWrap.style.cssText =
+      "position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));border:1px solid " +
+      theme.outline +
+      ";border-radius:24px;background:" +
+      theme.primary +
+      ";overflow:hidden;";
+    iframe.style.cssText =
+      "width:100%;height:100%;border:0;background:" + theme.primary + ";";
+  }
+
+  paintTheme();
+
+  fetch(origin + "/api/widget/" + encodeURIComponent(id))
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (d) {
+      var t = (d && d.theme) || (d && d.appearance && d.appearance.theme);
+      if (!t) return;
+      if (t.outline) theme.outline = t.outline;
+      if (t.primary) theme.primary = t.primary;
+      if (t.text) theme.text = t.text;
+      paintTheme();
+    })
+    .catch(function () {});
 
   var openKey = "sclxter:ask:" + id + ":open";
   function readOpen() {
@@ -27,24 +75,6 @@
       return false;
     }
   }
-
-  var btn = document.createElement("button");
-  btn.type = "button";
-  btn.setAttribute("aria-label", "Ask anything");
-  btn.textContent = "Ask anything";
-  btn.style.cssText =
-    "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;border:0;border-radius:16px;background:#ffffff;color:#050505;font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:hidden;";
-
-  var frameWrap = document.createElement("div");
-  frameWrap.id = hostId + "-panel";
-  frameWrap.style.cssText =
-    "position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;";
-  var iframe = document.createElement("iframe");
-  iframe.title = "Ask anything";
-  iframe.name = "sclxter-ask-frame-" + id;
-  iframe.src = origin + "/widget/" + encodeURIComponent(id);
-  iframe.style.cssText = "width:100%;height:100%;border:0;background:#050505;";
-  frameWrap.appendChild(iframe);
 
   function applyOpen(open) {
     frameWrap.style.visibility = open ? "visible" : "hidden";
@@ -67,6 +97,7 @@
     applyOpen(btn.getAttribute("aria-expanded") !== "true");
   });
 
+  frameWrap.appendChild(iframe);
   var host = document.createElement("div");
   host.id = hostId;
   host.addEventListener("mousedown", function (e) {

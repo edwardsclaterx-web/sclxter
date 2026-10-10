@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, WidgetTheme } from "@/lib/types";
 
 type Props = {
   endpoint: string;
@@ -15,6 +15,7 @@ type Props = {
   showLead?: boolean;
   extraBody?: Record<string, unknown>;
   blocked?: string | null;
+  theme?: WidgetTheme;
   onLeadSaved?: () => void;
 };
 
@@ -28,6 +29,7 @@ export function ChatPanel({
   showLead = true,
   extraBody,
   blocked,
+  theme,
   onLeadSaved,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -114,15 +116,26 @@ export function ChatPanel({
     onLeadSaved?.();
   }
 
+  const themed = Boolean(theme);
+  const ink = theme?.text;
+  const box = theme?.primary;
+  const line = theme?.outline;
+
   return (
-    <div className={`flex flex-col ${compact ? "h-full" : "h-[28rem]"}`}>
+    <div
+      className={`flex flex-col ${compact ? "h-full" : "h-[28rem]"}`}
+      style={themed ? { color: ink, background: box } : undefined}
+    >
       {(title || clearable) && (
-        <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-3">
+        <div
+          className="mb-3 flex items-center justify-between gap-3 border-b pb-3"
+          style={themed ? { borderColor: line } : undefined}
+        >
           <p className="text-xs tracking-[0.16em]">{title || "Ask anything"}</p>
           {clearable && (
             <button
               type="button"
-              className="text-xs text-muted hover:text-fg"
+              className={`text-xs ${themed ? "opacity-70 hover:opacity-100" : "text-muted hover:text-fg"}`}
               onClick={clearChat}
             >
               Clear chat
@@ -132,34 +145,50 @@ export function ChatPanel({
       )}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {blocked && (
-          <p className="text-sm leading-6 text-fg">{blocked}</p>
+          <p className="text-sm leading-6" style={themed ? { color: ink } : undefined}>
+            {blocked}
+          </p>
         )}
         {!blocked && messages.length === 0 && (
-          <p className="text-sm leading-6 text-muted">{welcome}</p>
+          <p className={`text-sm leading-6 ${themed ? "opacity-70" : "text-muted"}`}>
+            {welcome}
+          </p>
         )}
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-right" : ""}>
-            <p className="mb-1 text-[10px] uppercase tracking-[0.16em] text-muted">
+            <p className={`mb-1 text-[10px] uppercase tracking-[0.16em] ${themed ? "opacity-60" : "text-muted"}`}>
               {m.role === "user" ? "You" : assistantName}
             </p>
             <p
-              className={`inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 ${
-                m.role === "user"
-                  ? "bg-fg text-bg"
-                  : "border border-line bg-surface"
-              }`}
+              className={
+                themed
+                  ? "inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6"
+                  : `inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 ${
+                      m.role === "user"
+                        ? "bg-fg text-bg"
+                        : "border border-line bg-surface"
+                    }`
+              }
+              style={
+                themed
+                  ? m.role === "user"
+                    ? { background: ink, color: box }
+                    : { border: `1px solid ${line}`, color: ink }
+                  : undefined
+              }
             >
               {m.content}
             </p>
           </div>
         ))}
-        {busy && <p className="text-sm text-muted">Thinking…</p>}
-        {error && <p className="text-sm text-muted">{error}</p>}
+        {busy && <p className={`text-sm ${themed ? "opacity-70" : "text-muted"}`}>Thinking…</p>}
+        {error && <p className={`text-sm ${themed ? "opacity-70" : "text-muted"}`}>{error}</p>}
         <div ref={bottom} />
       </div>
 
       <form
-        className="mt-4 flex gap-2 border-t border-line pt-4"
+        className="mt-4 flex gap-2 border-t pt-4"
+        style={themed ? { borderColor: line } : undefined}
         onSubmit={(e) => {
           e.preventDefault();
           const form = e.currentTarget;
@@ -177,8 +206,23 @@ export function ChatPanel({
           placeholder="Ask anything"
           aria-label="Ask anything"
           disabled={Boolean(blocked)}
+          className={themed ? "bg-transparent" : undefined}
+          style={themed ? { borderColor: line, color: ink } : undefined}
         />
-        <Button type="submit" aria-busy={busy} disabled={Boolean(blocked) || busy}>
+        <Button
+          type="submit"
+          aria-busy={busy}
+          disabled={Boolean(blocked) || busy}
+          style={
+            themed
+              ? {
+                  background: box,
+                  color: ink,
+                  border: `1px solid ${line}`,
+                }
+              : undefined
+          }
+        >
           {busy ? "…" : "Send"}
         </Button>
       </form>

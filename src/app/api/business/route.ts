@@ -4,6 +4,8 @@ import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
 import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { readStore, updateStore } from "@/lib/store";
 import { TONES } from "@/lib/tones";
+import { parseThemeInput } from "@/lib/widget-theme";
+import type { WidgetTheme } from "@/lib/types";
 
 export async function GET(request: Request) {
   const user = await getSessionUser();
@@ -37,12 +39,27 @@ export async function PATCH(request: Request) {
     contactOther?: string;
     tone?: string;
     notepad?: string;
+    theme?: WidgetTheme;
   };
   const seq = typeof body.seq === "number" ? body.seq : null;
   const biz = await resolveBusiness(user, seq);
   if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
   const tones = new Set(TONES.map((t) => t.id));
+  let nextTheme: WidgetTheme | undefined;
+  if (body.theme) {
+    const parsed = parseThemeInput(body.theme);
+    if (parsed === "same") {
+      return NextResponse.json(
+        { error: "Text and primary must be different colours." },
+        { status: 400 },
+      );
+    }
+    if (!parsed) {
+      return NextResponse.json({ error: "Pick colours from the list." }, { status: 400 });
+    }
+    nextTheme = parsed;
+  }
   let updated = await updateStore((data) => {
     const row = data.businesses.find((b) => b.id === biz.id);
     if (!row) return biz;
@@ -56,6 +73,13 @@ export async function PATCH(request: Request) {
       row.tone = body.tone;
     }
     if (typeof body.notepad === "string") row.notepad = body.notepad;
+    if (nextTheme) {
+      row.appearance = {
+        ...row.appearance,
+        colour: nextTheme.primary,
+        theme: nextTheme,
+      };
+    }
     return row;
   });
   updated = await ensureIndustryBriefing(updated);

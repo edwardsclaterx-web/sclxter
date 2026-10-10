@@ -5,6 +5,7 @@ import { DEMO_PUBLIC_ID } from "./seed";
 import { readStore, updateStore } from "./store";
 import { id, publicId } from "./ids";
 import type { Business, ClientBusiness, StoreData, User } from "./types";
+import { DEFAULT_WIDGET_THEME, normalizeTheme } from "./widget-theme";
 
 export function isAdmin(user: User) {
   return isOwnerEmail(user.email);
@@ -53,6 +54,7 @@ export function newBusinessFields(
       assistantName: "Assistant",
       colour: "#ffffff",
       welcome: "Ask about hours, prices, or how to book.",
+      theme: { ...DEFAULT_WIDGET_THEME },
     },
     widgetConnectedAt: null,
   };
@@ -114,6 +116,7 @@ export function toClientBusiness(
     scannedAt: b.scannedAt,
     publicId: b.publicId,
     createdAt: b.createdAt,
+    theme: normalizeTheme(b.appearance?.theme),
   };
   if (opts.admin) {
     base.seq = b.seq;

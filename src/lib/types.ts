@@ -1,9 +1,16 @@
 export type KnowledgeSource = "note" | "scan";
 
+export type WidgetTheme = {
+  outline: string;
+  primary: string;
+  text: string;
+};
+
 export type Appearance = {
   assistantName: string;
   colour: string;
   welcome: string;
+  theme: WidgetTheme;
 };
 
 export type User = {
@@ -96,6 +103,7 @@ export type ClientBusiness = {
   scannedAt: string | null;
   publicId: string;
   createdAt: string;
+  theme: WidgetTheme;
   seq?: number;
   ownerEmail?: string;
 };

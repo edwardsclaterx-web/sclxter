@@ -34,6 +34,11 @@ export function seedIfEmpty(data: StoreData) {
       assistantName: "Northgate",
       colour: "#ffffff",
       welcome: "Ask about cuts, prices, hours, or booking.",
+      theme: {
+        outline: "#222222",
+        primary: "#ffffff",
+        text: "#000000",
+      },
     },
     widgetConnectedAt: null,
     createdAt: now,

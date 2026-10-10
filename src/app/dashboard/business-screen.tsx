@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ChatMessage, ClientBusiness } from "@/lib/types";
+import type { ChatMessage, ClientBusiness, WidgetTheme } from "@/lib/types";
 import { NOTEPAD_NOTICE, TONES } from "@/lib/tones";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
+import { normalizeTheme } from "@/lib/widget-theme";
 import { EmbedGuide } from "./embed-guide";
 import { InstructionsBanner } from "./instructions-banner";
+import { ThemePicker } from "./theme-picker";
 
 type Convo = {
   seq: number;
@@ -70,6 +72,10 @@ export function BusinessScreen({
   const [contactEmail, setContactEmail] = useState(business.contactEmail);
   const [contactOther, setContactOther] = useState(business.contactOther);
   const [tone, setTone] = useState(business.tone || "plain");
+  const [theme, setTheme] = useState<WidgetTheme>(() =>
+    normalizeTheme(business.theme),
+  );
+  const [themeError, setThemeError] = useState<string | null>(null);
   const [notepad, setNotepad] = useState(business.notepad);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -151,6 +157,35 @@ export function BusinessScreen({
   async function onSave(e: FormEvent) {
     e.preventDefault();
     await saveFields();
+  }
+
+  async function onTheme(next: WidgetTheme) {
+    if (next.primary === next.text) {
+      setThemeError("Text and primary must be different colours.");
+      return;
+    }
+    setTheme(next);
+    setThemeError(null);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/business", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ seq, theme: next }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setThemeError(data.error || "Could not save theme.");
+        return;
+      }
+      setSaveNote("Theme saved. The live widget will use it.");
+      router.refresh();
+    } catch {
+      setThemeError("Could not reach the server.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function onTone(id: string) {
@@ -410,6 +445,8 @@ export function BusinessScreen({
           </select>
         </section>
 
+        <ThemePicker theme={theme} onChange={(next) => void onTheme(next)} error={themeError} />
+
         <section>
           <h2 className="text-xl font-medium tracking-tight">Scan data</h2>
           <p className="mt-2 text-sm text-muted">
@@ -544,6 +581,7 @@ export function BusinessScreen({
             welcome="Ask using the notepad and tone saved for this business."
             assistantName="Assistant"
             title="Test AI"
+            theme={theme}
             clearable
             compact
             showLead={false}

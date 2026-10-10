@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import { ensureDemoIndustry, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
 import { normalizeInstructions } from "./instructions";
-import type { Business, StoreData } from "./types";
+import type { Appearance, Business, StoreData } from "./types";
+import { normalizeTheme } from "./widget-theme";
 
 const DATA_PATH = join(process.cwd(), "data", "store.json");
 
@@ -28,6 +29,15 @@ function withLock<T>(fn: () => T): Promise<T> {
   return run;
 }
 
+function patchAppearance(a?: Partial<Appearance> | null): Appearance {
+  return {
+    assistantName: a?.assistantName || "Assistant",
+    colour: a?.colour || "#ffffff",
+    welcome: a?.welcome || "Ask about hours, prices, or how to book.",
+    theme: normalizeTheme(a?.theme),
+  };
+}
+
 function patchBusiness(b: Partial<Business> & { id: string }): Business {
   return {
     id: b.id,
@@ -45,11 +55,7 @@ function patchBusiness(b: Partial<Business> & { id: string }): Business {
     industryBriefing: b.industryBriefing ?? "",
     industryBriefingFor: b.industryBriefingFor ?? "",
     publicId: b.publicId ?? "",
-    appearance: b.appearance ?? {
-      assistantName: "Assistant",
-      colour: "#ffffff",
-      welcome: "Ask about hours, prices, or how to book.",
-    },
+    appearance: patchAppearance(b.appearance),
     widgetConnectedAt: b.widgetConnectedAt ?? null,
     createdAt: b.createdAt ?? new Date().toISOString(),
   };

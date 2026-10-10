@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readStore, updateStore } from "@/lib/store";
+import { normalizeTheme } from "@/lib/widget-theme";
 
 function cors(res: NextResponse) {
   res.headers.set("Access-Control-Allow-Origin", "*");
@@ -26,7 +27,11 @@ export async function GET(
     NextResponse.json({
       publicId: business.publicId,
       name: business.name,
-      appearance: business.appearance,
+      appearance: {
+        ...business.appearance,
+        theme: normalizeTheme(business.appearance?.theme),
+      },
+      theme: normalizeTheme(business.appearance?.theme),
     }),
   );
 }

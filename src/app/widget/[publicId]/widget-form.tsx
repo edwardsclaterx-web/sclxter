@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
+import type { WidgetTheme } from "@/lib/types";
 
 export function WidgetForm({
   publicId,
   welcome,
   assistantName,
+  theme,
 }: {
   publicId: string;
   welcome: string;
   assistantName: string;
+  theme?: WidgetTheme;
 }) {
   const endpoint =
     publicId === "sclxter"
@@ -33,6 +36,7 @@ export function WidgetForm({
   form.dataset.bound='1';
   var name=${JSON.stringify(assistantName)};
   var endpoint=${JSON.stringify(endpoint)};
+  var theme=${JSON.stringify(theme || null)};
   var history=[];
   var busy=false;
   function load(){
@@ -55,9 +59,20 @@ export function WidgetForm({
     who.className='mb-1 text-[10px] uppercase tracking-[0.16em] text-muted';
     who.textContent=role==='user'?'You':name;
     var body=document.createElement('p');
-    body.className=role==='user'
-      ? 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 bg-fg text-bg'
-      : 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 border border-line bg-surface';
+    body.className='inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6';
+    if(theme){
+      if(role==='user'){
+        body.style.background=theme.text;
+        body.style.color=theme.primary;
+      }else{
+        body.style.border='1px solid '+theme.outline;
+        body.style.color=theme.text;
+      }
+    }else{
+      body.className=role==='user'
+        ? 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 bg-fg text-bg'
+        : 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 border border-line bg-surface';
+    }
     body.textContent=text;
     wrap.appendChild(who); wrap.appendChild(body);
     if(welcome) welcome.style.display='none';
@@ -122,37 +137,60 @@ export function WidgetForm({
     new Function(boot)();
   }, [boot]);
 
+  const line = theme?.outline;
+  const ink = theme?.text;
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-3">
+    <div className="flex h-full flex-col" style={ink ? { color: ink } : undefined}>
+      <div
+        className={`mb-3 flex items-center justify-between gap-3 border-b pb-3 ${theme ? "" : "border-line"}`}
+        style={line ? { borderColor: line } : undefined}
+      >
         <p className="text-xs tracking-[0.16em]">Ask anything</p>
         <button
           id="wa-clear"
           type="button"
-          className="text-xs text-muted hover:text-fg"
+          className={`text-xs ${theme ? "opacity-70 hover:opacity-100" : "text-muted hover:text-fg"}`}
         >
           Clear chat
         </button>
       </div>
       <div id="wa-log" className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-        <p id="wa-welcome" className="text-sm leading-6 text-muted">
+        <p
+          id="wa-welcome"
+          className={`text-sm leading-6 ${theme ? "opacity-70" : "text-muted"}`}
+        >
           {welcome}
         </p>
       </div>
       <form
         id="wa-form"
-        className="mt-4 flex items-start gap-2 border-t border-line pt-4 pb-1"
+        className={`mt-4 flex items-start gap-2 border-t pt-4 pb-1 ${theme ? "" : "border-line"}`}
+        style={line ? { borderColor: line } : undefined}
       >
         <div className="min-w-0 flex-1">
           <input
             id="wa-input"
             name="message"
-            className="h-10 w-full border border-line bg-surface px-3 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
+            className={
+              theme
+                ? "h-10 w-full border px-3 text-sm outline-none"
+                : "h-10 w-full border border-line bg-surface px-3 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
+            }
+            style={
+              theme
+                ? {
+                    borderColor: theme.outline,
+                    background: theme.primary,
+                    color: theme.text,
+                  }
+                : undefined
+            }
             placeholder="Ask anything"
             aria-label="Ask anything"
             autoComplete="off"
           />
-          <p className="mt-1.5 text-[10px] leading-4 tracking-wide text-muted opacity-45">
+          <p className="mt-1.5 text-[10px] leading-4 tracking-wide opacity-45">
             powered by sclxter.com
           </p>
         </div>
@@ -165,10 +203,10 @@ export function WidgetForm({
             alignItems: "center",
             justifyContent: "center",
             padding: "0 16px",
-            border: 0,
+            border: theme ? `1px solid ${theme.outline}` : 0,
             borderRadius: 9999,
-            background: "#ffffff",
-            color: "#050505",
+            background: theme ? theme.primary : "#ffffff",
+            color: theme ? theme.text : "#050505",
             fontSize: 14,
             letterSpacing: "0.04em",
             cursor: "pointer",

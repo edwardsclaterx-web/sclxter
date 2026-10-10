@@ -21,7 +21,7 @@ export function DashHeader({
 
   return (
     <header className="flex items-center justify-between border-b border-line px-5 py-4 md:px-10">
-      <Wordmark href={admin ? "/dashboard/businesses" : "/dashboard"} />
+      <Wordmark href="/" />
       <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
         {admin && (
           <Link href="/dashboard/businesses" className="text-fg">

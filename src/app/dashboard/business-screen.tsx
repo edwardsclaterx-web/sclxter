@@ -30,6 +30,7 @@ type Props = {
   conversations: Convo[];
   leads: LeadRow[];
   instructions: string[];
+  asOf: number;
 };
 
 type Period = "day" | "week" | "month";
@@ -41,9 +42,8 @@ function formatStamp(iso: string) {
   return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
 }
 
-function within(iso: string, period: Period) {
+function within(iso: string, period: Period, now: number) {
   const t = new Date(iso).getTime();
-  const now = Date.now();
   const ms =
     period === "day"
       ? 24 * 60 * 60 * 1000
@@ -59,6 +59,7 @@ export function BusinessScreen({
   conversations,
   leads,
   instructions,
+  asOf,
 }: Props) {
   const router = useRouter();
   const seq = admin ? business.seq : undefined;
@@ -235,10 +236,10 @@ export function BusinessScreen({
   const snippet = `<script src="${origin || "https://your-host"}/embed.js" data-id="${business.publicId}" async></script>`;
 
   const convoCount = conversations.filter((c) =>
-    within(c.createdAt, period),
+    within(c.createdAt, period, asOf),
   ).length;
-  const leadCount = leads.filter((l) => within(l.createdAt, period)).length;
-  const periodLeads = leads.filter((l) => within(l.createdAt, period));
+  const leadCount = leads.filter((l) => within(l.createdAt, period, asOf)).length;
+  const periodLeads = leads.filter((l) => within(l.createdAt, period, asOf));
 
   const open = useMemo(
     () => conversations.find((c) => c.seq === openConvo) ?? null,

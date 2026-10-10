@@ -129,12 +129,18 @@ export default async function Home() {
               <p className="mt-4 text-sm leading-6 text-muted">
                 One site, one assistant, and an increase in customers.
               </p>
-              <Link
-                href="/signup"
-                className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
-              >
-                Buy
-              </Link>
+              {user ? (
+                <p className="mt-8 font-sans text-sm font-medium text-[#22c55e]">
+                  Owned
+                </p>
+              ) : (
+                <Link
+                  href="/signup"
+                  className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
+                >
+                  Buy
+                </Link>
+              )}
             </article>
           </div>
         </section>

@@ -50,6 +50,7 @@ export default async function DashboardPage() {
         message: l.message,
       }))}
       instructions={normalizeInstructions(data.settings?.instructions)}
+      asOf={Date.now()}
     />
   );
 }

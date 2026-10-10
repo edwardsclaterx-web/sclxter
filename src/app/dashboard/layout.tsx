@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
   return (
     <div className="flex min-h-full flex-col">
-      <DashHeader email={user.email} admin={isAdmin(user)} />
+      <DashHeader admin={isAdmin(user)} />
       {children}
     </div>
   );

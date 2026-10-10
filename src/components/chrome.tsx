@@ -58,6 +58,7 @@ export function ProductNav({
           )}
         </>
       )}
+      {signedIn || admin ? <Link href="/account">Sign out</Link> : null}
       {tail}
     </nav>
   );

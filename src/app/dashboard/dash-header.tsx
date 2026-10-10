@@ -24,9 +24,14 @@ export function DashHeader({
       <Wordmark href="/" />
       <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
         {admin && (
-          <Link href="/dashboard/businesses" className="text-fg">
-            Businesses
-          </Link>
+          <>
+            <Link href="/dashboard/businesses" className="text-fg">
+              Businesses
+            </Link>
+            <Link href="/dashboard/messages" className="text-fg">
+              Messages
+            </Link>
+          </>
         )}
         <span className="hidden sm:inline">{email}</span>
         <button type="button" onClick={() => void logout()} className="text-fg">

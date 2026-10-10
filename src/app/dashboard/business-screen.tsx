@@ -567,6 +567,14 @@ export function BusinessScreen({
       </div>
 
       <aside className="order-2 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
+        <div className="mb-3 flex justify-end">
+          <a
+            href="/contact#support"
+            className="text-xs text-muted hover:text-fg"
+          >
+            contact admin
+          </a>
+        </div>
         <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
         <p className="mt-2 text-sm text-muted">
           Same assistant visitors get, using this business’s notepad and

@@ -1,5 +1,9 @@
 import { SiteHeader } from "@/components/chrome";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
+import { findOwnerBusiness } from "@/lib/support";
+import { readStore } from "@/lib/store";
+import { OwnerSupport } from "./owner-support";
 
 export const metadata = { title: "Contact — sclxter" };
 
@@ -7,6 +11,10 @@ const EMAIL = "sclxter@outlook.com";
 
 export default async function ContactPage() {
   const user = await getSessionUser();
+  const data = user ? await readStore() : null;
+  const owned = Boolean(
+    user && !isAdmin(user) && data && findOwnerBusiness(user, data),
+  );
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader signedIn={Boolean(user)} showPricing={false} />
@@ -18,6 +26,7 @@ export default async function ContactPage() {
         >
           {EMAIL}
         </a>
+        {owned && <OwnerSupport />}
       </main>
     </div>
   );

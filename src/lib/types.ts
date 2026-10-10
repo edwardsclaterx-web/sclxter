@@ -77,12 +77,33 @@ export type StoreSettings = {
   instructions: string[];
 };
 
+export type SupportRole = "owner" | "admin";
+
+export type SupportMessage = {
+  id: string;
+  from: SupportRole;
+  content: string;
+  createdAt: string;
+};
+
+export type SupportThread = {
+  id: string;
+  businessId: string;
+  ownerId: string;
+  messages: SupportMessage[];
+  ownerUnread: number;
+  adminUnread: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoreData = {
   users: User[];
   businesses: Business[];
   knowledge: KnowledgeItem[];
   leads: Lead[];
   conversations: Conversation[];
+  supportThreads: SupportThread[];
   settings: StoreSettings;
 };
 

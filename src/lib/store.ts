@@ -14,6 +14,7 @@ const empty = (): StoreData => ({
   knowledge: [],
   leads: [],
   conversations: [],
+  supportThreads: [],
   settings: { instructions: normalizeInstructions(null) },
 });
 
@@ -69,6 +70,16 @@ function normalize(data: StoreData): StoreData {
     conversationId: l.conversationId ?? null,
   }));
   data.conversations = data.conversations ?? [];
+  data.supportThreads = (data.supportThreads ?? []).map((t) => ({
+    id: t.id,
+    businessId: t.businessId,
+    ownerId: t.ownerId,
+    messages: Array.isArray(t.messages) ? t.messages : [],
+    ownerUnread: typeof t.ownerUnread === "number" ? t.ownerUnread : 0,
+    adminUnread: typeof t.adminUnread === "number" ? t.adminUnread : 0,
+    createdAt: t.createdAt,
+    updatedAt: t.updatedAt,
+  }));
   data.settings = {
     instructions: normalizeInstructions(data.settings?.instructions),
   };
@@ -105,6 +116,7 @@ function readDisk(): StoreData {
       knowledge: parsed.knowledge ?? [],
       leads: parsed.leads ?? [],
       conversations: parsed.conversations ?? [],
+      supportThreads: parsed.supportThreads ?? [],
       settings: parsed.settings ?? { instructions: [] },
     });
   } catch {
@@ -126,6 +138,7 @@ export async function readStore(): Promise<StoreData> {
       writeDisk(cache);
     } else {
       ensureDemoIndustry(cache);
+      cache.supportThreads = cache.supportThreads ?? [];
     }
     return cache;
   });
@@ -140,6 +153,7 @@ export async function updateStore<T>(
       seedIfEmpty(cache);
       cache = normalize(cache);
     }
+    cache.supportThreads = cache.supportThreads ?? [];
     const result = fn(cache);
     writeDisk(cache);
     return result;

@@ -61,10 +61,6 @@ textarea {
   resize: vertical;
 }
 
-.nav-current {
-  border-bottom: 1px solid #ffffff;
-}
-
 #northgate-ask-btn,
 #sclxter-site-ask-btn {
   appearance: none !important;

@@ -13,9 +13,7 @@ export function Wordmark({ href = "/" }: { href?: string }) {
 }
 
 function navClass(className?: string, active?: boolean) {
-  return [className, active ? "nav-current px-1 -mx-1 pb-1.5" : null]
-    .filter(Boolean)
-    .join(" ");
+  return [className, active ? "text-fg" : null].filter(Boolean).join(" ");
 }
 
 export function ProductNav({

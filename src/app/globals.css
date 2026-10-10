@@ -23,6 +23,11 @@
   --font-sans: var(--font-inter);
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 html,
 body {
   background: var(--bg);

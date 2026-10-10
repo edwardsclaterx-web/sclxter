@@ -6,11 +6,14 @@ import { readStore } from "@/lib/store";
 import { toClientBusiness } from "@/lib/access";
 import { normalizeInstructions } from "@/lib/instructions";
 import { BusinessScreen } from "./business-screen";
+import { ClientGo } from "./client-go";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (isAdmin(user)) redirect("/dashboard/businesses");
+  if (isAdmin(user)) {
+    return <ClientGo href="/dashboard/businesses" />;
+  }
 
   let biz = await getOwnedBusiness(user);
   if (!biz) {

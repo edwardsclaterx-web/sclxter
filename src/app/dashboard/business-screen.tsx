@@ -566,8 +566,8 @@ export function BusinessScreen({
         </section>
       </div>
 
-      <aside className="order-2 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
-        <div className="mb-3 flex justify-end">
+      <aside className="order-2 flex flex-col gap-4 lg:sticky lg:top-8 lg:order-3 lg:max-h-[calc(100vh-6rem)]">
+        <div className="flex justify-end border border-line px-5 py-3">
           <a
             href="/contact#support"
             className="text-xs text-muted hover:text-fg"
@@ -575,25 +575,27 @@ export function BusinessScreen({
             contact admin
           </a>
         </div>
-        <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
-        <p className="mt-2 text-sm text-muted">
-          Same assistant visitors get, using this business’s notepad and
-          tone. It will not chat until name, URL, industry, and at least one
-          contact field are filled.
-        </p>
-        <div className="mt-4 flex min-h-[20rem] flex-1 flex-col">
-          <ChatPanel
-            endpoint="/api/chat/test"
-            extraBody={admin && typeof seq === "number" ? { seq } : {}}
-            blocked={testBlocked}
-            welcome="Ask using the notepad and tone saved for this business."
-            assistantName="Assistant"
-            title="Test AI"
-            theme={theme}
-            clearable
-            compact
-            showLead={false}
-          />
+        <div className="flex min-h-[32rem] flex-1 flex-col border border-line p-5 lg:min-h-0">
+          <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
+          <p className="mt-2 text-sm text-muted">
+            Same assistant visitors get, using this business’s notepad and
+            tone. It will not chat until name, URL, industry, and at least one
+            contact field are filled.
+          </p>
+          <div className="mt-4 flex min-h-[20rem] flex-1 flex-col">
+            <ChatPanel
+              endpoint="/api/chat/test"
+              extraBody={admin && typeof seq === "number" ? { seq } : {}}
+              blocked={testBlocked}
+              welcome="Ask using the notepad and tone saved for this business."
+              assistantName="Assistant"
+              title="Test AI"
+              theme={theme}
+              clearable
+              compact
+              showLead={false}
+            />
+          </div>
         </div>
       </aside>
       </div>

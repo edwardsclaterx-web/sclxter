@@ -42,71 +42,76 @@ export function ThemePicker({
         Colours for this business’s live widget. Text and primary cannot be
         the same. Outline may match either.
       </p>
-      <div className="mt-5 space-y-2">
-        {ROWS.map((row) => {
-          const shown = open === row.key;
-          return (
-            <div key={row.key}>
+      <div className="mt-5">
+        <div className="flex flex-wrap gap-2">
+          {ROWS.map((row) => {
+            const shown = open === row.key;
+            return (
               <button
+                key={row.key}
                 type="button"
                 onClick={() => setOpen(shown ? null : row.key)}
-                className="text-sm text-fg"
+                className="inline-flex items-center gap-2 border border-white px-3 py-1.5 text-sm text-fg"
               >
                 {row.label}
+                <span aria-hidden className="text-xs leading-none text-muted">
+                  ▾
+                </span>
               </button>
-              {shown && (
-                <div className="mt-2 border border-line bg-surface p-4">
-                  <div className="flex flex-wrap gap-2">
-                    {WIDGET_COLORS.map((c) => {
-                      const selected = theme[row.key] === c;
-                      const blocked =
-                        (row.key === "primary" && c === theme.text) ||
-                        (row.key === "text" && c === theme.primary);
-                      return (
-                        <button
-                          key={`${row.key}-${c}`}
-                          type="button"
-                          disabled={blocked}
-                          aria-label={`${row.label} ${c}`}
-                          aria-pressed={selected}
-                          title={
-                            blocked
-                              ? "Text and primary must be different colours."
-                              : c
-                          }
-                          onClick={() => pick(row.key, c)}
-                          className={`relative h-8 w-8 border ${
-                            selected ? "border-fg" : "border-line"
-                          } ${blocked ? "cursor-not-allowed opacity-30" : ""}`}
-                          style={{ background: c }}
-                        >
-                          {selected && (
-                            <svg
-                              viewBox="0 0 16 16"
-                              width="14"
-                              height="14"
-                              className="absolute inset-0 m-auto"
-                              aria-hidden
-                            >
-                              <path
-                                d="M3 8.2l3.2 3.2L13 4.4"
-                                fill="none"
-                                stroke={tickOn(c)}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            );
+          })}
+        </div>
+        {open && (
+          <div className="mt-2 border border-line bg-surface p-4">
+            <div className="flex flex-wrap gap-2">
+              {WIDGET_COLORS.map((c) => {
+                const selected = theme[open] === c;
+                const blocked =
+                  (open === "primary" && c === theme.text) ||
+                  (open === "text" && c === theme.primary);
+                const row = ROWS.find((r) => r.key === open);
+                return (
+                  <button
+                    key={`${open}-${c}`}
+                    type="button"
+                    disabled={blocked}
+                    aria-label={`${row?.label ?? open} ${c}`}
+                    aria-pressed={selected}
+                    title={
+                      blocked
+                        ? "Text and primary must be different colours."
+                        : c
+                    }
+                    onClick={() => pick(open, c)}
+                    className={`relative h-8 w-8 border ${
+                      selected ? "border-fg" : "border-line"
+                    } ${blocked ? "cursor-not-allowed opacity-30" : ""}`}
+                    style={{ background: c }}
+                  >
+                    {selected && (
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="14"
+                        height="14"
+                        className="absolute inset-0 m-auto"
+                        aria-hidden
+                      >
+                        <path
+                          d="M3 8.2l3.2 3.2L13 4.4"
+                          fill="none"
+                          stroke={tickOn(c)}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        )}
       </div>
       {error && <p className="mt-3 text-sm text-muted">{error}</p>}
     </section>

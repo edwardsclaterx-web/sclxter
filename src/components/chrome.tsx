@@ -12,8 +12,10 @@ export function Wordmark({ href = "/" }: { href?: string }) {
   );
 }
 
-function navHref(href: string, className?: string, active?: boolean) {
-  return `${className ?? ""} border-b ${active ? "border-fg" : "border-transparent"}`.trim();
+function navClass(className?: string, active?: boolean) {
+  return [className, active ? "border-b border-fg px-1 -mx-1" : null]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function ProductNav({
@@ -51,22 +53,22 @@ export function ProductNav({
   return (
     <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
       {showHome && (
-        <Link href="/" className={navHref("/", undefined, onHome)}>
+        <Link href="/" className={navClass(undefined, onHome)}>
           Home
         </Link>
       )}
       {showPricing && (
-        <Link href="/#pricing" className={navHref("/#pricing")}>
+        <Link href="/#pricing" className={navClass()}>
           Pricing
         </Link>
       )}
-      <Link href="/demo" className={navHref("/demo", undefined, onDemo)}>
+      <Link href="/demo" className={navClass(undefined, onDemo)}>
         Demo
       </Link>
-      <Link href="/faq" className={navHref("/faq", undefined, onFaq)}>
+      <Link href="/faq" className={navClass(undefined, onFaq)}>
         FAQ
       </Link>
-      <Link href="/contact" className={navHref("/contact", undefined, onContact)}>
+      <Link href="/contact" className={navClass(undefined, onContact)}>
         Contact
       </Link>
       {extra}
@@ -74,13 +76,13 @@ export function ProductNav({
         <>
           <Link
             href="/dashboard/businesses"
-            className={navHref("/dashboard/businesses", undefined, onBusinesses)}
+            className={navClass(undefined, onBusinesses)}
           >
             Businesses
           </Link>
           <Link
             href="/dashboard/messages"
-            className={navHref("/dashboard/messages", undefined, onMessages)}
+            className={navClass(undefined, onMessages)}
           >
             Messages
           </Link>
@@ -88,19 +90,19 @@ export function ProductNav({
       ) : signedIn ? (
         <Link
           href="/dashboard"
-          className={navHref("/dashboard", "text-fg", onMyDash)}
+          className={navClass("text-fg", onMyDash)}
         >
           My dashboard
         </Link>
       ) : (
         <>
-          <Link href="/login" className={navHref("/login", undefined, onLogin)}>
+          <Link href="/login" className={navClass(undefined, onLogin)}>
             Sign in
           </Link>
           {showBuy && (
             <Link
               href="/signup"
-              className={navHref("/signup", "text-fg", onSignup)}
+              className={navClass("text-fg", onSignup)}
             >
               Buy
             </Link>
@@ -108,7 +110,7 @@ export function ProductNav({
         </>
       )}
       {signedIn || admin ? (
-        <Link href="/account" className={navHref("/account", undefined, onAccount)}>
+        <Link href="/account" className={navClass(undefined, onAccount)}>
           Sign out
         </Link>
       ) : null}

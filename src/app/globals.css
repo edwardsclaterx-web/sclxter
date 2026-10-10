@@ -61,6 +61,21 @@ textarea {
   resize: vertical;
 }
 
+a.nav-item {
+  display: inline;
+  position: static;
+  padding: 0;
+  margin: 0;
+  border: none;
+  line-height: inherit;
+  transform: none;
+  vertical-align: baseline;
+}
+
+a.nav-item.here {
+  color: #ffffff;
+}
+
 #northgate-ask-btn,
 #sclxter-site-ask-btn {
   appearance: none !important;

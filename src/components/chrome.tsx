@@ -13,7 +13,7 @@ export function Wordmark({ href = "/" }: { href?: string }) {
 }
 
 function navClass(className?: string, active?: boolean) {
-  return [className, active ? "text-fg" : null].filter(Boolean).join(" ");
+  return ["nav-item", className, active ? "here" : null].filter(Boolean).join(" ");
 }
 
 export function ProductNav({
@@ -49,7 +49,7 @@ export function ProductNav({
     (pathname.startsWith("/dashboard/") && !onMessages && !onBusinesses);
 
   return (
-    <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
+    <nav className="flex flex-wrap items-baseline justify-end gap-x-6 gap-y-2 text-sm text-muted">
       {showHome && (
         <Link href="/" className={navClass(undefined, onHome)}>
           Home

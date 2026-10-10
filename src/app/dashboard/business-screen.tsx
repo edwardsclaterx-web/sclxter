@@ -524,7 +524,7 @@ export function BusinessScreen({
           >
             Copy snippet
           </Button>
-          <EmbedGuide />
+          <EmbedGuide snippet={snippet} />
         </section>
       </div>
 

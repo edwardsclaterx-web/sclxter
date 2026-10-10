@@ -600,12 +600,16 @@ export function BusinessScreen({
                 type="button"
                 tabIndex={-1}
                 aria-label="Preview widget"
-                className="inline-flex h-[52px] min-w-[52px] items-center justify-center overflow-hidden px-7 text-sm font-semibold tracking-[0.06em] [border-radius:16px]"
+                className="inline-flex h-[52px] min-w-[52px] items-center justify-center px-7 text-sm font-semibold tracking-[0.06em]"
                 style={{
+                  boxSizing: "border-box",
                   background: theme.primary,
+                  backgroundClip: "padding-box",
                   color: theme.text,
-                  border: `1px solid ${theme.outline}`,
+                  border: `2px solid ${theme.outline}`,
+                  borderRadius: 20,
                   appearance: "none",
+                  overflow: "visible",
                 }}
               >
                 Ask anything

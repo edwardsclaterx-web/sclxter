@@ -123,12 +123,12 @@ export function ChatPanel({
 
   return (
     <div
-      className={`flex flex-col ${compact ? "h-full" : "h-[28rem]"}`}
+      className={`flex min-h-0 flex-col ${compact ? "h-full" : "h-[28rem]"}`}
       style={themed ? { color: ink, background: box } : undefined}
     >
       {(title || clearable) && (
         <div
-          className="mb-3 flex items-center justify-between gap-3 border-b pb-3"
+          className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b pb-3"
           style={themed ? { borderColor: line } : undefined}
         >
           <p className="text-xs tracking-[0.16em]">{title || "Ask anything"}</p>
@@ -187,7 +187,7 @@ export function ChatPanel({
       </div>
 
       <form
-        className="mt-4 flex gap-2 border-t pt-4"
+        className="mt-auto flex shrink-0 items-center gap-2 border-t pt-4"
         style={themed ? { borderColor: line } : undefined}
         onSubmit={(e) => {
           e.preventDefault();
@@ -206,13 +206,14 @@ export function ChatPanel({
           placeholder="Ask anything"
           aria-label="Ask anything"
           disabled={Boolean(blocked)}
-          className={themed ? "bg-transparent" : undefined}
+          className={`h-10 min-h-10 max-h-10 ${themed ? "bg-transparent" : ""}`}
           style={themed ? { borderColor: line, color: ink } : undefined}
         />
         <Button
           type="submit"
           aria-busy={busy}
           disabled={Boolean(blocked) || busy}
+          className="h-10 min-h-10 max-h-10 shrink-0"
           style={
             themed
               ? {

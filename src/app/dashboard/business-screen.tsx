@@ -603,7 +603,7 @@ export function BusinessScreen({
                 className="inline-flex h-[52px] min-w-[52px] items-center justify-center px-7 text-sm font-semibold tracking-[0.06em]"
                 style={{
                   boxSizing: "border-box",
-                  background: theme.primary,
+                  backgroundColor: theme.primary,
                   backgroundClip: "padding-box",
                   color: theme.text,
                   border: `2px solid ${theme.outline}`,

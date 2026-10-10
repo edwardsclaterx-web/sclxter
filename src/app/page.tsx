@@ -17,7 +17,9 @@ export default async function Home() {
           <div className="mx-auto w-full max-w-3xl px-5 py-20 md:px-8 md:py-28">
             <p className="text-xs tracking-[0.22em] text-muted">sclxter</p>
             <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight md:text-6xl">
-              The most advanced AI assistant
+              The most advanced
+              <br />
+              AI assistant
             </h1>
             <p className="mt-3 text-sm text-muted">for independent businesses</p>
             <p className="mt-6 max-w-xl text-base leading-7 text-muted">

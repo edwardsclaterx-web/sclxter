@@ -593,6 +593,25 @@ export function BusinessScreen({
               showLead={false}
             />
           </div>
+          <div className="mt-4 shrink-0 border-t border-line pt-4">
+            <p className="text-sm text-fg">Preview widget</p>
+            <div className="mt-3">
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label="Preview widget"
+                className="inline-flex h-[52px] min-w-[52px] items-center justify-center overflow-hidden px-7 text-sm font-semibold tracking-[0.06em] [border-radius:16px]"
+                style={{
+                  background: theme.primary,
+                  color: theme.text,
+                  border: `1px solid ${theme.outline}`,
+                  appearance: "none",
+                }}
+              >
+                Ask anything
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
       </div>

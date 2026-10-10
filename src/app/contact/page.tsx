@@ -26,7 +26,17 @@ export default async function ContactPage() {
         >
           {EMAIL}
         </a>
-        {owned && <OwnerSupport />}
+        {owned ? (
+          <OwnerSupport />
+        ) : (
+          <p className="mt-8 max-w-2xl text-sm leading-6 text-muted">
+            Purchasing a sclxter assistant also unlocks a priority chat within
+            the website. This chat is between only real people, (no AI&apos;s),
+            and will be there to assist you if you have any enquiries or
+            problems after purchasing a sclxter assistant. Feel free to email,
+            but this is an alternative and better way of messaging.
+          </p>
+        )}
       </main>
     </div>
   );

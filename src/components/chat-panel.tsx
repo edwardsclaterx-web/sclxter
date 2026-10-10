@@ -123,12 +123,12 @@ export function ChatPanel({
 
   return (
     <div
-      className={`flex min-h-0 flex-col ${compact ? "h-full" : "h-[28rem]"}`}
+      className={`flex min-h-0 flex-col overflow-visible ${compact ? "h-full" : "h-[28rem]"}`}
       style={themed ? { color: ink, background: box } : undefined}
     >
       {(title || clearable) && (
         <div
-          className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b pb-3"
+          className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b px-0.5 pb-3"
           style={themed ? { borderColor: line } : undefined}
         >
           <p className="text-xs tracking-[0.16em]">{title || "Ask anything"}</p>
@@ -187,7 +187,7 @@ export function ChatPanel({
       </div>
 
       <form
-        className="mt-auto flex shrink-0 items-center gap-2 border-t pt-4"
+        className="mt-auto flex min-w-0 shrink-0 items-center gap-2 border-t pt-4"
         style={themed ? { borderColor: line } : undefined}
         onSubmit={(e) => {
           e.preventDefault();
@@ -198,17 +198,23 @@ export function ChatPanel({
           void send(v);
         }}
       >
-        <Input
-          name="message"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onInput={(e) => setText((e.target as HTMLInputElement).value)}
-          placeholder="Ask anything"
-          aria-label="Ask anything"
-          disabled={Boolean(blocked)}
-          className={`h-10 min-h-10 max-h-10 ${themed ? "bg-transparent" : ""}`}
-          style={themed ? { borderColor: line, color: ink } : undefined}
-        />
+        <div className="min-w-0 flex-1">
+          <Input
+            name="message"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onInput={(e) => setText((e.target as HTMLInputElement).value)}
+            placeholder="Ask anything"
+            aria-label="Ask anything"
+            disabled={Boolean(blocked)}
+            className={`box-border h-10 min-h-10 max-h-10 ${themed ? "bg-transparent" : ""}`}
+            style={{
+              paddingLeft: 16,
+              paddingRight: 16,
+              ...(themed ? { borderColor: line, color: ink } : {}),
+            }}
+          />
+        </div>
         <Button
           type="submit"
           aria-busy={busy}

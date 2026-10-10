@@ -12,6 +12,10 @@ export function Wordmark({ href = "/" }: { href?: string }) {
   );
 }
 
+function navHref(href: string, className?: string, active?: boolean) {
+  return `${className ?? ""} border-b ${active ? "border-fg" : "border-transparent"}`.trim();
+}
+
 export function ProductNav({
   signedIn,
   admin,
@@ -30,35 +34,84 @@ export function ProductNav({
   const pathname = usePathname() || "/";
   const onHome = pathname === "/";
   const showHome = !onHome && !admin;
+  const onDemo = pathname === "/demo" || pathname.startsWith("/demo/");
+  const onFaq = pathname === "/faq";
+  const onContact = pathname === "/contact";
+  const onLogin = pathname === "/login";
+  const onSignup = pathname === "/signup";
+  const onAccount = pathname === "/account";
+  const onMessages = pathname === "/dashboard/messages" || pathname.startsWith("/dashboard/messages/");
+  const onBusinesses =
+    pathname === "/dashboard/businesses" ||
+    pathname.startsWith("/dashboard/businesses/");
+  const onMyDash =
+    pathname === "/dashboard" ||
+    (pathname.startsWith("/dashboard/") && !onMessages && !onBusinesses);
 
   return (
     <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
-      {showHome && <Link href="/">Home</Link>}
-      {showPricing && <Link href="/#pricing">Pricing</Link>}
-      <Link href="/demo">Demo</Link>
-      <Link href="/faq">FAQ</Link>
-      <Link href="/contact">Contact</Link>
+      {showHome && (
+        <Link href="/" className={navHref("/", undefined, onHome)}>
+          Home
+        </Link>
+      )}
+      {showPricing && (
+        <Link href="/#pricing" className={navHref("/#pricing")}>
+          Pricing
+        </Link>
+      )}
+      <Link href="/demo" className={navHref("/demo", undefined, onDemo)}>
+        Demo
+      </Link>
+      <Link href="/faq" className={navHref("/faq", undefined, onFaq)}>
+        FAQ
+      </Link>
+      <Link href="/contact" className={navHref("/contact", undefined, onContact)}>
+        Contact
+      </Link>
       {extra}
       {admin ? (
         <>
-          <Link href="/dashboard/businesses">Businesses</Link>
-          <Link href="/dashboard/messages">Messages</Link>
+          <Link
+            href="/dashboard/businesses"
+            className={navHref("/dashboard/businesses", undefined, onBusinesses)}
+          >
+            Businesses
+          </Link>
+          <Link
+            href="/dashboard/messages"
+            className={navHref("/dashboard/messages", undefined, onMessages)}
+          >
+            Messages
+          </Link>
         </>
       ) : signedIn ? (
-        <Link href="/dashboard" className="text-fg">
+        <Link
+          href="/dashboard"
+          className={navHref("/dashboard", "text-fg", onMyDash)}
+        >
           My dashboard
         </Link>
       ) : (
         <>
-          <Link href="/login">Sign in</Link>
+          <Link href="/login" className={navHref("/login", undefined, onLogin)}>
+            Sign in
+          </Link>
           {showBuy && (
-            <Link href="/signup" className="text-fg">
+            <Link
+              href="/signup"
+              className={navHref("/signup", "text-fg", onSignup)}
+            >
               Buy
             </Link>
           )}
         </>
       )}
-      {signedIn || admin ? <Link href="/account">Sign out</Link> : null}
+      {signedIn || admin ? (
+        <Link href="/account" className={navHref("/account", undefined, onAccount)}>
+          Sign out
+        </Link>
+      ) : null}
       {tail}
     </nav>
   );

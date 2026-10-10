@@ -1,12 +1,19 @@
 import Link from "next/link";
+import { SiteHeader } from "@/components/chrome";
+import { isAdmin } from "@/lib/access";
+import { getSessionUser } from "@/lib/auth";
 
-export function BarberHeader() {
+export async function BarberHeader() {
+  const user = await getSessionUser();
   return (
-    <header className="flex items-center justify-between border-b border-line px-5 py-4 md:px-10">
-      <Link href="/demo" className="text-sm tracking-[0.22em]">
-        NORTHGATE
-      </Link>
-    </header>
+    <div>
+      <SiteHeader
+        signedIn={Boolean(user)}
+        admin={Boolean(user && isAdmin(user))}
+        showPricing={false}
+      />
+      <p className="px-5 pt-4 text-sm tracking-[0.22em] md:px-10">NORTHGATE</p>
+    </div>
   );
 }
 

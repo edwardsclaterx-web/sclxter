@@ -29,7 +29,7 @@ const TYPES: Guide[] = [
   {
     name: "WordPress",
     intro:
-      "You need to be logged in as an administrator. The safest path is a header-and-footer plugin so a theme update does not wipe the code.",
+      "You need to be signed in as an administrator. The safest path is a header-and-footer plugin so a theme update does not wipe the code.",
     steps: [
       "Copy the code in the box below in one piece. The data-id belongs to this business.",
       "In WordPress, open Plugins → Add New. Search for “WPCode” or “Insert Headers and Footers”. Install and Activate one of those.",
@@ -37,11 +37,11 @@ const TYPES: Guide[] = [
       "Paste the code into that footer box. Save or Update.",
       "If you would rather edit the theme: Appearance → Theme File Editor → footer.php. Find </body> and paste the same code just above it, then click Update File. A plugin is safer.",
       "If you use Elementor, Divi, or another page builder that replaces the footer, open that builder’s Theme Builder / Footer / Custom code area and paste the same code there instead of footer.php.",
-      "Clear cache if you use WP Rocket, LiteSpeed, Cloudflare, or a host cache button. Then log out of WordPress (or open a private window).",
+      "Clear cache if you use WP Rocket, LiteSpeed, Cloudflare, or a host cache button. Then sign out of WordPress (or open a private window).",
       "Visit the public homepage. You should see Ask anything at the bottom. Click it and send a test question.",
     ],
     check:
-      "If the button is missing, purge cache again and view the site logged out. After a theme update, open the plugin and confirm the code is still in the footer box.",
+      "If the button is missing, purge cache again and view the site signed out. After a theme update, open the plugin and confirm the code is still in the footer box.",
   },
   {
     name: "Squarespace",
@@ -49,7 +49,7 @@ const TYPES: Guide[] = [
       "Code injection has to be on a Squarespace plan that includes it (Business and above on most sites). You need to be the site owner or an admin.",
     steps: [
       "Copy the code in the box below. Keep the data-id as it is — that is this business’s assistant.",
-      "Log in to Squarespace and open this website.",
+      "Sign in to Squarespace and open this website.",
       "Click Settings (the gear). Open Developer tools, then Code injection. On some sites the path is Settings → Advanced → Code injection.",
       "Find the Footer box. Click in it and paste the code. Leave Header empty unless you already use it for something else.",
       "Click Save.",
@@ -66,7 +66,7 @@ const TYPES: Guide[] = [
       "You need a Wix plan that allows Custom code, and you must Publish — the editor preview often hides the button.",
     steps: [
       "Copy the code in the box below, including the data-id for this business.",
-      "Log in to Wix and open this site.",
+      "Sign in to Wix and open this site.",
       "Click Settings in the left menu. Open Custom code (sometimes under Advanced → Custom code).",
       "Click Add code. Name it Ask anything so you can find it later.",
       "Paste the code into the Code snippet box.",

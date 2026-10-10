@@ -139,7 +139,7 @@ export default async function Home() {
                 </p>
               ) : (
                 <Link
-                  href="/signup"
+                  href="/buy"
                   className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"
                 >
                   Buy

@@ -81,7 +81,7 @@ export function AccountPanel({
         </div>
       </div>
       <button type="button" onClick={() => setAsk(true)} className="text-sm text-fg">
-        Log out
+        Sign out
       </button>
       {ask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/40">

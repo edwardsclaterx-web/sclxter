@@ -25,6 +25,8 @@ function skipPath() {
     p.indexOf("/login/") === 0 ||
     p === "/signup" ||
     p.indexOf("/signup/") === 0 ||
+    p === "/buy" ||
+    p.indexOf("/buy/") === 0 ||
     p === "/in" ||
     p.indexOf("/in/") === 0
   );

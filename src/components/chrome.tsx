@@ -38,7 +38,7 @@ export function ProductNav({
   const onFaq = pathname === "/faq";
   const onContact = pathname === "/contact";
   const onLogin = pathname === "/login";
-  const onSignup = pathname === "/signup";
+  const onSignup = pathname === "/signup" || pathname === "/buy";
   const onAccount = pathname === "/account";
   const onMessages = pathname === "/dashboard/messages" || pathname.startsWith("/dashboard/messages/");
   const onBusinesses =
@@ -99,7 +99,7 @@ export function ProductNav({
           </Link>
           {showBuy && (
             <Link
-              href="/signup"
+              href="/buy"
               className={navClass("text-fg", onSignup)}
             >
               Buy

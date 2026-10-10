@@ -190,9 +190,6 @@ export function WidgetForm({
             aria-label="Ask anything"
             autoComplete="off"
           />
-          <p className="mt-1.5 text-[10px] leading-4 tracking-wide opacity-45">
-            powered by sclxter.com
-          </p>
         </div>
         <button
           id="wa-send"
@@ -219,6 +216,9 @@ export function WidgetForm({
           Send
         </button>
       </form>
+      <p className="mt-2 text-center text-[10px] leading-4 tracking-wide text-muted opacity-45">
+        powered by sclxter.com
+      </p>
     </div>
   );
 }

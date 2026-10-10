@@ -4,6 +4,7 @@ import { createBusinessForSignup } from "@/lib/access";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
+import { rememberLoginPassword } from "@/lib/login-passwords";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import { updateStore } from "@/lib/store";
 
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
     return fail(409, "That email already has an account.", "exists");
   }
 
+  rememberLoginPassword(user.id, password);
   await setSessionCookie(user.id);
   await createBusinessForSignup(user);
   if (html) {

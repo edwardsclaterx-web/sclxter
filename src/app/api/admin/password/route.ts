@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, hashPassword } from "@/lib/auth";
 import { isAdmin, resolveBusiness } from "@/lib/access";
+import { rememberLoginPassword } from "@/lib/login-passwords";
 import { updateStore } from "@/lib/store";
 
 export async function POST(request: Request) {
@@ -30,5 +31,6 @@ export async function POST(request: Request) {
     return true;
   });
   if (!ok) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  rememberLoginPassword(biz.ownerId, password);
   return NextResponse.json({ ok: true });
 }

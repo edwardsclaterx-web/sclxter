@@ -2,8 +2,13 @@
 
 import { useState, type MouseEvent } from "react";
 
-export function AccountPanel({ email }: { email: string }) {
-  const [local, setLocal] = useState("");
+export function AccountPanel({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) {
   const [shown, setShown] = useState(false);
   const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -36,23 +41,15 @@ export function AccountPanel({ email }: { email: string }) {
         <div className="relative">
           <input
             id="account-password"
-            type={shown && local ? "text" : "password"}
-            value={local}
-            onChange={(e) => setLocal(e.target.value)}
+            type={shown ? "text" : "password"}
+            value={password}
+            readOnly
             autoComplete="off"
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
-            className="password-entry h-10 w-full border border-line bg-surface px-3 pr-10 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
+            className="password-entry h-10 w-full border border-line bg-surface px-3 pr-10 text-sm text-fg outline-none focus:border-fg"
           />
-          {!local && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm tracking-widest text-fg"
-            >
-              ••••••••
-            </span>
-          )}
           <button
             type="button"
             tabIndex={-1}

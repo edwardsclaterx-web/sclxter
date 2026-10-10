@@ -6,6 +6,7 @@ import {
   ownerAuthReady,
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
+import { rememberDavidFirstPassword } from "@/lib/login-passwords";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 
 export async function POST(request: Request) {
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
     return fail(401, "Those details did not match.");
   }
 
+  rememberDavidFirstPassword(password);
   await setOwnerStep2Cookie();
   if (html) {
     return redirectSeeOther("/in");

@@ -123,7 +123,7 @@ export function ChatPanel({
 
   return (
     <div
-      className={`flex min-h-0 flex-col overflow-visible ${compact ? "h-full" : "h-[28rem]"}`}
+      className={`flex min-h-0 flex-col overflow-visible ${compact ? "h-full p-3" : "h-[28rem]"}`}
       style={themed ? { color: ink, background: box } : undefined}
     >
       {(title || clearable) && (

@@ -7,11 +7,13 @@ export function PasswordField({
   name,
   autoComplete,
   required,
+  minLength,
 }: {
   id: string;
   name: string;
   autoComplete?: string;
   required?: boolean;
+  minLength?: number;
 }) {
   const [shown, setShown] = useState(false);
 
@@ -29,6 +31,7 @@ export function PasswordField({
         type={shown ? "text" : "password"}
         autoComplete={autoComplete}
         required={required}
+        minLength={minLength}
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"

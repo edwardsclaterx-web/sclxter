@@ -1,71 +1,48 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
 import { FieldError } from "@/components/chrome";
+import { PasswordField } from "@/components/password-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/auth/${mode}`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        setError(data.error || "That did not work.");
-        return;
-      }
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
-      setError("Could not reach the server.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
+export function AuthForm({
+  mode,
+  error,
+}: {
+  mode: "login" | "signup";
+  error?: string | null;
+}) {
+  const signup = mode === "signup";
   return (
-    <form onSubmit={onSubmit} className="mt-8 space-y-5">
+    <form
+      method="post"
+      action={signup ? "/api/auth/signup" : "/api/auth/login"}
+      encType="application/x-www-form-urlencoded"
+      className="mt-8 space-y-5"
+      autoComplete="on"
+    >
       <div>
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
+          name="email"
           type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="username"
           required
         />
       </div>
       <div>
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordField
           id="password"
-          type="password"
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={mode === "signup" ? 8 : undefined}
+          name="password"
+          autoComplete={signup ? "new-password" : "current-password"}
+          minLength={signup ? 8 : undefined}
           required
         />
       </div>
       <FieldError>{error}</FieldError>
-      <Button type="submit" disabled={busy} className="w-full">
-        {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+      <Button type="submit" className="w-full">
+        {signup ? "Create account" : "Sign in"}
       </Button>
     </form>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/chrome";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function Home() {
@@ -8,6 +9,7 @@ export default async function Home() {
     <div className="flex min-h-full flex-col">
       <SiteHeader
         signedIn={Boolean(user)}
+        admin={Boolean(user && isAdmin(user))}
         lowercase
         showPricing={false}
         showBuy={false}

@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Wordmark({ href = "/" }: { href?: string }) {
   return (
@@ -11,25 +14,39 @@ export function Wordmark({ href = "/" }: { href?: string }) {
 
 export function ProductNav({
   signedIn,
+  admin,
   extra,
+  tail,
   showPricing = true,
   showBuy = true,
 }: {
   signedIn?: boolean;
+  admin?: boolean;
   extra?: ReactNode;
+  tail?: ReactNode;
   showPricing?: boolean;
   showBuy?: boolean;
 }) {
+  const pathname = usePathname() || "/";
+  const onHome = pathname === "/";
+  const showHome = !onHome && !admin;
+
   return (
     <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm text-muted">
+      {showHome && <Link href="/">Home</Link>}
       {showPricing && <Link href="/#pricing">Pricing</Link>}
       <Link href="/demo">Demo</Link>
       <Link href="/faq">FAQ</Link>
       <Link href="/contact">Contact</Link>
       {extra}
-      {signedIn ? (
+      {admin ? (
+        <>
+          <Link href="/dashboard/businesses">Businesses</Link>
+          <Link href="/dashboard/messages">Messages</Link>
+        </>
+      ) : signedIn ? (
         <Link href="/dashboard" className="text-fg">
-          Dashboard
+          My dashboard
         </Link>
       ) : (
         <>
@@ -41,6 +58,7 @@ export function ProductNav({
           )}
         </>
       )}
+      {tail}
     </nav>
   );
 }
@@ -48,24 +66,30 @@ export function ProductNav({
 export function SiteHeader({
   right,
   signedIn,
+  admin,
   extra,
+  tail,
   showPricing,
   showBuy,
 }: {
   right?: ReactNode;
   signedIn?: boolean;
+  admin?: boolean;
   extra?: ReactNode;
+  tail?: ReactNode;
   lowercase?: boolean;
   showPricing?: boolean;
   showBuy?: boolean;
 }) {
   return (
     <header className="flex items-center justify-between border-b border-line px-5 py-4 md:px-10">
-      <Wordmark />
+      <Wordmark href="/" />
       {right ?? (
         <ProductNav
           signedIn={signedIn}
+          admin={admin}
           extra={extra}
+          tail={tail}
           showPricing={showPricing}
           showBuy={showBuy}
         />

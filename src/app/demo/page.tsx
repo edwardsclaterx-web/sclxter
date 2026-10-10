@@ -10,7 +10,7 @@ export const metadata = {
 export default function DemoHome() {
   return (
     <div className="flex min-h-full flex-col">
-      <BarberHeader showCuts={false} />
+      <BarberHeader />
       <main className="flex flex-1 flex-col">
         <section className="relative">
           <div className="mx-auto w-full max-w-3xl px-5 py-16 md:px-8">

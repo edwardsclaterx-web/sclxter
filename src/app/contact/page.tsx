@@ -17,7 +17,11 @@ export default async function ContactPage() {
   );
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader signedIn={Boolean(user)} showPricing={false} />
+      <SiteHeader
+        signedIn={Boolean(user)}
+        admin={Boolean(user && isAdmin(user))}
+        showPricing={false}
+      />
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-20 md:px-8">
         <h1 className="text-3xl font-medium tracking-tight">Contact</h1>
         <a

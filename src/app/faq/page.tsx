@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/chrome";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 
 export const metadata = { title: "FAQ — sclxter" };
@@ -109,7 +110,11 @@ export default async function FaqPage() {
   const user = await getSessionUser();
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader signedIn={Boolean(user)} showPricing={false} />
+      <SiteHeader
+        signedIn={Boolean(user)}
+        admin={Boolean(user && isAdmin(user))}
+        showPricing={false}
+      />
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-16 md:px-8 md:py-20">
         <h1 className="text-3xl font-medium tracking-tight">FAQ</h1>
         <dl className="mt-12 space-y-10">

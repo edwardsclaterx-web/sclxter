@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const html = wantsHtml(request);
   const fail = (status: number, error: string) => {
     if (html) {
-      return redirectSeeOther("/login");
+      return redirectSeeOther("/login?error=1");
     }
     return NextResponse.json({ error }, { status });
   };

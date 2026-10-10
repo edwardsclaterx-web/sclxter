@@ -3,9 +3,19 @@ import { SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 import { AuthForm } from "../auth-form";
 
-export default async function SignupPage() {
+const SIGNUP_ERRORS: Record<string, string> = {
+  invalid: "Use a real email and a password of at least 8 characters.",
+  exists: "That email already has an account.",
+};
+
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await getSessionUser();
   if (user) redirect("/dashboard");
+  const q = await searchParams;
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader signedIn={false} showPricing={false} showBuy />
@@ -14,7 +24,10 @@ export default async function SignupPage() {
         <p className="mt-2 text-sm text-muted">
           One business per account in this first version.
         </p>
-        <AuthForm mode="signup" />
+        <AuthForm
+          mode="signup"
+          error={q.error ? SIGNUP_ERRORS[q.error] || SIGNUP_ERRORS.invalid : null}
+        />
       </main>
     </div>
   );

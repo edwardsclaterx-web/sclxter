@@ -1,33 +1,40 @@
 import { NextResponse } from "next/server";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
 import { createBusinessForSignup } from "@/lib/access";
+import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
+import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import { updateStore } from "@/lib/store";
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { email?: string; password?: string };
-  const email = body.email?.trim().toLowerCase() ?? "";
-  const password = body.password ?? "";
-  if (!email.includes("@") || password.length < 8) {
-    return NextResponse.json(
-      { error: "Use a real email and a password of at least 8 characters." },
-      { status: 400 },
+  const { email, password } = await readLoginBody(request);
+  const html = wantsHtml(request);
+  const fail = (status: number, error: string, code: string) => {
+    if (html) {
+      return redirectSeeOther(`/signup?error=${code}`);
+    }
+    return NextResponse.json({ error }, { status });
+  };
+
+  const mail = email.trim().toLowerCase();
+  if (!mail.includes("@") || password.length < 8) {
+    return fail(
+      400,
+      "Use a real email and a password of at least 8 characters.",
+      "invalid",
     );
   }
-  if (isOwnerEmail(email)) {
-    return NextResponse.json(
-      { error: "That email already has an account." },
-      { status: 409 },
-    );
+  if (isOwnerEmail(mail)) {
+    return fail(409, "That email already has an account.", "exists");
   }
 
   const passwordHash = await hashPassword(password);
   const user = await updateStore((data) => {
-    if (data.users.some((u) => u.email === email)) return null;
+    if (data.users.some((u) => u.email === mail)) return null;
     const created = {
       id: id("usr"),
-      email,
+      email: mail,
       passwordHash,
       createdAt: new Date().toISOString(),
     };
@@ -36,13 +43,13 @@ export async function POST(request: Request) {
   });
 
   if (!user) {
-    return NextResponse.json(
-      { error: "That email already has an account." },
-      { status: 409 },
-    );
+    return fail(409, "That email already has an account.", "exists");
   }
 
   await setSessionCookie(user.id);
   await createBusinessForSignup(user);
+  if (html) {
+    return redirectSeeOther("/dashboard");
+  }
   return NextResponse.json({ ok: true });
 }

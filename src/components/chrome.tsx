@@ -13,7 +13,10 @@ export function Wordmark({ href = "/" }: { href?: string }) {
 }
 
 function navClass(className?: string, active?: boolean) {
-  return [className, active ? "border-b border-fg px-1 -mx-1" : null]
+  return [
+    className,
+    active ? "text-fg border-b border-fg px-1 -mx-1 pb-1.5" : null,
+  ]
     .filter(Boolean)
     .join(" ");
 }

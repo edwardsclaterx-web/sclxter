@@ -95,3 +95,16 @@ a.nav-item.here {
   border-radius: 20px !important;
   cursor: pointer !important;
 }
+
+#wa-log {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-gutter: auto;
+}
+
+#wa-log::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}

@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { parseAssistantReply } from "./knowledge-gaps";
 import { loadSecrets } from "./secrets";
 import { toneById } from "./tones";
 import type { Business, ChatMessage, KnowledgeItem } from "./types";
@@ -107,6 +108,8 @@ When listing this shop’s services or prices, give one to a few that match what
 Ask a short follow-up when it would help (for a barber: fade vs scissor cut, today vs Saturday, walk-in vs holding a time).
 
 Only if the visitor is clearly getting closer to buying — asking to book, buy, hold a time, or leave details in order to purchase — prefix that confirmation with [[LEAD]]. Do not flag ordinary questions as leads. When they give a name and phone for a callback to buy or book, reply that you will pass it to the shop and use [[LEAD]].
+
+If you could not answer a question about THIS shop because the shop knowledge is missing that fact (price, hours, named service, policy, staff, whether they offer something), prefix [[GAP]] even if you used the industry briefing and said the shop has not listed it. Do not use [[GAP]] for greetings or off-topic questions.
 
 Shop knowledge:
 ${factsBlock(business, items, notesOnly)}
@@ -264,6 +267,6 @@ export async function answerChat(opts: {
 }
 
 export function parseLeadFromReply(reply: string) {
-  if (!reply.includes("[[LEAD]]")) return { text: reply, lead: false };
-  return { text: reply.replace(/\[\[LEAD\]\]/g, "").trim(), lead: true };
+  const parsed = parseAssistantReply(reply);
+  return { text: parsed.text, lead: parsed.lead, gap: parsed.gap };
 }

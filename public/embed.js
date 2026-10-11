@@ -58,6 +58,11 @@
       return r.json();
     })
     .then(function (d) {
+      if (d && d.live === false) {
+        btn.style.display = "none";
+        frameWrap.style.display = "none";
+        return;
+      }
       var t = (d && d.theme) || (d && d.appearance && d.appearance.theme);
       if (!t) return;
       if (t.outline) theme.outline = t.outline;

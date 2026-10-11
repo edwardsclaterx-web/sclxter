@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getBusinessBySeq, isAdmin, toClientBusiness } from "@/lib/access";
 import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { normalizeInstructions } from "@/lib/instructions";
+import { topGapsForBusiness } from "@/lib/knowledge-gaps";
 import { readStore } from "@/lib/store";
 import { BusinessScreen } from "../../business-screen";
 
@@ -48,6 +49,9 @@ export default async function AdminBusinessPage({
       leads={leads.map((l) => ({
         createdAt: l.createdAt,
         message: l.message,
+      }))}
+      gaps={topGapsForBusiness(data.knowledgeGaps, biz.id).map((g) => ({
+        question: g.question,
       }))}
       instructions={normalizeInstructions(data.settings?.instructions)}
       asOf={Date.now()}

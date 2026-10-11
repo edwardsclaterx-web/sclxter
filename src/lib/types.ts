@@ -18,6 +18,7 @@ export type User = {
   email: string;
   passwordHash: string;
   createdAt: string;
+  paidUntil?: string;
 };
 
 export type Business = {
@@ -97,6 +98,16 @@ export type SupportThread = {
   updatedAt: string;
 };
 
+export type KnowledgeGap = {
+  id: string;
+  businessId: string;
+  key: string;
+  question: string;
+  count: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoreData = {
   users: User[];
   businesses: Business[];
@@ -104,6 +115,7 @@ export type StoreData = {
   leads: Lead[];
   conversations: Conversation[];
   supportThreads: SupportThread[];
+  knowledgeGaps: KnowledgeGap[];
   settings: StoreSettings;
 };
 

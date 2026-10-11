@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { resolveBusiness } from "@/lib/access";
 import { answerChat, parseLeadFromReply } from "@/lib/groq";
+import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
 import { groqKeyPresent } from "@/lib/secrets";
 import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
@@ -47,7 +48,10 @@ export async function POST(request: Request) {
       messages,
       notesOnly: true,
     });
-    const { text } = parseLeadFromReply(raw);
+    const { text, gap } = parseLeadFromReply(raw);
+    const asked =
+      [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    if (gap) await recordKnowledgeGap(biz.id, asked);
     return NextResponse.json({ reply: text });
   } catch (err) {
     const message = err instanceof Error ? err.message : "";

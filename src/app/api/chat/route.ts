@@ -4,7 +4,9 @@ import {
   isDemoBusiness,
   nextConversationSeq,
 } from "@/lib/access";
+import { businessHasLiveAccess } from "@/lib/billing";
 import { answerChat, parseLeadFromReply, SCLXTER_SITE_ID } from "@/lib/groq";
+import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
 import { ensureIndustryBriefing } from "@/lib/industry-briefing";
@@ -99,6 +101,15 @@ export async function POST(request: Request) {
     }
   }
 
+  if (!ownerTest && !businessHasLiveAccess(business, data)) {
+    return cors(
+      NextResponse.json(
+        { error: "This assistant is unavailable." },
+        { status: 403 },
+      ),
+    );
+  }
+
   if (ownerTest && !businessReadyForTest(business)) {
     return cors(
       NextResponse.json({ error: TEST_AI_BLOCKED }, { status: 400 }),
@@ -120,7 +131,10 @@ export async function POST(request: Request) {
       barber,
       notesOnly: ownerTest,
     });
-    const { text, lead } = parseLeadFromReply(raw);
+    const { text, lead, gap } = parseLeadFromReply(raw);
+    const asked =
+      [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    if (gap && !isDemoBusiness(shop)) await recordKnowledgeGap(shop.id, asked);
     const thread = [...messages, { role: "assistant" as const, content: text }];
     const persist = !isDemoBusiness(shop) && !ownerTest;
     let conversationId =

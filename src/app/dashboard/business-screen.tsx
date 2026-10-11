@@ -25,12 +25,14 @@ type Convo = {
 };
 
 type LeadRow = { createdAt: string; message: string };
+type GapRow = { question: string };
 
 type Props = {
   admin: boolean;
   business: ClientBusiness;
   conversations: Convo[];
   leads: LeadRow[];
+  gaps: GapRow[];
   instructions: string[];
   asOf: number;
 };
@@ -60,6 +62,7 @@ export function BusinessScreen({
   business,
   conversations,
   leads,
+  gaps,
   instructions,
   asOf,
 }: Props) {
@@ -508,6 +511,28 @@ export function BusinessScreen({
                   </li>
                 ))}
             </ul>
+          )}
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold tracking-tight text-fg">
+            Non answered questions
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            These are the top 5 most asked questions from your website which
+            the assistant can&apos;t answer. Review them and add extra
+            information into the data notepad.
+          </p>
+          {gaps.length === 0 ? (
+            <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
+              No unanswered questions yet.
+            </p>
+          ) : (
+            <ol className="mt-4 list-decimal space-y-3 border border-line px-8 py-4 text-sm leading-6">
+              {gaps.map((g) => (
+                <li key={g.question}>{g.question}</li>
+              ))}
+            </ol>
           )}
         </section>
 

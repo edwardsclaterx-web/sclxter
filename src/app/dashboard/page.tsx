@@ -5,6 +5,7 @@ import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { readStore } from "@/lib/store";
 import { toClientBusiness } from "@/lib/access";
 import { normalizeInstructions } from "@/lib/instructions";
+import { topGapsForBusiness } from "@/lib/knowledge-gaps";
 import { BusinessScreen } from "./business-screen";
 import { ClientGo } from "./client-go";
 
@@ -51,6 +52,9 @@ export default async function DashboardPage() {
       leads={leads.map((l) => ({
         createdAt: l.createdAt,
         message: l.message,
+      }))}
+      gaps={topGapsForBusiness(data.knowledgeGaps, biz.id).map((g) => ({
+        question: g.question,
       }))}
       instructions={normalizeInstructions(data.settings?.instructions)}
       asOf={Date.now()}

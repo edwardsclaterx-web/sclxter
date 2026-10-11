@@ -15,6 +15,7 @@ const empty = (): StoreData => ({
   leads: [],
   conversations: [],
   supportThreads: [],
+  knowledgeGaps: [],
   settings: { instructions: normalizeInstructions(null) },
 });
 
@@ -63,7 +64,10 @@ function patchBusiness(b: Partial<Business> & { id: string }): Business {
 }
 
 function normalize(data: StoreData): StoreData {
-  data.users = data.users ?? [];
+  data.users = (data.users ?? []).map((u) => ({
+    ...u,
+    paidUntil: typeof u.paidUntil === "string" ? u.paidUntil : undefined,
+  }));
   data.knowledge = data.knowledge ?? [];
   data.leads = (data.leads ?? []).map((l) => ({
     ...l,
@@ -79,6 +83,15 @@ function normalize(data: StoreData): StoreData {
     adminUnread: typeof t.adminUnread === "number" ? t.adminUnread : 0,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
+  }));
+  data.knowledgeGaps = (data.knowledgeGaps ?? []).map((g) => ({
+    id: g.id,
+    businessId: g.businessId,
+    key: g.key,
+    question: g.question,
+    count: typeof g.count === "number" && g.count > 0 ? g.count : 1,
+    createdAt: g.createdAt,
+    updatedAt: g.updatedAt,
   }));
   data.settings = {
     instructions: normalizeInstructions(data.settings?.instructions),
@@ -117,6 +130,7 @@ function readDisk(): StoreData {
       leads: parsed.leads ?? [],
       conversations: parsed.conversations ?? [],
       supportThreads: parsed.supportThreads ?? [],
+      knowledgeGaps: parsed.knowledgeGaps ?? [],
       settings: parsed.settings ?? { instructions: [] },
     });
   } catch {
@@ -139,6 +153,7 @@ export async function readStore(): Promise<StoreData> {
     } else {
       ensureDemoIndustry(cache);
       cache.supportThreads = cache.supportThreads ?? [];
+      cache.knowledgeGaps = cache.knowledgeGaps ?? [];
     }
     return cache;
   });
@@ -154,6 +169,7 @@ export async function updateStore<T>(
       cache = normalize(cache);
     }
     cache.supportThreads = cache.supportThreads ?? [];
+    cache.knowledgeGaps = cache.knowledgeGaps ?? [];
     const result = fn(cache);
     writeDisk(cache);
     return result;

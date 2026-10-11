@@ -60,11 +60,21 @@ export function newBusinessFields(
   };
 }
 
+export function businessForUser(data: StoreData, user: User): Business | null {
+  const listed = listedBusinesses(data);
+  return (
+    listed.find((b) => b.ownerId === user.id) ??
+    listed.find((b) => {
+      const owner = data.users.find((u) => u.id === b.ownerId);
+      return owner?.email === user.email;
+    }) ??
+    null
+  );
+}
+
 export async function getOwnedBusiness(user: User): Promise<Business | null> {
   const data = await readStore();
-  return (
-    listedBusinesses(data).find((b) => b.ownerId === user.id) ?? null
-  );
+  return businessForUser(data, user);
 }
 
 export async function getBusinessBySeq(seq: number): Promise<Business | null> {
@@ -87,8 +97,11 @@ export async function resolveBusiness(
 
 export async function createBusinessForSignup(user: User): Promise<Business> {
   return updateStore((data) => {
-    const existing = listedBusinesses(data).find((b) => b.ownerId === user.id);
-    if (existing) return existing;
+    const existing = businessForUser(data, user);
+    if (existing) {
+      existing.ownerId = user.id;
+      return existing;
+    }
     const now = new Date().toISOString();
     const biz: Business = {
       id: id("biz"),

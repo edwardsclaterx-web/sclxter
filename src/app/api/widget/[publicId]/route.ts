@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { businessHasLiveAccess } from "@/lib/billing";
 import { readStore, updateStore } from "@/lib/store";
 import { normalizeTheme } from "@/lib/widget-theme";
 
@@ -17,14 +18,18 @@ export async function GET(
   if (!business) {
     return cors(NextResponse.json({ error: "Unknown widget." }, { status: 404 }));
   }
-  await updateStore((store) => {
-    const row = store.businesses.find((b) => b.publicId === publicId);
-    if (row && !row.widgetConnectedAt) {
-      row.widgetConnectedAt = new Date().toISOString();
-    }
-  });
+  const live = businessHasLiveAccess(business, data);
+  if (live) {
+    await updateStore((store) => {
+      const row = store.businesses.find((b) => b.publicId === publicId);
+      if (row && !row.widgetConnectedAt) {
+        row.widgetConnectedAt = new Date().toISOString();
+      }
+    });
+  }
   return cors(
     NextResponse.json({
+      live,
       publicId: business.publicId,
       name: business.name,
       appearance: {

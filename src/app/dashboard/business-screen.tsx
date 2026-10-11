@@ -91,6 +91,7 @@ export function BusinessScreen({
   const [pwNote, setPwNote] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
   const [openConvo, setOpenConvo] = useState<number | null>(null);
+  const [convosOpen, setConvosOpen] = useState(false);
   const [period, setPeriod] = useState<Period>("week");
 
   const hist = useRef<string[]>([business.notepad]);
@@ -343,6 +344,100 @@ export function BusinessScreen({
         </p>
       </aside>
       <section className="mt-8">
+        <h2 className="text-xl font-bold tracking-tight text-fg">Stats</h2>
+        <div className="mt-4 flex gap-2">
+          {(["day", "week", "month"] as const).map((p) => (
+            <Button
+              key={p}
+              type="button"
+              variant={period === p ? "primary" : "ghost"}
+              onClick={() => setPeriod(p)}
+            >
+              {p === "day" ? "Day" : p === "week" ? "Week" : "Month"}
+            </Button>
+          ))}
+        </div>
+        <p className="mt-4 text-sm">Conversations made: {convoCount}</p>
+        <p className="mt-2 text-sm">Potential leads: {leadCount}</p>
+        {periodLeads.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">
+            No potential leads in this window. Only chats flagged as closer
+            to buying appear here.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-sm text-muted">
+            {periodLeads.map((l, i) => (
+              <li key={i}>
+                {formatStamp(l.createdAt)} — {l.message}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section className="mt-8">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between text-left"
+          aria-expanded={convosOpen}
+          onClick={() => setConvosOpen((v) => !v)}
+        >
+          <h2 className="text-xl font-bold tracking-tight text-fg">
+            Conversations
+          </h2>
+          <span className="text-sm text-muted">
+            {convosOpen ? "Close" : "Open"}
+          </span>
+        </button>
+        {convosOpen ? (
+          conversations.length === 0 ? (
+            <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
+              No conversations yet.
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-line border border-line">
+              {conversations
+                .slice()
+                .sort((a, b) => a.seq - b.seq)
+                .map((c) => (
+                  <li key={c.seq}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between px-4 py-3 text-left text-sm hover:bg-surface"
+                      onClick={() =>
+                        setOpenConvo((n) => (n === c.seq ? null : c.seq))
+                      }
+                    >
+                      <span>id {c.seq}</span>
+                      <span className="text-muted">
+                        {formatStamp(c.updatedAt)}
+                        {c.lead ? " · lead" : ""}
+                      </span>
+                    </button>
+                    {open?.seq === c.seq && (
+                      <div className="space-y-3 border-t border-line bg-surface px-4 py-4">
+                        {c.messages.map((m, i) => (
+                          <p key={i} className="text-sm leading-6">
+                            <span className="text-xs uppercase tracking-[0.14em] text-muted">
+                              {m.role === "user" ? "Visitor" : "Assistant"}
+                            </span>
+                            <span className="mt-1 block whitespace-pre-wrap">
+                              {m.content}
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          )
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            Closed. Open to view all conversations.
+          </p>
+        )}
+      </section>
+      <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Non answered questions
         </h2>
@@ -502,86 +597,6 @@ export function BusinessScreen({
             {scanning ? "Scanning…" : "Scan website"}
           </Button>
           <FieldError>{scanError}</FieldError>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-medium tracking-tight">Conversations</h2>
-          {conversations.length === 0 ? (
-            <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
-              No conversations yet.
-            </p>
-          ) : (
-            <ul className="mt-4 divide-y divide-line border border-line">
-              {conversations
-                .slice()
-                .sort((a, b) => a.seq - b.seq)
-                .map((c) => (
-                  <li key={c.seq}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between px-4 py-3 text-left text-sm hover:bg-surface"
-                      onClick={() =>
-                        setOpenConvo((n) => (n === c.seq ? null : c.seq))
-                      }
-                    >
-                      <span>id {c.seq}</span>
-                      <span className="text-muted">
-                        {formatStamp(c.updatedAt)}
-                        {c.lead ? " · lead" : ""}
-                      </span>
-                    </button>
-                    {open?.seq === c.seq && (
-                      <div className="space-y-3 border-t border-line bg-surface px-4 py-4">
-                        {c.messages.map((m, i) => (
-                          <p key={i} className="text-sm leading-6">
-                            <span className="text-xs uppercase tracking-[0.14em] text-muted">
-                              {m.role === "user" ? "Visitor" : "Assistant"}
-                            </span>
-                            <span className="mt-1 block whitespace-pre-wrap">
-                              {m.content}
-                            </span>
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                ))}
-            </ul>
-          )}
-        </section>
-
-        <section>
-          <h2 className="text-xl font-medium tracking-tight">Stats</h2>
-          <div className="mt-4 flex gap-2">
-            {(["day", "week", "month"] as const).map((p) => (
-              <Button
-                key={p}
-                type="button"
-                variant={period === p ? "primary" : "ghost"}
-                onClick={() => setPeriod(p)}
-              >
-                {p === "day" ? "Day" : p === "week" ? "Week" : "Month"}
-              </Button>
-            ))}
-          </div>
-          <p className="mt-4 text-sm">
-            Conversations made: {convoCount}
-          </p>
-          <p className="mt-2 text-sm">Potential leads: {leadCount}</p>
-          {periodLeads.length === 0 ? (
-            <p className="mt-3 text-sm text-muted">
-              No potential leads in this window. Only chats flagged as closer
-              to buying appear here.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2 text-sm text-muted">
-              {periodLeads.map((l, i) => (
-                <li key={i}>
-                  {formatStamp(l.createdAt)} — {l.message}
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
 
         <section>

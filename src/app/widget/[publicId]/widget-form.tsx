@@ -8,16 +8,19 @@ export function WidgetForm({
   welcome,
   assistantName,
   theme,
+  from,
 }: {
   publicId: string;
   welcome: string;
   assistantName: string;
   theme?: WidgetTheme;
+  from?: string | null;
 }) {
+  const fromQ = from ? `&from=${encodeURIComponent(from)}` : "";
   const endpoint =
     publicId === "sclxter"
-      ? "/api/chat?site=sclxter"
-      : `/api/chat?publicId=${encodeURIComponent(publicId)}`;
+      ? `/api/chat?site=sclxter${fromQ}`
+      : `/api/chat?publicId=${encodeURIComponent(publicId)}${fromQ}`;
   const boot = `(function(){
   var form=document.getElementById('wa-form');
   var input=document.getElementById('wa-input');
@@ -103,12 +106,20 @@ export function WidgetForm({
           conversationId=x.d.conversationId;
           try{ sessionStorage.setItem(cidKey, conversationId); }catch(e3){}
         }
-        var reply=(x.d&&x.d.reply)||(x.d&&x.d.error)||'The assistant is unavailable.';
+        var reply;
+        if(!x.ok){
+          var code=x.d&&x.d.error;
+          reply=code&&(code.indexOf('unavailable')!==-1||code.indexOf('not available')!==-1)
+            ? code
+            : 'Try again in a moment.';
+        }else{
+          reply=(x.d&&x.d.reply)||'Try again in a moment.';
+        }
         history.push({role:'assistant', content:reply});
         save();
         bubble('assistant', reply);
       })
-      .catch(function(){ bubble('assistant','Could not reach the assistant.'); })
+      .catch(function(){ bubble('assistant','Try again in a moment.'); })
       .then(function(){ busy=false; send.textContent='Send'; send.removeAttribute('disabled'); });
   }
   form.addEventListener('submit', function(e){ e.preventDefault(); e.stopPropagation(); go(); });

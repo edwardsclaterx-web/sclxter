@@ -26,6 +26,7 @@ export function seedIfEmpty(data: StoreData) {
     contactOther: "14 Northgate, York YO1 7HH",
     tone: "warm",
     notepad: "",
+    lastScanText: "",
     scannedAt: null,
     industryBriefing: "",
     industryBriefingFor: "",

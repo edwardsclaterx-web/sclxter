@@ -25,6 +25,6 @@ export function businessHasLiveAccess(business: Business, data: StoreData) {
   if (isDemoBusiness(business)) return true;
   if (!business.ownerId) return true;
   const owner = data.users.find((u) => u.id === business.ownerId);
-  if (!owner) return true;
+  if (!owner) return false;
   return userHasLiveAccess(owner);
 }

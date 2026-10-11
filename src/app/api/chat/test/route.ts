@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { resolveBusiness } from "@/lib/access";
 import { answerChat, parseLeadFromReply } from "@/lib/groq";
 import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
+import { TRY_AGAIN } from "@/lib/embed-host";
 import { groqKeyPresent } from "@/lib/secrets";
 import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
@@ -61,9 +62,6 @@ export async function POST(request: Request) {
         { status: 503 },
       );
     }
-    return NextResponse.json(
-      { error: "The assistant had a problem. Try again in a moment." },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: TRY_AGAIN }, { status: 502 });
   }
 }

@@ -4,7 +4,12 @@ import {
   isDemoBusiness,
   nextConversationSeq,
 } from "@/lib/access";
-import { businessHasLiveAccess } from "@/lib/billing";
+import {
+  appOriginFromRequest,
+  publicEmbedGate,
+  readEmbedFrom,
+  TRY_AGAIN,
+} from "@/lib/embed-host";
 import { answerChat, parseLeadFromReply, SCLXTER_SITE_ID } from "@/lib/groq";
 import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
 import { groqKeyPresent } from "@/lib/secrets";
@@ -42,7 +47,9 @@ export async function POST(request: Request) {
   const body = (await request.json()) as {
     messages?: ChatMessage[];
     conversationId?: unknown;
+    from?: unknown;
   };
+  const pageOrigin = readEmbedFrom(request, body);
   const messages = (body.messages ?? []).filter(
     (m) => m && (m.role === "user" || m.role === "assistant") && m.content,
   );
@@ -56,6 +63,15 @@ export async function POST(request: Request) {
     site === SCLXTER_SITE_ID || publicId === SCLXTER_SITE_ID;
 
   if (isSite) {
+    const app = appOriginFromRequest(request);
+    if (pageOrigin && pageOrigin !== app) {
+      return cors(
+        NextResponse.json(
+          { error: "This assistant is not available on this site." },
+          { status: 403 },
+        ),
+      );
+    }
     try {
       const raw = await answerChat({ messages, site: true });
       const { text } = parseLeadFromReply(raw);
@@ -70,12 +86,7 @@ export async function POST(request: Request) {
           ),
         );
       }
-      return cors(
-        NextResponse.json(
-          { error: "The assistant had a problem. Try again in a moment." },
-          { status: 502 },
-        ),
-      );
+      return cors(NextResponse.json({ error: TRY_AGAIN }, { status: 502 }));
     }
   }
 
@@ -101,13 +112,13 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!ownerTest && !businessHasLiveAccess(business, data)) {
-    return cors(
-      NextResponse.json(
-        { error: "This assistant is unavailable." },
-        { status: 403 },
-      ),
-    );
+  if (!ownerTest) {
+    const gate = publicEmbedGate(request, business, data, pageOrigin);
+    if (!gate.ok) {
+      return cors(
+        NextResponse.json({ error: gate.error }, { status: gate.status }),
+      );
+    }
   }
 
   if (ownerTest && !businessReadyForTest(business)) {
@@ -201,10 +212,7 @@ export async function POST(request: Request) {
       );
     }
     return cors(
-      NextResponse.json(
-        { error: "The assistant had a problem. Try again in a moment." },
-        { status: 502 },
-      ),
+      NextResponse.json({ error: TRY_AGAIN }, { status: 502 }),
     );
   }
 }

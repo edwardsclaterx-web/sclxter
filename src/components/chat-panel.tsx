@@ -94,7 +94,12 @@ export function ChatPanel({
         error?: string;
       };
       if (!res.ok) {
-        setError(data.error || "The assistant is unavailable.");
+        const raw = data.error || "";
+        setError(
+          raw.includes("unavailable") || raw.includes("not available") || res.status === 400
+            ? raw || "The assistant is unavailable."
+            : "Try again in a moment.",
+        );
         return;
       }
       setMessages([
@@ -102,7 +107,7 @@ export function ChatPanel({
         { role: "assistant", content: data.reply || "" },
       ]);
     } catch {
-      setError("Could not reach the assistant.");
+      setError("Try again in a moment.");
     } finally {
       setBusy(false);
     }

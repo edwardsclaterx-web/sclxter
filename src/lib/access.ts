@@ -46,6 +46,7 @@ export function newBusinessFields(
     contactOther: "",
     tone: "plain",
     notepad: "",
+    lastScanText: "",
     scannedAt: null,
     industryBriefing: "",
     industryBriefingFor: "",
@@ -62,14 +63,13 @@ export function newBusinessFields(
 
 export function businessForUser(data: StoreData, user: User): Business | null {
   const listed = listedBusinesses(data);
-  return (
-    listed.find((b) => b.ownerId === user.id) ??
-    listed.find((b) => {
-      const owner = data.users.find((u) => u.id === b.ownerId);
-      return owner?.email === user.email;
-    }) ??
-    null
-  );
+  const mine = listed.filter((b) => {
+    if (b.ownerId === user.id) return true;
+    const owner = data.users.find((u) => u.id === b.ownerId);
+    return owner?.email === user.email;
+  });
+  mine.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return mine[0] ?? null;
 }
 
 export async function getOwnedBusiness(user: User): Promise<Business | null> {
@@ -99,7 +99,7 @@ export async function createBusinessForSignup(user: User): Promise<Business> {
   return updateStore((data) => {
     const existing = businessForUser(data, user);
     if (existing) {
-      existing.ownerId = user.id;
+      if (!existing.ownerId) existing.ownerId = user.id;
       return existing;
     }
     const now = new Date().toISOString();

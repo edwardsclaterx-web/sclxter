@@ -53,6 +53,7 @@ function patchBusiness(b: Partial<Business> & { id: string }): Business {
     contactOther: b.contactOther ?? "",
     tone: b.tone ?? "plain",
     notepad: b.notepad ?? "",
+    lastScanText: typeof b.lastScanText === "string" ? b.lastScanText : "",
     scannedAt: b.scannedAt ?? null,
     industryBriefing: b.industryBriefing ?? "",
     industryBriefingFor: b.industryBriefingFor ?? "",
@@ -121,21 +122,18 @@ function normalize(data: StoreData): StoreData {
 
 function readDisk(): StoreData {
   if (!existsSync(DATA_PATH)) return empty();
-  try {
-    const parsed = JSON.parse(readFileSync(DATA_PATH, "utf8")) as StoreData;
-    return normalize({
-      users: parsed.users ?? [],
-      businesses: parsed.businesses ?? [],
-      knowledge: parsed.knowledge ?? [],
-      leads: parsed.leads ?? [],
-      conversations: parsed.conversations ?? [],
-      supportThreads: parsed.supportThreads ?? [],
-      knowledgeGaps: parsed.knowledgeGaps ?? [],
-      settings: parsed.settings ?? { instructions: [] },
-    });
-  } catch {
-    return empty();
-  }
+  const raw = readFileSync(DATA_PATH, "utf8");
+  const parsed = JSON.parse(raw) as StoreData;
+  return normalize({
+    users: parsed.users ?? [],
+    businesses: parsed.businesses ?? [],
+    knowledge: parsed.knowledge ?? [],
+    leads: parsed.leads ?? [],
+    conversations: parsed.conversations ?? [],
+    supportThreads: parsed.supportThreads ?? [],
+    knowledgeGaps: parsed.knowledgeGaps ?? [],
+    settings: parsed.settings ?? { instructions: [] },
+  });
 }
 
 function writeDisk(data: StoreData) {

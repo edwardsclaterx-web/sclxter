@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
+import { publicEmbedGate, readEmbedFrom } from "@/lib/embed-host";
 import { id } from "@/lib/ids";
 import { readStore, updateStore } from "@/lib/store";
 
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     email?: string;
     message?: string;
     publicId?: string | null;
+    from?: unknown;
   };
   const name = body.name?.trim() ?? "";
   const phone = body.phone?.trim() ?? "";
@@ -31,6 +33,7 @@ export async function POST(request: Request) {
   }
 
   const data = await readStore();
+  const pageOrigin = readEmbedFrom(request, body);
   let business = body.publicId
     ? data.businesses.find((b) => b.publicId === body.publicId)
     : null;
@@ -45,6 +48,13 @@ export async function POST(request: Request) {
     if (!business) {
       return cors(
         NextResponse.json({ error: "Unknown shop." }, { status: 404 }),
+      );
+    }
+  } else {
+    const gate = publicEmbedGate(request, business, data, pageOrigin);
+    if (!gate.ok) {
+      return cors(
+        NextResponse.json({ error: gate.error }, { status: gate.status }),
       );
     }
   }

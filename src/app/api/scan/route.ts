@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
+import { applyScanToNotepad } from "@/lib/notepad-scan";
 import { resolveWebsiteUrl, scanSite } from "@/lib/scan";
 import { readStore, updateStore } from "@/lib/store";
 
@@ -46,8 +47,8 @@ export async function POST(request: Request) {
   const updated = await updateStore((data) => {
     const row = data.businesses.find((b) => b.id === biz.id);
     if (!row) return biz;
-    const existing = (row.notepad || "").trim();
-    row.notepad = existing ? `${existing}\n\n${block}` : block;
+    row.notepad = applyScanToNotepad(row.notepad || "", row.lastScanText, block);
+    row.lastScanText = block;
     row.scannedAt = new Date().toISOString();
     return row;
   });

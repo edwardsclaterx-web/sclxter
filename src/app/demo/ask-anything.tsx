@@ -76,7 +76,7 @@ function boot() {
   const iframe = document.createElement("iframe");
   iframe.title = "Ask anything";
   iframe.name = "northgate-ask-frame";
-  iframe.src = `/widget/${PUBLIC_ID}`;
+  iframe.src = `/widget/${PUBLIC_ID}?from=${encodeURIComponent(location.origin)}`;
   iframe.style.cssText =
     "width:100%;height:100%;border:0;background:#050505;pointer-events:auto;";
   panel.appendChild(iframe);

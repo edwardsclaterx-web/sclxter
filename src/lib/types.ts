@@ -33,6 +33,7 @@ export type Business = {
   contactOther: string;
   tone: string;
   notepad: string;
+  lastScanText: string;
   scannedAt: string | null;
   industryBriefing: string;
   industryBriefingFor: string;

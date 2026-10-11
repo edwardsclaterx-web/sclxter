@@ -1,11 +1,10 @@
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { isOwnerEmail } from "./owner-auth";
 import { loadSecrets } from "./secrets";
 import { readStore } from "./store";
 import type { Business, User } from "./types";
-import { createBusinessForSignup, getOwnedBusiness } from "./access";
+import { getOwnedBusiness } from "./access";
 
 const COOKIE = "sclxter_session";
 const PENDING = "sclxter_login_pending";
@@ -101,12 +100,7 @@ export async function requireUser() {
 }
 
 export async function getOrCreateBusiness(user: User): Promise<Business | null> {
-  if (isOwnerEmail(user.email)) {
-    return getOwnedBusiness(user);
-  }
-  const existing = await getOwnedBusiness(user);
-  if (existing) return existing;
-  return createBusinessForSignup(user);
+  return getOwnedBusiness(user);
 }
 
 export function publicUser(user: User) {

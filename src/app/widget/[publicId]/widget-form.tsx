@@ -77,7 +77,11 @@ export function WidgetForm({
     wrap.appendChild(who); wrap.appendChild(body);
     if(welcome) welcome.style.display='none';
     log.appendChild(wrap);
-    log.scrollTop=log.scrollHeight;
+    if(role==='assistant' && wrap.offsetHeight > log.clientHeight){
+      log.scrollTop=wrap.offsetTop;
+    }else{
+      log.scrollTop=log.scrollHeight;
+    }
   }
   history=load();
   history.forEach(function(m){ bubble(m.role,m.content); });

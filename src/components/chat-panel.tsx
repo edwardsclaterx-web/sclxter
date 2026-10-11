@@ -44,10 +44,25 @@ export function ChatPanel({
     message: "",
   });
   const [leadNote, setLeadNote] = useState<string | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
+  const log = useRef<HTMLDivElement>(null);
+  const lastReply = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottom.current?.scrollIntoView({ behavior: "smooth" });
+    const box = log.current;
+    if (!box) return;
+    const latest = messages[messages.length - 1];
+    const reply = lastReply.current;
+    requestAnimationFrame(() => {
+      if (
+        latest?.role === "assistant" &&
+        reply &&
+        reply.offsetHeight > box.clientHeight
+      ) {
+        box.scrollTop = reply.offsetTop;
+        return;
+      }
+      box.scrollTop = box.scrollHeight;
+    });
   }, [messages, busy]);
 
   function clearChat() {
@@ -143,7 +158,7 @@ export function ChatPanel({
           )}
         </div>
       )}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+      <div ref={log} className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {blocked && (
           <p className="text-sm leading-6" style={themed ? { color: ink } : undefined}>
             {blocked}
@@ -155,7 +170,15 @@ export function ChatPanel({
           </p>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={m.role === "user" ? "text-right" : ""}>
+          <div
+            key={i}
+            ref={
+              m.role === "assistant" && i === messages.length - 1
+                ? lastReply
+                : undefined
+            }
+            className={m.role === "user" ? "text-right" : ""}
+          >
             <p className={`mb-1 text-[10px] uppercase tracking-[0.16em] ${themed ? "opacity-60" : "text-muted"}`}>
               {m.role === "user" ? "You" : assistantName}
             </p>
@@ -183,7 +206,6 @@ export function ChatPanel({
         ))}
         {busy && <p className={`text-sm ${themed ? "opacity-70" : "text-muted"}`}>Thinking…</p>}
         {error && <p className={`text-sm ${themed ? "opacity-70" : "text-muted"}`}>{error}</p>}
-        <div ref={bottom} />
       </div>
 
       <form

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const maxDuration = 20;
 import { getSessionUser } from "@/lib/auth";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
 import { applyScanToNotepad } from "@/lib/notepad-scan";
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { pages, error } = await scanSite(start);
+  const { pages, error, skipped } = await scanSite(start);
   if (error) return NextResponse.json({ error }, { status: 422 });
 
   const block = compilePages(pages, new Date().toISOString());
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
   const admin = isAdmin(user);
   return NextResponse.json({
     pages: pages.length,
+    skipped: skipped ?? 0,
     business: toClientBusiness(updated, {
       admin,
       ownerEmail: admin ? owner?.email : undefined,

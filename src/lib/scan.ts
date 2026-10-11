@@ -1,14 +1,16 @@
 import { load } from "cheerio";
 
-const MAX_PAGES = 8;
-const MAX_BYTES = 80_000;
-const DELAY_MS = 350;
-const MAX_BLOCKS = 40;
-const MAX_BODY = 4000;
+const MAX_PAGES = 16;
+const MAX_BYTES = 250_000;
+const MAX_DOWNLOAD = 1_500_000;
+const MAX_BLOCKS = 80;
+const MAX_BODY = 8_000;
+const FETCH_MS = 4_000;
+const SCAN_MS = 12_000;
+const BATCH = 4;
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
 function isHttpUrl(value: string) {
   try {
@@ -27,8 +29,12 @@ export function resolveWebsiteUrl(websiteUrl: string, origin: string) {
   return `https://${trimmed}`;
 }
 
-function sameOrigin(a: URL, b: URL) {
-  return a.origin === b.origin;
+function siteHost(hostname: string) {
+  return hostname.replace(/^www\./i, "").toLowerCase();
+}
+
+function sameSite(a: URL, b: URL) {
+  return siteHost(a.hostname) === siteHost(b.hostname);
 }
 
 function cleanText(text: string) {
@@ -37,6 +43,8 @@ function cleanText(text: string) {
 
 const JUNK_PATH =
   /(^|\/)(reviews?|testimonials?|ratings?|comments?|feedback|trustpilot)(\/|$)/i;
+
+const SKIP_FILE = /\.(pdf|jpe?g|png|gif|webp|svg|mp4|mp3|zip|docx?|xlsx?)$/i;
 
 const USEFUL_PATH: Array<{ re: RegExp; rank: number }> = [
   { re: /about|our-story|who-we-are/, rank: 1 },
@@ -59,8 +67,8 @@ export function pageRank(url: string, startPath: string) {
   } catch {
     return 50;
   }
-  if (isJunkPath(path)) return 1000;
-  const start = (startPath.replace(/\/+$/, "") || "/") ;
+  if (isJunkPath(path) || SKIP_FILE.test(path)) return 1000;
+  const start = startPath.replace(/\/+$/, "") || "/";
   if (path === "/" || path === start) return 0;
   const leaf = path.toLowerCase();
   for (const row of USEFUL_PATH) {
@@ -99,7 +107,7 @@ function isUsefulBit(text: string) {
 }
 
 function stripJunk($: ReturnType<typeof load>) {
-  $("script, style, noscript, iframe, svg").remove();
+  $("script, style, noscript, iframe, svg, canvas").remove();
   $("[class], [id]").each((_, el) => {
     const node = $(el);
     const label = `${node.attr("class") || ""} ${node.attr("id") || ""}`;
@@ -121,10 +129,13 @@ function extract(html: string, pageUrl: string) {
     cleanText($("title").first().text()) ||
     pageUrl;
   const bits: string[] = [];
-  $("h1, h2, h3, p, li, dt, dd").each((_, el) => {
+  $("h1, h2, h3, h4, p, li, dt, dd, td, th").each((_, el) => {
     const t = cleanText($(el).text());
-    if (t.length <= 20) return;
+    if (!t) return;
     if (isJunkBit(t)) return;
+    const useful = isUsefulBit(t);
+    if (!useful && t.length < 12) return;
+    if (useful && t.length < 3) return;
     bits.push(t);
   });
   bits.sort((a, b) => Number(isUsefulBit(b)) - Number(isUsefulBit(a)));
@@ -133,6 +144,7 @@ function extract(html: string, pageUrl: string) {
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href");
     if (!href) return;
+    if (/^(mailto:|tel:|javascript:)/i.test(href)) return;
     try {
       links.push(new URL(href, pageUrl).href.split("#")[0]);
     } catch {
@@ -148,79 +160,124 @@ export type ScanPage = {
   body: string;
 };
 
+function looksHtml(type: string, head: string) {
+  if (type.includes("text/html") || type.includes("application/xhtml")) return true;
+  if (!type || type === "text/plain") {
+    const start = head.slice(0, 200).toLowerCase();
+    return start.includes("<!doctype") || start.includes("<html") || start.includes("<head");
+  }
+  return false;
+}
+
+async function fetchHtml(
+  url: string,
+): Promise<{ url: string; html: string } | null> {
+  try {
+    const res = await fetch(url, {
+      redirect: "follow",
+      headers: {
+        "user-agent": BROWSER_UA,
+        accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
+        "accept-language": "en-GB,en;q=0.8",
+      },
+      signal: AbortSignal.timeout(FETCH_MS),
+    });
+    if (!res.ok) return null;
+    const type = (res.headers.get("content-type") ?? "").toLowerCase();
+    if (
+      type.includes("image/") ||
+      type.includes("video/") ||
+      type.includes("audio/") ||
+      type.includes("application/pdf") ||
+      type.includes("octet-stream")
+    ) {
+      return null;
+    }
+    const length = Number(res.headers.get("content-length") || 0);
+    if (length > MAX_DOWNLOAD) return null;
+    const raw = await res.text();
+    if (!looksHtml(type, raw)) return null;
+    return { url: res.url || url, html: raw.slice(0, MAX_BYTES) };
+  } catch {
+    return null;
+  }
+}
+
 export async function scanSite(
   startUrl: string,
-): Promise<{ pages: ScanPage[]; error?: string }> {
+): Promise<{ pages: ScanPage[]; error?: string; skipped?: number }> {
   if (!isHttpUrl(startUrl)) {
     return { pages: [], error: "That does not look like a web address." };
   }
 
+  const started = Date.now();
   const start = new URL(startUrl);
   const seen = new Set<string>();
-  const queue = [start.href];
+  const wanted = new Set<string>([start.href]);
   const pages: ScanPage[] = [];
+  let skipped = 0;
 
-  function enqueue(href: string) {
+  function allow(href: string): string | null {
     try {
       const next = new URL(href);
-      if (!sameOrigin(start, next)) return;
-      const prefix = start.pathname.endsWith("/")
-        ? start.pathname
-        : `${start.pathname}/`;
-      const rootScan = start.pathname === "/" || start.pathname === "";
-      if (!rootScan) {
-        const path = next.pathname.endsWith("/")
-          ? next.pathname
-          : `${next.pathname}/`;
-        const isStart = next.pathname === start.pathname;
-        const under = path.startsWith(prefix);
-        if (!isStart && !under) return;
-      }
-      if (isJunkPath(next.pathname)) return;
-      if (seen.has(next.href) || queue.includes(next.href)) return;
-      if (queue.length + pages.length >= MAX_PAGES * 2) return;
-      queue.push(next.href);
-      queue.sort(
-        (a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname),
-      );
+      if (!sameSite(start, next)) return null;
+      if (isJunkPath(next.pathname) || SKIP_FILE.test(next.pathname)) return null;
+      const key = next.href.replace(/\/$/, "") || next.origin;
+      if (seen.has(key) || seen.has(next.href)) return null;
+      return next.href;
     } catch {
-      /* skip */
+      return null;
     }
   }
 
-  while (queue.length && pages.length < MAX_PAGES) {
-    const url = queue.shift()!;
-    if (seen.has(url)) continue;
-    seen.add(url);
-    if (isJunkPath(new URL(url).pathname)) continue;
-
-    let html = "";
-    try {
-      const res = await fetch(url, {
-        redirect: "follow",
-        headers: { "user-agent": "SCLXTER-scan/1.0" },
-        signal: AbortSignal.timeout(8000),
-      });
-      const type = res.headers.get("content-type") ?? "";
-      if (!res.ok || !type.includes("text/html")) continue;
-      html = (await res.text()).slice(0, MAX_BYTES);
-    } catch {
-      continue;
+  function rememberLinks(links: string[]) {
+    for (const href of links) {
+      const next = allow(href);
+      if (!next) continue;
+      wanted.add(next);
     }
+  }
 
-    const { title, body, links } = extract(html, url);
-    if (body.length > 40) {
-      pages.push({ url, title, body: body.slice(0, MAX_BODY) });
+  function takeBatch() {
+    const open = [...wanted].filter((u) => {
+      const key = u.replace(/\/$/, "") || u;
+      return !seen.has(key) && !seen.has(u);
+    });
+    open.sort((a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname));
+    return open.slice(0, BATCH);
+  }
+
+  while (pages.length < MAX_PAGES) {
+    if (Date.now() - started > SCAN_MS) break;
+    const batch = takeBatch();
+    if (!batch.length) break;
+    for (const url of batch) {
+      seen.add(url);
+      seen.add(url.replace(/\/$/, "") || url);
     }
-
-    for (const href of links) enqueue(href);
-
-    if (queue.length && pages.length < MAX_PAGES) await sleep(DELAY_MS);
+    const fetched = await Promise.all(batch.map((url) => fetchHtml(url)));
+    for (let i = 0; i < batch.length; i += 1) {
+      const got = fetched[i];
+      if (!got) {
+        skipped += 1;
+        continue;
+      }
+      try {
+        const { title, body, links } = extract(got.html, got.url);
+        rememberLinks(links);
+        if (body.length >= 12) {
+          pages.push({ url: got.url, title, body: body.slice(0, MAX_BODY) });
+        }
+      } catch {
+        skipped += 1;
+      }
+    }
   }
 
   if (!pages.length) {
     return {
       pages: [],
+      skipped,
       error: "No readable pages found. Check the address is public HTML.",
     };
   }
@@ -228,5 +285,5 @@ export async function scanSite(
   pages.sort(
     (a, b) => pageRank(a.url, start.pathname) - pageRank(b.url, start.pathname),
   );
-  return { pages };
+  return { pages: pages.slice(0, MAX_PAGES), skipped };
 }

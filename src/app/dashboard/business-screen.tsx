@@ -232,6 +232,7 @@ export function BusinessScreen({
       });
       const data = (await res.json()) as {
         error?: string;
+        pages?: number;
         business?: ClientBusiness;
       };
       if (!res.ok) {
@@ -241,6 +242,11 @@ export function BusinessScreen({
       if (data.business) {
         patchPad(data.business.notepad);
       }
+      setSaveNote(
+        typeof data.pages === "number"
+          ? `Scanned ${data.pages} page${data.pages === 1 ? "" : "s"}.`
+          : "Scan finished.",
+      );
       router.refresh();
     } catch {
       setScanError("Could not reach the server.");

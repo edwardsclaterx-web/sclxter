@@ -85,14 +85,13 @@ a.nav-item.here {
 #sclxter-site-ask-btn {
   appearance: none !important;
   -webkit-appearance: none !important;
-  border-radius: 16px !important;
+  border-radius: 20px !important;
   overflow: hidden;
 }
 
 #wa-send {
   appearance: none !important;
   -webkit-appearance: none !important;
-  opacity: 1 !important;
+  border-radius: 20px !important;
   cursor: pointer !important;
-  pointer-events: auto !important;
 }

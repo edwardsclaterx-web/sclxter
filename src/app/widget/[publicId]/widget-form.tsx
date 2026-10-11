@@ -9,18 +9,27 @@ export function WidgetForm({
   assistantName,
   theme,
   from,
+  endpoint: endpointOverride,
+  extraBody,
+  namespace,
+  blocked,
 }: {
   publicId: string;
   welcome: string;
   assistantName: string;
   theme?: WidgetTheme;
   from?: string | null;
+  endpoint?: string;
+  extraBody?: Record<string, unknown>;
+  namespace?: string;
+  blocked?: string | null;
 }) {
   const fromQ = from ? `&from=${encodeURIComponent(from)}` : "";
   const endpoint =
-    publicId === "sclxter"
+    endpointOverride ||
+    (publicId === "sclxter"
       ? `/api/chat?site=sclxter${fromQ}`
-      : `/api/chat?publicId=${encodeURIComponent(publicId)}${fromQ}`;
+      : `/api/chat?publicId=${encodeURIComponent(publicId)}${fromQ}`);
   const boot = `(function(){
   var form=document.getElementById('wa-form');
   var input=document.getElementById('wa-input');
@@ -29,7 +38,9 @@ export function WidgetForm({
   var welcome=document.getElementById('wa-welcome');
   var clear=document.getElementById('wa-clear');
   if(!form||!input||!send||!log) return;
-  var publicId=${JSON.stringify(publicId)};
+  var publicId=${JSON.stringify(namespace || publicId)};
+  var extra=${JSON.stringify(extraBody || {})};
+  var blocked=${JSON.stringify(blocked || "")};
   var msgKey='sclxter:ask:'+publicId+':messages';
   var draftKey='sclxter:ask:'+publicId+':draft';
   var cidKey='sclxter:ask:'+publicId+':cid';
@@ -90,6 +101,7 @@ export function WidgetForm({
   history.forEach(function(m){ bubble(m.role,m.content); });
   try{ input.value=sessionStorage.getItem(draftKey)||''; }catch(e){}
   function go(){
+    if(blocked) return;
     var v=(input.value||'').trim();
     if(!v||busy) return;
     input.value='';
@@ -99,7 +111,7 @@ export function WidgetForm({
     bubble('user', v);
     busy=true; send.textContent='…';
     send.removeAttribute('disabled');
-    fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:history,conversationId:conversationId||undefined})})
+    fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({messages:history,conversationId:conversationId||undefined},extra))})
       .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
       .then(function(x){
         if(x.d&&x.d.conversationId){
@@ -204,6 +216,7 @@ export function WidgetForm({
             placeholder="Ask anything"
             aria-label="Ask anything"
             autoComplete="off"
+            disabled={Boolean(blocked)}
           />
         </div>
         <button
@@ -216,7 +229,7 @@ export function WidgetForm({
             justifyContent: "center",
             padding: "0 16px",
             border: theme ? `1px solid ${theme.outline}` : 0,
-            borderRadius: 9999,
+            borderRadius: 20,
             background: theme ? theme.primary : "#ffffff",
             color: theme ? theme.text : "#050505",
             fontSize: 14,
@@ -224,9 +237,10 @@ export function WidgetForm({
             cursor: "pointer",
             appearance: "none",
             WebkitAppearance: "none",
-            opacity: 1,
-            pointerEvents: "auto",
+            pointerEvents: blocked ? "none" : "auto",
+            opacity: blocked ? 0.4 : 1,
           }}
+          disabled={Boolean(blocked)}
         >
           Send
         </button>

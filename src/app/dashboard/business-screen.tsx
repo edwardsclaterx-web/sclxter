@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { ChatPanel } from "@/components/chat-panel";
+import { WidgetForm } from "@/app/widget/[publicId]/widget-form";
 import { FieldError } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -609,18 +609,29 @@ export function BusinessScreen({
             contact field are filled.
           </p>
           <div className="mt-4 flex min-h-0 flex-1 flex-col">
-            <ChatPanel
-              endpoint="/api/chat/test"
-              extraBody={admin && typeof seq === "number" ? { seq } : {}}
-              blocked={testBlocked}
-              welcome="Ask using the notepad and tone saved for this business."
-              assistantName="Assistant"
-              title="Test AI"
-              theme={theme}
-              clearable
-              compact
-              showLead={false}
-            />
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-hidden p-4"
+              style={{
+                border: `1px solid ${theme.outline}`,
+                borderRadius: 24,
+                background: theme.primary,
+                color: theme.text,
+              }}
+            >
+              <WidgetForm
+                publicId={business.publicId}
+                welcome={
+                  testBlocked ||
+                  "Ask using the notepad and tone saved for this business."
+                }
+                assistantName="Assistant"
+                theme={theme}
+                endpoint="/api/chat/test"
+                extraBody={admin && typeof seq === "number" ? { seq } : {}}
+                namespace={`test:${business.publicId}`}
+                blocked={testBlocked}
+              />
+            </div>
           </div>
           <div className="mt-4 shrink-0 border-t border-line pt-4">
             <p className="text-sm text-fg">Preview widget</p>

@@ -163,7 +163,7 @@ export function ChatPanel({
           )}
         </div>
       )}
-      <div ref={log} className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+      <div ref={log} className="ask-log min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
         {blocked && (
           <p className="text-sm leading-6" style={themed ? { color: ink } : undefined}>
             {blocked}

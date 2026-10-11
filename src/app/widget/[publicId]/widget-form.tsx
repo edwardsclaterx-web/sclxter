@@ -182,7 +182,7 @@ export function WidgetForm({
           Clear chat
         </button>
       </div>
-      <div id="wa-log" className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+      <div id="wa-log" className="ask-log min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
         <p
           id="wa-welcome"
           className={`text-sm leading-6 ${theme ? "opacity-70" : "text-muted"}`}

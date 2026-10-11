@@ -96,15 +96,41 @@ a.nav-item.here {
   cursor: pointer !important;
 }
 
-#wa-log {
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+html:has(.widget-frame),
+html:has(.widget-frame) body {
+  overflow: hidden;
   scrollbar-gutter: auto;
 }
 
+.ask-log,
+#wa-log {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #6a6a6a transparent;
+}
+
+.ask-log::-webkit-scrollbar,
 #wa-log::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
+  width: 8px;
+}
+
+.ask-log::-webkit-scrollbar-track,
+#wa-log::-webkit-scrollbar-track {
+  margin-block: 14px;
+  background: transparent;
+}
+
+.ask-log::-webkit-scrollbar-thumb,
+#wa-log::-webkit-scrollbar-thumb {
+  background: #6a6a6a;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 99px;
+}
+
+.ask-log::-webkit-scrollbar-button,
+#wa-log::-webkit-scrollbar-button {
+  height: 10px;
+  background: transparent;
 }

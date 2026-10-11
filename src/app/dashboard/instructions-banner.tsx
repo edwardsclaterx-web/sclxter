@@ -1,32 +1,20 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-import { FieldError } from "@/components/chrome";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
 import {
+  DEFAULT_INSTRUCTION_STEPS,
   INSTRUCTIONS_KICKER,
   INSTRUCTIONS_TITLE,
 } from "@/lib/instructions";
 
 export function InstructionsBanner({
   steps,
-  admin,
 }: {
-  steps: string[];
-  admin: boolean;
+  steps?: string[];
+  admin?: boolean;
 }) {
+  const copy = steps?.length ? steps : [...DEFAULT_INSTRUCTION_STEPS];
   const [open, setOpen] = useState(false);
-  const [copy, setCopy] = useState(steps);
-  const [draft, setDraft] = useState(steps.join("\n\n"));
-  const [note, setNote] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setCopy(steps);
-    setDraft(steps.join("\n\n"));
-  }, [steps]);
 
   useEffect(() => {
     if (!open) return;
@@ -36,39 +24,6 @@ export function InstructionsBanner({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
-
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    setNote(null);
-    const next = draft
-      .split(/\n\n+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    try {
-      const res = await fetch("/api/admin/instructions", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ instructions: next }),
-      });
-      const data = (await res.json()) as {
-        error?: string;
-        instructions?: string[];
-      };
-      if (!res.ok || !data.instructions) {
-        setError(data.error || "Could not save.");
-        return;
-      }
-      setCopy(data.instructions);
-      setDraft(data.instructions.join("\n\n"));
-      setNote("Saved for every business.");
-    } catch {
-      setError("Could not reach the server.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <>
@@ -115,24 +70,6 @@ export function InstructionsBanner({
                 <li key={i}>{step}</li>
               ))}
             </ol>
-            {admin && (
-              <form onSubmit={save} className="mt-10 space-y-3 border-t border-line pt-6">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted">
-                  Edit for every business
-                </p>
-                <Textarea
-                  className="min-h-48"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  aria-label="Instruction steps"
-                />
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Saving…" : "Save instructions"}
-                </Button>
-                {note && <p className="text-sm text-muted">{note}</p>}
-                <FieldError>{error}</FieldError>
-              </form>
-            )}
           </div>
         </div>
       )}

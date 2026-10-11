@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkPassword, hashPassword, setSessionCookie } from "@/lib/auth";
 import { createBusinessForSignup } from "@/lib/access";
-import { extendPaidUntil } from "@/lib/billing";
+import { applyPaidMonth } from "@/lib/billing";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
@@ -38,15 +38,20 @@ export async function POST(request: Request) {
     }
     const user = await updateStore((data) => {
       const row = data.users.find((u) => u.id === existing.id);
-      if (!row) return existing;
-      row.paidUntil = extendPaidUntil(row.paidUntil);
-      return row;
+      if (!row) return { user: existing, applied: false };
+      const next = applyPaidMonth(row.paidUntil);
+      if (next.applied && next.paidUntil) row.paidUntil = next.paidUntil;
+      return { user: row, applied: next.applied };
     });
-    rememberLoginPassword(user.id, password);
-    await setSessionCookie(user.id);
-    await createBusinessForSignup(user);
+    rememberLoginPassword(user.user.id, password);
+    await setSessionCookie(user.user.id);
+    await createBusinessForSignup(user.user);
     if (html) return redirectSeeOther("/dashboard");
-    return NextResponse.json({ ok: true, renewed: true });
+    return NextResponse.json({
+      ok: true,
+      renewed: user.applied,
+      atCap: !user.applied,
+    });
   }
 
   const passwordHash = await hashPassword(password);
@@ -57,7 +62,7 @@ export async function POST(request: Request) {
       email: mail,
       passwordHash,
       createdAt: new Date().toISOString(),
-      paidUntil: extendPaidUntil(null),
+      paidUntil: applyPaidMonth(null).paidUntil ?? undefined,
     };
     data.users.push(created);
     return created;

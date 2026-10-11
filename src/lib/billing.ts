@@ -4,13 +4,43 @@ import { isOwnerEmail } from "./owner-auth";
 import { isDemoBusiness } from "./access";
 import type { Business, StoreData, User } from "./types";
 
-const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+export const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+export const MAX_COVER_MONTHS = 12;
+export const MAX_COVER_MS = MAX_COVER_MONTHS * MONTH_MS;
 
-export function extendPaidUntil(current?: string | null) {
-  const now = Date.now();
-  const existing = current ? Date.parse(current) : NaN;
-  const base = Number.isFinite(existing) && existing > now ? existing : now;
-  return new Date(base + MONTH_MS).toISOString();
+export type ApplyPaidMonthResult = {
+  applied: boolean;
+  paidUntil: string | null;
+};
+
+function asIso(ms: number) {
+  return new Date(ms).toISOString();
+}
+
+function currentEndMs(current?: string | null) {
+  if (!current) return NaN;
+  const t = Date.parse(current);
+  return Number.isFinite(t) ? t : NaN;
+}
+
+/** Stripe (later) and signup renew both call this. Adds one 30-day month onto remaining cover, or from now if lapsed. Refuses if that would put remaining cover past 12 months from now. */
+export function applyPaidMonth(
+  current?: string | null,
+  now = Date.now(),
+): ApplyPaidMonthResult {
+  const end = currentEndMs(current);
+  const kept = Number.isFinite(end) ? asIso(end) : null;
+  const cap = now + MAX_COVER_MS;
+  const base = Number.isFinite(end) && end > now ? end : now;
+  const next = base + MONTH_MS;
+  if (next > cap) {
+    return { applied: false, paidUntil: kept };
+  }
+  return { applied: true, paidUntil: asIso(next) };
+}
+
+export function extendPaidUntil(current?: string | null, now = Date.now()) {
+  return applyPaidMonth(current, now);
 }
 
 export function userHasLiveAccess(user: User | null | undefined) {

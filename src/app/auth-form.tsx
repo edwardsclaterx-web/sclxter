@@ -18,7 +18,7 @@ export function AuthForm({
       action={signup ? "/api/auth/signup" : "/api/auth/login"}
       encType="application/x-www-form-urlencoded"
       className="mt-8 space-y-5"
-      autoComplete="on"
+      autoComplete={signup ? "off" : "on"}
     >
       <div>
         <Label htmlFor="email">Email</Label>
@@ -26,7 +26,8 @@ export function AuthForm({
           id="email"
           name="email"
           type="email"
-          autoComplete="username"
+          autoComplete={signup ? "email" : "username"}
+          defaultValue=""
           required
         />
       </div>

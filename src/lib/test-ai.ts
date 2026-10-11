@@ -1,4 +1,5 @@
-export const TEST_AI_BLOCKED = "ERROR - details need to be filled in";
+export const TEST_AI_BLOCKED =
+  "Fill in the shop name, website, industry, and one contact field first.";
 
 export function businessReadyForTest(b: {
   name: string;

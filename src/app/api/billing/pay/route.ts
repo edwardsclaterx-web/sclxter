@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { showBillingNav } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
-import { applyPaidMonths, MAX_COVER_MONTHS } from "@/lib/billing";
-import { updateStore } from "@/lib/store";
 
-export async function POST(request: Request) {
+export async function POST() {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -12,30 +10,8 @@ export async function POST(request: Request) {
   if (!(await showBillingNav(user))) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
-
-  const body = (await request.json().catch(() => ({}))) as { months?: unknown };
-  const months = typeof body.months === "number" ? body.months : Number(body.months);
-  if (!Number.isInteger(months) || months < 1 || months > MAX_COVER_MONTHS) {
-    return NextResponse.json(
-      { error: "Pick between 1 and 12 months." },
-      { status: 400 },
-    );
-  }
-
-  const result = await updateStore((data) => {
-    const row = data.users.find((u) => u.id === user.id);
-    if (!row) return null;
-    const next = applyPaidMonths(row.paidUntil, months);
-    if (next.applied && next.paidUntil) row.paidUntil = next.paidUntil;
-    return {
-      applied: next.applied,
-      refused: next.refused,
-      paidUntil: row.paidUntil ?? null,
-    };
-  });
-
-  if (!result) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  return NextResponse.json(result);
+  return NextResponse.json(
+    { error: "Card payments when Stripe is live." },
+    { status: 403 },
+  );
 }

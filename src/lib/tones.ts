@@ -58,4 +58,4 @@ export function toneById(id: string | undefined) {
 }
 
 export const NOTEPAD_NOTICE =
-  "Notice - the AI is an intelligent system which also has access to the whole internet. This text feeds the assistant. Visitors do not see it raw.";
+  "This text feeds the assistant. Visitors do not see it raw. The assistant does not search the live internet.";

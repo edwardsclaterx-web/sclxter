@@ -5,9 +5,11 @@ import { useState, type MouseEvent } from "react";
 export function AccountPanel({
   email,
   password,
+  showPassword = false,
 }: {
   email: string;
   password: string;
+  showPassword?: boolean;
 }) {
   const [shown, setShown] = useState(false);
   const [ask, setAsk] = useState(false);
@@ -34,7 +36,7 @@ export function AccountPanel({
         <p className="text-xs uppercase tracking-[0.14em] text-muted">Email</p>
         <p className="mt-2 text-sm">{email}</p>
       </div>
-      <div>
+      {showPassword ? <div>
         <p className="mb-1.5 text-xs uppercase tracking-[0.14em] text-muted">
           Password
         </p>
@@ -79,7 +81,11 @@ export function AccountPanel({
             )}
           </button>
         </div>
-      </div>
+      </div> : (
+        <p className="text-sm leading-7 text-muted">
+          The password is stored hashed. It is not shown here.
+        </p>
+      )}
       <button type="button" onClick={() => setAsk(true)} className="text-sm text-fg">
         Sign out
       </button>

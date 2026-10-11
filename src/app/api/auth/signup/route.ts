@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { checkPassword, hashPassword, setSessionCookie } from "@/lib/auth";
 import { createBusinessForSignup } from "@/lib/access";
-import { applyPaidMonth } from "@/lib/billing";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
-import { rememberLoginPassword } from "@/lib/login-passwords";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import { readStore, updateStore } from "@/lib/store";
 
@@ -36,7 +34,6 @@ export async function POST(request: Request) {
     if (!(await checkPassword(password, existing.passwordHash))) {
       return fail(409, "That email already has an account.", "exists");
     }
-    rememberLoginPassword(existing.id, password);
     await setSessionCookie(existing.id);
     await createBusinessForSignup(existing);
     if (html) return redirectSeeOther("/dashboard");
@@ -51,7 +48,6 @@ export async function POST(request: Request) {
       email: mail,
       passwordHash,
       createdAt: new Date().toISOString(),
-      paidUntil: applyPaidMonth(null).paidUntil ?? undefined,
     };
     data.users.push(created);
     return created;
@@ -61,7 +57,6 @@ export async function POST(request: Request) {
     return fail(409, "That email already has an account.", "exists");
   }
 
-  rememberLoginPassword(user.id, password);
   await setSessionCookie(user.id);
   await createBusinessForSignup(user);
   if (html) {

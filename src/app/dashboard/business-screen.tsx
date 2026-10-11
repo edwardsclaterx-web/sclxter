@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { WidgetForm } from "@/app/widget/[publicId]/widget-form";
 import { FieldError } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ type Props = {
   gaps: GapRow[];
   instructions: string[];
   asOf: number;
+  live?: boolean;
 };
 
 type Period = "day" | "week" | "month";
@@ -65,6 +66,7 @@ export function BusinessScreen({
   gaps,
   instructions,
   asOf,
+  live = true,
 }: Props) {
   const router = useRouter();
   const seq = admin ? business.seq : undefined;
@@ -90,14 +92,9 @@ export function BusinessScreen({
   const [pwError, setPwError] = useState<string | null>(null);
   const [openConvo, setOpenConvo] = useState<number | null>(null);
   const [period, setPeriod] = useState<Period>("week");
-  const [origin, setOrigin] = useState("");
 
   const hist = useRef<string[]>([business.notepad]);
   const histI = useRef(0);
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   function patchPad(next: string, record = true) {
     setNotepad(next);
@@ -277,7 +274,7 @@ export function BusinessScreen({
     }
   }
 
-  const snippet = `<script src="${origin || "https://your-host"}/embed.js" data-id="${business.publicId}" async></script>`;
+  const snippet = `<script src="https://sclxter.com/embed.js" data-id="${business.publicId}" async></script>`;
 
   const convoCount = conversations.filter((c) =>
     within(c.createdAt, period, asOf),
@@ -303,6 +300,13 @@ export function BusinessScreen({
 
   return (
     <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
+      {!admin && !live ? (
+        <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
+          This account is unpaid. Your shop data is kept. The live assistant
+          on your website stays off until cover is current. Card payments when
+          Stripe is live.
+        </p>
+      ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <div className="order-1 min-w-0">
@@ -495,7 +499,7 @@ export function BusinessScreen({
             disabled={scanning || !websiteUrl.trim()}
             onClick={() => void scan()}
           >
-            {scanning ? "Scanning…" : "Scan site"}
+            {scanning ? "Scanning…" : "Scan website"}
           </Button>
           <FieldError>{scanError}</FieldError>
         </section>
@@ -584,7 +588,9 @@ export function BusinessScreen({
           <h2 className="text-xl font-medium tracking-tight">Embed Ask anything</h2>
           <p className="mt-2 text-sm text-muted">
             This snippet is this business’s assistant. Paste it before the
-            closing body tag.
+            closing body tag. It loads from sclxter.com, not from 127.0.0.1.
+            Until that host is public, Ask anything on this app still uses
+            this server.
           </p>
           <pre className="mt-4 overflow-x-auto border border-line bg-surface p-4 text-xs leading-6">
             {snippet}

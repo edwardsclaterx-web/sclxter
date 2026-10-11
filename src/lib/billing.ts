@@ -66,14 +66,14 @@ export function applyPaidMonths(
 export function userHasLiveAccess(user: User | null | undefined) {
   if (!user) return false;
   if (isOwnerEmail(user.email)) return true;
-  if (!user.paidUntil) return true;
+  if (!user.paidUntil) return false;
   const t = Date.parse(user.paidUntil);
   return Number.isFinite(t) && t > Date.now();
 }
 
 export function businessHasLiveAccess(business: Business, data: StoreData) {
   if (isDemoBusiness(business)) return true;
-  if (!business.ownerId) return true;
+  if (!business.ownerId) return false;
   const owner = data.users.find((u) => u.id === business.ownerId);
   if (!owner) return false;
   return userHasLiveAccess(owner);

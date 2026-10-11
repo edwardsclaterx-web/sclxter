@@ -102,6 +102,46 @@ const items: { q: ReactNode; a: ReactNode }[] = [
       </>
     ),
   },
+  {
+    q: <>How much does it cost?</>,
+    a: (
+      <>
+        £299.99 setup, then £74.99 a month. Card payments when Stripe is live
+        — you cannot pay by card on this site yet.
+      </>
+    ),
+  },
+  {
+    q: <>What does Scan website do?</>,
+    a: (
+      <>
+        After you save your public URL, Scan website reads about 16 public
+        HTML pages in a few seconds and adds that text to your notepad. It
+        does not wipe notes you typed. JavaScript-heavy or blocked pages can
+        come back thin. You still review and correct the notepad.
+      </>
+    ),
+  },
+  {
+    q: <>What happens if I stop paying?</>,
+    a: (
+      <>
+        Your account and shop data stay. The live assistant on your website
+        switches off until cover is current. Missing paid time does not keep
+        the widget live.
+      </>
+    ),
+  },
+  {
+    q: <>How do I put Ask anything on my site?</>,
+    a: (
+      <>
+        Copy the snippet from your dashboard (Squarespace, Wix, WordPress, or
+        a custom footer). If you would rather we paste it, email the site
+        login to sclxter@outlook.com.
+      </>
+    ),
+  },
 ];
 
 export default async function FaqPage() {

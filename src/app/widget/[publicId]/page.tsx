@@ -23,7 +23,7 @@ function Unavailable({ text }: { text: string }) {
 
 async function appOrigin() {
   const h = await headers();
-  const host = h.get("x-forwarded-host") || h.get("host") || "127.0.0.1";
+  const host = h.get("x-forwarded-host") || h.get("host") || "localhost";
   const proto = h.get("x-forwarded-proto") || "http";
   return `${proto}://${host}`;
 }

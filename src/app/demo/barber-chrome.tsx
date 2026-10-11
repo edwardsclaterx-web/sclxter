@@ -17,7 +17,7 @@ export function BarberFooter() {
       <nav className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         <Link href="/demo/cuts">Cuts</Link>
         <Link href="/demo/about">About</Link>
-        <Link href="/demo/about">More information</Link>
+        <Link href="/demo/visit">Visit</Link>
       </nav>
     </footer>
   );

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/chrome";
 import { getSessionUser, hasOwnerStep2Pending } from "@/lib/auth";
-import { OwnerLoginForm } from "../owner-login-form";
+import { AuthForm } from "../auth-form";
 
 export default async function LoginPage({
   searchParams,
@@ -27,7 +27,8 @@ export default async function LoginPage({
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Sign in</h1>
         <p className="mt-2 text-sm text-muted">Email and password.</p>
-        <OwnerLoginForm
+        <AuthForm
+          mode="login"
           error={q.error ? "Those details did not match." : null}
         />
       </main>

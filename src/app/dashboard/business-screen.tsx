@@ -299,7 +299,8 @@ export function BusinessScreen({
     <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
-      <aside className="order-1 flex min-h-[32rem] flex-col border border-line p-5 lg:sticky lg:top-8 lg:h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-6rem)]">
+      <div className="order-1 space-y-8">
+      <aside className="flex min-h-[24rem] flex-col border border-line p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Your website&apos;s data
         </h2>
@@ -313,7 +314,7 @@ export function BusinessScreen({
           </Button>
         </div>
         <Textarea
-          className="mt-3 min-h-0 flex-1 text-[0.9375rem] leading-6"
+          className="mt-3 min-h-[16rem] flex-1 text-[0.9375rem] leading-6"
           value={notepad}
           onChange={(e) => patchPad(e.target.value)}
           placeholder="Scan website to fill"
@@ -327,7 +328,32 @@ export function BusinessScreen({
         >
           Save notepad
         </Button>
+        <p className="mt-3 text-sm text-muted">
+          You can edit all of the information.
+        </p>
       </aside>
+      <section>
+        <h2 className="text-xl font-bold tracking-tight text-fg">
+          Non answered questions
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          These are the top 5 most asked questions from your website which
+          the assistant can&apos;t answer. Review them and add extra
+          information into the data notepad.
+        </p>
+        {gaps.length === 0 ? (
+          <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
+            No unanswered questions yet.
+          </p>
+        ) : (
+          <ol className="mt-4 list-decimal space-y-3 border border-line px-8 py-4 text-sm leading-6">
+            {gaps.map((g) => (
+              <li key={g.question}>{g.question}</li>
+            ))}
+          </ol>
+        )}
+      </section>
+      </div>
 
       <div className="order-3 space-y-12 lg:order-2">
         <section>
@@ -511,28 +537,6 @@ export function BusinessScreen({
                   </li>
                 ))}
             </ul>
-          )}
-        </section>
-
-        <section>
-          <h2 className="text-xl font-bold tracking-tight text-fg">
-            Non answered questions
-          </h2>
-          <p className="mt-2 text-sm text-muted">
-            These are the top 5 most asked questions from your website which
-            the assistant can&apos;t answer. Review them and add extra
-            information into the data notepad.
-          </p>
-          {gaps.length === 0 ? (
-            <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
-              No unanswered questions yet.
-            </p>
-          ) : (
-            <ol className="mt-4 list-decimal space-y-3 border border-line px-8 py-4 text-sm leading-6">
-              {gaps.map((g) => (
-                <li key={g.question}>{g.question}</li>
-              ))}
-            </ol>
           )}
         </section>
 

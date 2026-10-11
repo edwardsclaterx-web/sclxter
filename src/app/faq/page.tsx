@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
-import { SiteHeader } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
-import { getSessionUser } from "@/lib/auth";
+import { AppHeader } from "@/components/app-header";
 
 export const metadata = { title: "FAQ — sclxter" };
 
@@ -107,14 +105,9 @@ const items: { q: ReactNode; a: ReactNode }[] = [
 ];
 
 export default async function FaqPage() {
-  const user = await getSessionUser();
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader
-        signedIn={Boolean(user)}
-        admin={Boolean(user && isAdmin(user))}
-        showPricing={false}
-      />
+      <AppHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-16 md:px-8 md:py-20">
         <h1 className="text-3xl font-medium tracking-tight">FAQ</h1>
         <dl className="mt-12 space-y-10">

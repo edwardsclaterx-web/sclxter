@@ -1,19 +1,14 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/chrome";
+import { AppHeader } from "@/components/app-header";
 import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function Home() {
   const user = await getSessionUser();
+  const owned = Boolean(user && !isAdmin(user));
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader
-        signedIn={Boolean(user)}
-        admin={Boolean(user && isAdmin(user))}
-        lowercase
-        showPricing={false}
-        showBuy={false}
-      />
+      <AppHeader />
       <main className="flex-1">
         <section className="relative">
           <div className="mx-auto w-full max-w-3xl px-5 py-20 md:px-8 md:py-28">
@@ -133,11 +128,11 @@ export default async function Home() {
               <p className="mt-4 text-sm leading-6 text-muted">
                 One site, one assistant, and an increase in customers.
               </p>
-              {user ? (
+              {owned ? (
                 <p className="mt-8 font-sans text-sm font-medium text-[#22c55e]">
                   Owned
                 </p>
-              ) : (
+              ) : user ? null : (
                 <Link
                   href="/buy"
                   className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"

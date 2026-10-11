@@ -7,7 +7,7 @@ export const metadata = { title: "Buy — sclxter" };
 
 export default async function BuyPage() {
   const user = await getSessionUser();
-  if (user) redirect("/dashboard");
+  if (user) redirect("/billing");
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader signedIn={false} showPricing={false} showBuy />

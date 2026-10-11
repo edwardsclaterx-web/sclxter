@@ -43,6 +43,26 @@ export function extendPaidUntil(current?: string | null, now = Date.now()) {
   return applyPaidMonth(current, now);
 }
 
+export function applyPaidMonths(
+  current?: string | null,
+  count = 1,
+  now = Date.now(),
+) {
+  const n = Math.min(
+    MAX_COVER_MONTHS,
+    Math.max(0, Math.floor(Number(count) || 0)),
+  );
+  let paidUntil = current ?? null;
+  let applied = 0;
+  for (let i = 0; i < n; i += 1) {
+    const next = applyPaidMonth(paidUntil, now);
+    if (!next.applied || !next.paidUntil) break;
+    paidUntil = next.paidUntil;
+    applied += 1;
+  }
+  return { applied, paidUntil, refused: n - applied };
+}
+
 export function userHasLiveAccess(user: User | null | undefined) {
   if (!user) return false;
   if (isOwnerEmail(user.email)) return true;

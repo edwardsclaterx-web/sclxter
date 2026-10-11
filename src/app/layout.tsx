@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { RenewWatch } from "@/components/renew-watch";
 import { SiteAskAnything } from "@/components/site-ask-anything";
 import "./globals.css";
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full bg-bg font-sans text-fg">
         {children}
+        <RenewWatch />
         <SiteAskAnything />
       </body>
     </html>

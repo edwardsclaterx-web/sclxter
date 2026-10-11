@@ -1,17 +1,10 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
-import { getSessionUser } from "@/lib/auth";
+import { AppHeader } from "@/components/app-header";
 
 export async function BarberHeader() {
-  const user = await getSessionUser();
   return (
     <div>
-      <SiteHeader
-        signedIn={Boolean(user)}
-        admin={Boolean(user && isAdmin(user))}
-        showPricing={false}
-      />
+      <AppHeader />
       <p className="px-5 pt-4 text-sm tracking-[0.22em] md:px-10">NORTHGATE</p>
     </div>
   );

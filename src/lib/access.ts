@@ -77,6 +77,12 @@ export async function getOwnedBusiness(user: User): Promise<Business | null> {
   return businessForUser(data, user);
 }
 
+export async function showBillingNav(user: User): Promise<boolean> {
+  const shop = await getOwnedBusiness(user);
+  if (shop) return true;
+  return !isAdmin(user);
+}
+
 export async function getBusinessBySeq(seq: number): Promise<Business | null> {
   const data = await readStore();
   return listedBusinesses(data).find((b) => b.seq === seq) ?? null;

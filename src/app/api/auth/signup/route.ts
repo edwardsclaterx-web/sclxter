@@ -36,22 +36,11 @@ export async function POST(request: Request) {
     if (!(await checkPassword(password, existing.passwordHash))) {
       return fail(409, "That email already has an account.", "exists");
     }
-    const user = await updateStore((data) => {
-      const row = data.users.find((u) => u.id === existing.id);
-      if (!row) return { user: existing, applied: false };
-      const next = applyPaidMonth(row.paidUntil);
-      if (next.applied && next.paidUntil) row.paidUntil = next.paidUntil;
-      return { user: row, applied: next.applied };
-    });
-    rememberLoginPassword(user.user.id, password);
-    await setSessionCookie(user.user.id);
-    await createBusinessForSignup(user.user);
+    rememberLoginPassword(existing.id, password);
+    await setSessionCookie(existing.id);
+    await createBusinessForSignup(existing);
     if (html) return redirectSeeOther("/dashboard");
-    return NextResponse.json({
-      ok: true,
-      renewed: user.applied,
-      atCap: !user.applied,
-    });
+    return NextResponse.json({ ok: true, signedIn: true });
   }
 
   const passwordHash = await hashPassword(password);

@@ -1,4 +1,4 @@
-import { SiteHeader } from "@/components/chrome";
+import { AppHeader } from "@/components/app-header";
 import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { findOwnerBusiness } from "@/lib/support";
@@ -17,11 +17,7 @@ export default async function ContactPage() {
   );
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader
-        signedIn={Boolean(user)}
-        admin={Boolean(user && isAdmin(user))}
-        showPricing={false}
-      />
+      <AppHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-20 md:px-8">
         <h1 className="text-3xl font-medium tracking-tight">Contact</h1>
         <a

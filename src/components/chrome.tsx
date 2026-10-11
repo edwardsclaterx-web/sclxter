@@ -19,6 +19,7 @@ function navClass(className?: string, active?: boolean) {
 export function ProductNav({
   signedIn,
   admin,
+  purchaser,
   extra,
   tail,
   showPricing = true,
@@ -26,6 +27,7 @@ export function ProductNav({
 }: {
   signedIn?: boolean;
   admin?: boolean;
+  purchaser?: boolean;
   extra?: ReactNode;
   tail?: ReactNode;
   showPricing?: boolean;
@@ -40,6 +42,7 @@ export function ProductNav({
   const onLogin = pathname === "/login";
   const onSignup = pathname === "/signup" || pathname === "/buy";
   const onAccount = pathname === "/account";
+  const onBilling = pathname === "/billing" || pathname.startsWith("/billing/");
   const onMessages = pathname === "/dashboard/messages" || pathname.startsWith("/dashboard/messages/");
   const onBusinesses =
     pathname === "/dashboard/businesses" ||
@@ -47,6 +50,7 @@ export function ProductNav({
   const onMyDash =
     pathname === "/dashboard" ||
     (pathname.startsWith("/dashboard/") && !onMessages && !onBusinesses);
+  const billing = Boolean(purchaser);
 
   return (
     <nav className="flex flex-wrap items-baseline justify-end gap-x-6 gap-y-2 text-sm text-muted">
@@ -107,6 +111,11 @@ export function ProductNav({
           )}
         </>
       )}
+      {billing ? (
+        <Link href="/billing" className={navClass(undefined, onBilling)}>
+          Billing
+        </Link>
+      ) : null}
       {signedIn || admin ? (
         <Link href="/account" className={navClass(undefined, onAccount)}>
           Sign out
@@ -121,6 +130,7 @@ export function SiteHeader({
   right,
   signedIn,
   admin,
+  purchaser,
   extra,
   tail,
   showPricing,
@@ -129,6 +139,7 @@ export function SiteHeader({
   right?: ReactNode;
   signedIn?: boolean;
   admin?: boolean;
+  purchaser?: boolean;
   extra?: ReactNode;
   tail?: ReactNode;
   lowercase?: boolean;
@@ -142,6 +153,7 @@ export function SiteHeader({
         <ProductNav
           signedIn={signedIn}
           admin={admin}
+          purchaser={purchaser}
           extra={extra}
           tail={tail}
           showPricing={showPricing}

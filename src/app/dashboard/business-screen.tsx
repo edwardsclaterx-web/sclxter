@@ -299,7 +299,7 @@ export function BusinessScreen({
     <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
-      <div className="order-1 space-y-8">
+      <div className="order-1 min-w-0">
       <aside className="flex min-h-[24rem] flex-col border border-line p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Your website&apos;s data
@@ -332,7 +332,7 @@ export function BusinessScreen({
           You can edit all of the information.
         </p>
       </aside>
-      <section>
+      <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Non answered questions
         </h2>

@@ -300,7 +300,7 @@ export function BusinessScreen({
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <div className="order-1 min-w-0">
-      <aside className="flex min-h-[24rem] flex-col border border-line p-5">
+      <aside className="flex min-h-[48rem] flex-col border border-line p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Your website&apos;s data
         </h2>
@@ -314,7 +314,7 @@ export function BusinessScreen({
           </Button>
         </div>
         <Textarea
-          className="mt-3 min-h-[16rem] flex-1 text-[0.9375rem] leading-6"
+          className="mt-3 min-h-[32rem] flex-1 text-[0.9375rem] leading-6"
           value={notepad}
           onChange={(e) => patchPad(e.target.value)}
           placeholder="Scan website to fill"

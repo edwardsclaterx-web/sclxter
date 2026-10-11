@@ -17,12 +17,6 @@ type Row = {
   createdAt: string;
 };
 
-function contactLine(r: Row) {
-  return [r.contactPhone, r.contactEmail, r.contactOther]
-    .filter(Boolean)
-    .join(" · ");
-}
-
 export function BusinessesList({ rows }: { rows: Row[] }) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"id" | "name">("id");
@@ -64,7 +58,7 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
     <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 md:px-8">
       <h1 className="text-2xl font-medium tracking-tight">Businesses</h1>
       <p className="mt-2 text-sm text-muted">
-        Search and open a business. Sequential ids are for you only.
+        Search and open a business.
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -94,17 +88,11 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
         </p>
       ) : (
         <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-[48rem] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-line text-xs uppercase tracking-[0.14em] text-muted">
-                <th className="py-3 pr-4 font-normal">id</th>
                 <th className="py-3 pr-4 font-normal">Name</th>
-                <th className="py-3 pr-4 font-normal">URL</th>
-                <th className="py-3 pr-4 font-normal">Industry</th>
-                <th className="py-3 pr-4 font-normal">Contact</th>
-                <th className="py-3 pr-4 font-normal">Email</th>
-                <th className="py-3 pr-4 font-normal">Password</th>
-                <th className="py-3 text-right font-normal">Had sclxter</th>
+                <th className="py-3 text-right font-normal">Member of sclxter</th>
               </tr>
             </thead>
             <tbody>
@@ -112,23 +100,9 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
                 <tr key={r.seq} className="border-b border-line hover:bg-surface">
                   <td className="py-3 pr-4">
                     <Link href={`/dashboard/b/${r.seq}`} className="text-fg">
-                      {r.seq}
-                    </Link>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <Link href={`/dashboard/b/${r.seq}`} className="text-fg">
                       {r.name || "Untitled"}
                     </Link>
                   </td>
-                  <td className="max-w-[12rem] truncate py-3 pr-4 text-muted">
-                    {r.websiteUrl || "—"}
-                  </td>
-                  <td className="py-3 pr-4 text-muted">{r.industry || "—"}</td>
-                  <td className="max-w-[14rem] truncate py-3 pr-4 text-muted">
-                    {contactLine(r) || "—"}
-                  </td>
-                  <td className="py-3 pr-4 text-muted">{r.ownerEmail || "—"}</td>
-                  <td className="py-3 pr-4 text-muted">Set on the business page</td>
                   <td className="py-3 text-right text-muted">
                     {formatHadSclxter(r.createdAt)}
                   </td>

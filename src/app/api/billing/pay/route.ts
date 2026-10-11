@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOwnedBusiness, isAdmin, showBillingNav } from "@/lib/access";
+import { showBillingNav } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { applyPaidMonths, MAX_COVER_MONTHS } from "@/lib/billing";
 import { updateStore } from "@/lib/store";
@@ -11,12 +11,6 @@ export async function POST(request: Request) {
   }
   if (!(await showBillingNav(user))) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  if (isAdmin(user)) {
-    const shop = await getOwnedBusiness(user);
-    if (!shop) {
-      return NextResponse.json({ error: "Not found." }, { status: 404 });
-    }
   }
 
   const body = (await request.json().catch(() => ({}))) as { months?: unknown };

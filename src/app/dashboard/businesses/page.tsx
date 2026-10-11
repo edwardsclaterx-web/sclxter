@@ -21,6 +21,7 @@ export default async function BusinessesPage() {
       contactEmail: b.contactEmail,
       contactOther: b.contactOther,
       ownerEmail: owner?.email ?? "",
+      createdAt: owner?.createdAt || b.createdAt,
     };
   });
 

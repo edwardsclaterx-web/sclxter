@@ -18,6 +18,32 @@ export function inRenewWarningWindow(
   return left > 0 && left <= WARN_BEFORE_MS;
 }
 
+export function formatHadSclxter(
+  createdAt?: string | null,
+  now = Date.now(),
+): string {
+  const start = createdAt ? Date.parse(createdAt) : NaN;
+  if (!Number.isFinite(start) || start > now) return "0 days";
+  const from = new Date(start);
+  const to = new Date(now);
+  let months =
+    (to.getUTCFullYear() - from.getUTCFullYear()) * 12 +
+    (to.getUTCMonth() - from.getUTCMonth());
+  let days = to.getUTCDate() - from.getUTCDate();
+  if (days < 0) {
+    months -= 1;
+    const prev = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 0));
+    days += prev.getUTCDate();
+  }
+  if (months < 0) return "0 days";
+  const bits: string[] = [];
+  if (months > 0) bits.push(months === 1 ? "1 month" : `${months} months`);
+  if (days > 0 || months === 0) {
+    bits.push(days === 1 ? "1 day" : `${days} days`);
+  }
+  return bits.join(" ");
+}
+
 export function formatRemaining(ms: number): string {
   if (ms <= 0) return "0 seconds";
   const total = Math.floor(ms / 1000);

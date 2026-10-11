@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { formatHadSclxter } from "@/lib/cover";
 
 type Row = {
   seq: number;
@@ -13,6 +14,7 @@ type Row = {
   contactEmail: string;
   contactOther: string;
   ownerEmail: string;
+  createdAt: string;
 };
 
 function contactLine(r: Row) {
@@ -101,7 +103,8 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
                 <th className="py-3 pr-4 font-normal">Industry</th>
                 <th className="py-3 pr-4 font-normal">Contact</th>
                 <th className="py-3 pr-4 font-normal">Email</th>
-                <th className="py-3 font-normal">Password</th>
+                <th className="py-3 pr-4 font-normal">Password</th>
+                <th className="py-3 text-right font-normal">Had sclxter</th>
               </tr>
             </thead>
             <tbody>
@@ -125,7 +128,10 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
                     {contactLine(r) || "—"}
                   </td>
                   <td className="py-3 pr-4 text-muted">{r.ownerEmail || "—"}</td>
-                  <td className="py-3 text-muted">Set on the business page</td>
+                  <td className="py-3 pr-4 text-muted">Set on the business page</td>
+                  <td className="py-3 text-right text-muted">
+                    {formatHadSclxter(r.createdAt)}
+                  </td>
                 </tr>
               ))}
             </tbody>

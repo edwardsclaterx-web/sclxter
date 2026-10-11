@@ -78,9 +78,8 @@ export async function getOwnedBusiness(user: User): Promise<Business | null> {
 }
 
 export async function showBillingNav(user: User): Promise<boolean> {
-  const shop = await getOwnedBusiness(user);
-  if (shop) return true;
-  return !isAdmin(user);
+  if (isAdmin(user)) return false;
+  return true;
 }
 
 export async function getBusinessBySeq(seq: number): Promise<Business | null> {

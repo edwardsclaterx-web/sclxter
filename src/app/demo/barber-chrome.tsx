@@ -5,7 +5,9 @@ export async function BarberHeader() {
   return (
     <div>
       <AppHeader />
-      <p className="px-5 pt-4 text-sm tracking-[0.22em] md:px-10">NORTHGATE</p>
+      <p className="px-5 pt-4 text-sm tracking-[0.22em] md:px-10">
+        <Link href="/demo">NORTHGATE</Link>
+      </p>
     </div>
   );
 }

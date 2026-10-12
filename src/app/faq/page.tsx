@@ -106,8 +106,7 @@ const items: { q: ReactNode; a: ReactNode }[] = [
     q: <>How much does it cost?</>,
     a: (
       <>
-        £299.99 setup, then £74.99 a month. Card payments when Stripe is live
-        — you cannot pay by card on this site yet.
+        £299.99 setup, then £74.99 a month.
       </>
     ),
   },
@@ -137,8 +136,7 @@ const items: { q: ReactNode; a: ReactNode }[] = [
     a: (
       <>
         Copy the snippet from your dashboard (Squarespace, Wix, WordPress, or
-        a custom footer). If you would rather we paste it, email the site
-        login to sclxter@outlook.com.
+        a custom footer).
       </>
     ),
   },

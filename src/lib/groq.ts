@@ -56,6 +56,8 @@ const SCLXTER_OFF_TOPIC = offTopicLine(SCLXTER_CONTACT);
 const POWERED = "I am powered by sclxter.com";
 const AI_LINE = "I am an AI, not a real person.";
 const HELLO = "Hi, what can I help you with?";
+const OUTPUT_RULE =
+  "Output only the final answer the visitor should read. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.";
 
 function isWhatIsSclxter(content: string) {
   return /^(please |can you |could you )?(tell me )?(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter|what is this( site| website)?)$/.test(
@@ -192,6 +194,7 @@ function shopPrompt(
     ? "This shop is a fictional demo for sclxter.com. If asked whether the shop is real, say that."
     : "";
   return `You are an AI assistant for ${business.name || "this business"}. Not a human.
+${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
 Unrelated to this shop: reply with this exact text only:
@@ -214,6 +217,7 @@ If they are clearly about to buy or book, prefix [[LEAD]]. If a shop fact was mi
 
 function sitePrompt() {
   return `You are an AI assistant for sclxter (always lowercase). Not a human. You are on the sclxter marketing site.
+${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
 Unrelated to sclxter: reply with this exact text only:
@@ -279,6 +283,29 @@ function isRequiredVerbatim(text: string) {
   }
   if (body === POWERED || body === AI_LINE || body === HELLO) return true;
   return false;
+}
+
+function looksLikeThought(text: string) {
+  return /user asks|according to (the )?instructions|let'?s craft|we need to respond|we should (prefix|also|add)|the user wants|we can say|keep under \d+ characters|so we add \[\[/i.test(
+    text,
+  );
+}
+
+function extractQuotedAnswer(text: string) {
+  const quotes = [...text.matchAll(/[“"]([^”"]{8,})[”"]/g)].map((m) => m[1].trim());
+  return quotes.length ? quotes[quotes.length - 1] : "";
+}
+
+function visitorAnswer(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  if (!looksLikeThought(trimmed)) return trimmed;
+  const quoted = extractQuotedAnswer(trimmed);
+  if (quoted && !looksLikeThought(quoted)) return quoted;
+  const after = trimmed.split(/short reply:\s*/i).pop() || "";
+  const cleaned = after.replace(/^["“]|["”]$/g, "").trim();
+  if (cleaned && cleaned !== trimmed && !looksLikeThought(cleaned)) return cleaned;
+  return "";
 }
 
 function capReply(text: string) {
@@ -349,16 +376,15 @@ export async function answerChat(opts: {
     model: MODEL,
     temperature: 0.3,
     max_tokens: 180,
+    reasoning_effort: "low",
+    reasoning_format: "hidden",
     messages: [{ role: "system", content: system }, ...history],
   });
 
   const message = completion.choices[0]?.message;
-  const content =
-    (typeof message?.content === "string" && message.content.trim()) ||
-    (typeof (message as { reasoning?: string } | undefined)?.reasoning ===
-      "string" &&
-      (message as { reasoning?: string }).reasoning?.trim()) ||
-    "";
+  const raw =
+    typeof message?.content === "string" ? message.content.trim() : "";
+  const content = visitorAnswer(raw);
   if (content.startsWith("I am programmed to assist you with related questions")) {
     return offTopicLine(contact);
   }

@@ -7,6 +7,7 @@ import type { Business, ChatMessage, KnowledgeItem } from "./types";
 const MODEL = "openai/gpt-oss-20b";
 const HISTORY = 8;
 const RETRIEVE_CHARS = 1600;
+const REPLY_LIMIT = 500;
 
 function client() {
   loadSecrets();
@@ -200,6 +201,7 @@ If asked how you work: ${POWERED}
 Greetings: say hi and ask what you can help with. Never say you have no information.
 Small talk is fine. Infer everyday language.
 Use only the retrieved notes. Do not invent prices, hours, names, or policies. If a shop fact is missing, say so and give the contact.
+Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points only. Short sentences.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
 ${demo}
@@ -224,6 +226,7 @@ Greetings: say hi and ask what you can help with. Never say you have no informat
 Small talk is fine. Infer everyday language.
 
 Basic product facts (not private): customisable theme, tone, and notepad; Scan website; Ask anything widget; buy up to 12 months ahead; £299.99 setup then £74.99 a month; card payments when Stripe is live; fictional barber demo on this site.
+Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer (the what-is-sclxter paragraph is allowed). Key points only. Short sentences.
 Do not guess other internals. Do not dump the whole site.`;
 }
 
@@ -266,6 +269,35 @@ Be concrete enough that the assistant can say “likely yes” or “usually not
 
 function lastUser(messages: ChatMessage[]) {
   return [...messages].reverse().find((m) => m.role === "user");
+}
+
+function isRequiredVerbatim(text: string) {
+  const body = text.replace(/^(\[\[(?:LEAD|GAP)\]\]\s*)+/g, "").trim();
+  if (body === SCLXTER_WHAT_IS) return true;
+  if (body.startsWith("I am programmed to assist you with related questions.")) {
+    return true;
+  }
+  if (body === POWERED || body === AI_LINE || body === HELLO) return true;
+  return false;
+}
+
+function capReply(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  if (isRequiredVerbatim(trimmed) || trimmed.length <= REPLY_LIMIT) return trimmed;
+  const prefix = trimmed.match(/^((?:\[\[(?:LEAD|GAP)\]\]\s*)*)/)?.[1] ?? "";
+  const body = trimmed.slice(prefix.length);
+  const room = REPLY_LIMIT - prefix.length;
+  if (body.length <= room) return trimmed;
+  const cut = body.slice(0, Math.max(0, room));
+  const breakAt = Math.max(
+    cut.lastIndexOf(". "),
+    cut.lastIndexOf(".\n"),
+    cut.lastIndexOf("\n"),
+    cut.lastIndexOf(" "),
+  );
+  const clipped = (breakAt > 40 ? cut.slice(0, breakAt + 1) : cut).trim();
+  return `${prefix}${clipped}`;
 }
 
 export async function answerChat(opts: {
@@ -316,7 +348,7 @@ export async function answerChat(opts: {
   const completion = await groq.chat.completions.create({
     model: MODEL,
     temperature: 0.3,
-    max_tokens: 350,
+    max_tokens: 180,
     messages: [{ role: "system", content: system }, ...history],
   });
 
@@ -330,7 +362,7 @@ export async function answerChat(opts: {
   if (content.startsWith("I am programmed to assist you with related questions")) {
     return offTopicLine(contact);
   }
-  return content || "I could not get a reply just then. Try once more.";
+  return capReply(content || "I could not get a reply just then. Try once more.");
 }
 
 export function parseLeadFromReply(reply: string) {

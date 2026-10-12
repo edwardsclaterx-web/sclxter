@@ -60,7 +60,7 @@ const OUTPUT_RULE = `Output only the composed answer the visitor should read. Ne
 Answer the question they asked. Do not predict or pre-plan the next question. Do not ask a follow-up instead of answering.
 Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points only. Short sentences.
 The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real questions (recommend a haircut, prices, hours) get a real short answer.
-Read the conversation. Messy follow-ups like “i mean 20 or less than” refer to the last question — list matching prices or services from the notes. Do not say you don’t know when those facts are in the notes.`;
+Read the whole conversation. Short or messy follow-ups continue the last question. Answer that question from the notes. Do not say you don’t know when the answer is in the notes.`;
 
 function isWhatIsSclxter(content: string) {
   return /^(please |can you |could you )?(tell me )?(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter|what is this( site| website)?)$/.test(
@@ -116,21 +116,17 @@ function isShopRelated(content: string, business: Business) {
   const industry = norm(business.industry || "");
   if (name && t.includes(name)) return true;
   if (industry && t.includes(industry)) return true;
-  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you|less|under|cheaper|mean|meant|pound|£|\d+)\b/.test(
+  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you|pound|£)\b/.test(
     t,
   );
 }
 
-function isFollowUp(content: string) {
+function looksLikeContinuation(content: string) {
   const t = norm(content);
-  return /^(i mean|i meant|no |yes |and |or |also |that |those |the \d)/.test(t) ||
-    /\b(less than|or less|under \d|cheaper|too much|i mean)\b/.test(t) ||
-    /^\d+(\s+or\s+less)?$/.test(t);
-}
-
-function wantsMenu(content: string) {
-  const t = norm(content);
-  return /\b(\d+|price|prices|cost|how much|cheap|cheaper|less|under|cut|haircut|hour|open|service|menu|£)\b/.test(
+  const words = t.split(" ").filter(Boolean);
+  if (!words.length) return false;
+  if (words.length <= 6) return true;
+  return /^(i mean|i meant|no |yes |yeah |nah |and |or |also |but |not |that |those |this |the )/.test(
     t,
   );
 }
@@ -143,6 +139,7 @@ function countTrailingUnrelated(
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const m = messages[i];
     if (m.role !== "user") continue;
+    if (looksLikeContinuation(m.content)) continue;
     if (related(m.content)) break;
     n += 1;
   }
@@ -182,78 +179,14 @@ function coreShopChunks(source: string) {
   );
 }
 
-function looksMoney(query: string) {
-  const t = norm(query);
-  return /\b(price|prices|cost|£|pound|cheap|cheaper|less|under|how much|or less)\b/.test(
-    t,
-  );
-}
-
-function queryBudget(query: string): number | null {
-  const t = norm(query);
-  const m =
-    t.match(
-      /(\d+(?:\.\d+)?)\s*(?:or less(?: than)?|and under|and below)/,
-    ) ||
-    t.match(
-      /(?:under|less than|below|cheaper than|no more than|at most|max(?:imum)?)\s*£?\s*(\d+(?:\.\d+)?)/,
-    ) ||
-    t.match(/i mean(?:t)?\s*£?\s*(\d+(?:\.\d+)?)/) ||
-    t.match(/£\s*(\d+(?:\.\d+)?)\s*(?:or less|max)/);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return Number.isFinite(n) ? n : null;
-}
-
-function pricedServices(source: string) {
-  const found: { label: string; pounds: number }[] = [];
-  const re = /([^.\n:;]+?)\s*£\s*(\d+(?:\.\d+)?)/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(source))) {
-    const label = m[1]
-      .replace(/^[-*•]\s*/, "")
-      .replace(/^###\s*/, "")
-      .trim();
-    if (label.length < 2) continue;
-    found.push({ label, pounds: Number(m[2]) });
-  }
-  return found;
-}
-
-function listUnderBudget(source: string, budget: number) {
-  const hits = pricedServices(source).filter((p) => p.pounds <= budget);
-  if (!hits.length) return "";
-  const bits = hits.map((p) => `${p.label} £${p.pounds}`);
-  return `Under £${budget}: ${bits.join("; ")}.`.slice(0, REPLY_LIMIT);
-}
-
-function looksUnsure(text: string) {
-  return /\b(i (do not|don't|dont) (know|have)|not sure|no (idea|prices?|information)|haven'?t got|cannot find|can'?t find|nothing in (the )?(notes|data)|i don'?t have (that|those|the|info))\b/i.test(
-    text,
-  );
-}
-
 function retrieveRelevant(source: string, query: string, limit = RETRIEVE_CHARS) {
   const chunks = chunkText(source);
   if (!chunks.length) return "";
   const q = tokens(query);
-  const money = looksMoney(query);
-  const budget = queryBudget(query);
   const ranked = (
     q.length
       ? chunks
-          .map((c) => {
-            let s = scoreChunk(c, q);
-            if (money && /£\s*\d/.test(c)) s += 4;
-            if (budget != null) {
-              const prices = [...c.matchAll(/£\s*(\d+(?:\.\d+)?)/g)].map((x) =>
-                Number(x[1]),
-              );
-              if (prices.some((p) => p <= budget)) s += 5;
-            }
-            if (money && /\d+\s*minutes/i.test(c) && !/£\s*\d/.test(c)) s -= 3;
-            return { c, s };
-          })
+          .map((c) => ({ c, s: scoreChunk(c, q) }))
           .filter((row) => row.s > 0)
           .sort((a, b) => b.s - a.s)
       : chunks.slice(0, 2).map((c) => ({ c, s: 1 }))
@@ -279,16 +212,16 @@ function retrieveForQuestion(
   recentUser: string[],
 ) {
   const combined = [...recentUser.slice(-4), query].join(" ");
-  let got = retrieveRelevant(source, combined);
-  const thin = got.length < 240;
-  if (thin || isFollowUp(query) || wantsMenu(query) || wantsMenu(combined)) {
-    const extra = coreShopChunks(source).filter((c) => !got.includes(c));
-    got = [got, ...extra].filter(Boolean).join("\n\n");
+  const ranked = retrieveRelevant(source, combined);
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const c of [...coreShopChunks(source), ...chunkText(ranked)]) {
+    if (!c || seen.has(c)) continue;
+    seen.add(c);
+    parts.push(c);
   }
-  if (got.length < 80) {
-    const core = coreShopChunks(source).join("\n\n");
-    got = core || source;
-  }
+  let got = parts.join("\n\n");
+  if (got.length < 80) got = source;
   return got.slice(0, RETRIEVE_CHARS);
 }
 
@@ -323,7 +256,7 @@ ${offTopicLine(contact)}
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
 Use the retrieved notes. Do not invent prices, hours, names, or policies.
-If they name a budget (“under 20”, “20 or less”), list every matching priced service from the notes. Do not say you do not know, or that you have no prices, when those lines are in the notes.
+Answer the question they asked, including anything implied by earlier turns. Pull matching facts from the notes (filter prices, hours, or services when that is what they meant). Do not claim the notes have no answer when they do.
 Give the contact only when the notes truly have nothing on the question.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
@@ -486,18 +419,13 @@ export async function answerChat(opts: {
       .map((m) => m.content)
       .slice(-4);
     retrieved = retrieveForQuestion(source, asked, recentUser);
-    const listed = (() => {
-      const budget = queryBudget([...recentUser, asked].join(" "));
-      return budget != null ? listUnderBudget(source, budget) : "";
-    })();
-    if (listed) return capReply(listed);
     system = shopPrompt(biz, retrieved, contact, Boolean(opts.barber));
   }
 
   const completion = await groq.chat.completions.create({
     model: MODEL,
     temperature: 0.3,
-    max_tokens: 180,
+    max_tokens: 220,
     reasoning_effort: "low",
     reasoning_format: "hidden",
     messages: [{ role: "system", content: system }, ...history],
@@ -515,18 +443,6 @@ export async function answerChat(opts: {
     return capReply(
       fromNotes || "Ask about hours, prices, or a cut and I can help.",
     );
-  }
-  if (
-    !opts.site &&
-    looksUnsure(content) &&
-    /£\s*\d/.test(retrieved)
-  ) {
-    const priced = pricedServices(retrieved);
-    if (priced.length) {
-      return capReply(
-        `${priced.map((p) => `${p.label} £${p.pounds}`).join("; ")}.`,
-      );
-    }
   }
   return capReply(content || "I could not get a reply just then. Try once more.");
 }

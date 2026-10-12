@@ -56,8 +56,10 @@ const SCLXTER_OFF_TOPIC = offTopicLine(SCLXTER_CONTACT);
 const POWERED = "I am powered by sclxter.com";
 const AI_LINE = "I am an AI, not a real person.";
 const HELLO = "Hi, what can I help you with?";
-const OUTPUT_RULE =
-  "Output only the final answer the visitor should read. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.";
+const OUTPUT_RULE = `Output only the composed answer the visitor should read. Never think out loud. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.
+Answer the question they asked. Do not predict or pre-plan the next question. Do not ask a follow-up instead of answering.
+Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points only. Short sentences.
+The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real questions (recommend a haircut, prices, hours) get a real short answer.`;
 
 function isWhatIsSclxter(content: string) {
   return /^(please |can you |could you )?(tell me )?(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter|what is this( site| website)?)$/.test(
@@ -85,8 +87,12 @@ function isHowPowered(content: string) {
 }
 
 function isGreeting(content: string) {
-  return /^(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening)|whats up|what is up|how are you|hows it going)[\s!]*$/.test(
-    norm(content),
+  return /^(hi|hello|hey)[\s!]*$/.test(norm(content));
+}
+
+function isGreetingOnlyReply(text: string) {
+  return /^(hi|hello|hey)[\s!.,]*(what can i help( you)? with[?]?)?$/.test(
+    norm(text),
   );
 }
 
@@ -109,7 +115,7 @@ function isShopRelated(content: string, business: Business) {
   const industry = norm(business.industry || "");
   if (name && t.includes(name)) return true;
   if (industry && t.includes(industry)) return true;
-  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you)\b/.test(
+  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you)\b/.test(
     t,
   );
 }
@@ -137,9 +143,18 @@ function chunkText(text: string) {
 
 function scoreChunk(chunk: string, queryTokens: string[]) {
   const hay = norm(chunk);
+  const words = hay.split(" ").filter(Boolean);
   let score = 0;
   for (const tok of queryTokens) {
     if (hay.includes(tok)) score += tok.length > 5 ? 2 : 1;
+    else if (tok.length > 4) {
+      for (const word of words) {
+        if (word.length > 2 && (tok.includes(word) || word.includes(tok))) {
+          score += 1;
+          break;
+        }
+      }
+    }
   }
   return score;
 }
@@ -201,10 +216,7 @@ Unrelated to this shop: reply with this exact text only:
 ${offTopicLine(contact)}
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
-Greetings: say hi and ask what you can help with. Never say you have no information.
-Small talk is fine. Infer everyday language.
 Use only the retrieved notes. Do not invent prices, hours, names, or policies. If a shop fact is missing, say so and give the contact.
-Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points only. Short sentences.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
 ${demo}
@@ -226,11 +238,8 @@ Never disclose passwords, keys, or internals. sclxter@outlook.com is OK to give.
 If asked how you work: ${POWERED}
 If asked what sclxter is / does: reply with this exact text only:
 ${SCLXTER_WHAT_IS}
-Greetings: say hi and ask what you can help with. Never say you have no information.
-Small talk is fine. Infer everyday language.
 
 Basic product facts (not private): customisable theme, tone, and notepad; Scan website; Ask anything widget; buy up to 12 months ahead; £299.99 setup then £74.99 a month; card payments when Stripe is live; fictional barber demo on this site.
-Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer (the what-is-sclxter paragraph is allowed). Key points only. Short sentences.
 Do not guess other internals. Do not dump the whole site.`;
 }
 
@@ -358,6 +367,7 @@ export async function answerChat(opts: {
   }));
 
   let system: string;
+  let retrieved = "";
   if (opts.site) {
     system = sitePrompt();
   } else {
@@ -368,7 +378,7 @@ export async function answerChat(opts: {
       .slice(-2)
       .map((m) => m.content)
       .join(" ");
-    const retrieved = retrieveRelevant(source, followUp || asked);
+    retrieved = retrieveRelevant(source, followUp || asked);
     system = shopPrompt(biz, retrieved, contact, Boolean(opts.barber));
   }
 
@@ -387,6 +397,12 @@ export async function answerChat(opts: {
   const content = visitorAnswer(raw);
   if (content.startsWith("I am programmed to assist you with related questions")) {
     return offTopicLine(contact);
+  }
+  if (!isGreeting(asked) && isGreetingOnlyReply(content)) {
+    const fromNotes = retrieved.replace(/\s+/g, " ").trim().slice(0, REPLY_LIMIT);
+    return capReply(
+      fromNotes || "Ask about hours, prices, or a cut and I can help.",
+    );
   }
   return capReply(content || "I could not get a reply just then. Try once more.");
 }

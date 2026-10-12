@@ -28,16 +28,10 @@ export default async function BuyPage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href="/login"
+            href="/account"
             className="inline-flex h-10 items-center justify-center bg-accent px-4 text-sm text-accent-fg"
           >
-            Sign in
-          </Link>
-          <Link
-            href="/signup"
-            className="inline-flex h-10 items-center justify-center border border-line px-4 text-sm text-fg"
-          >
-            Create account
+            Account
           </Link>
         </div>
       </main>

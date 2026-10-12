@@ -21,9 +21,9 @@ export function AuthForm({
       autoComplete={signup ? "off" : "on"}
     >
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor={`${mode}-email`}>Email</Label>
         <Input
-          id="email"
+          id={`${mode}-email`}
           name="email"
           type={signup ? "email" : "text"}
           autoComplete={signup ? "email" : "username"}
@@ -33,9 +33,9 @@ export function AuthForm({
         />
       </div>
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor={`${mode}-password`}>Password</Label>
         <PasswordField
-          id="password"
+          id={`${mode}-password`}
           name="password"
           autoComplete={signup ? "new-password" : "current-password"}
           minLength={signup ? 8 : undefined}

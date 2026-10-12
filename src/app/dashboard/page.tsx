@@ -12,7 +12,7 @@ import { ClientGo } from "./client-go";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/account");
   if (isAdmin(user)) {
     return <ClientGo href="/dashboard/businesses" />;
   }

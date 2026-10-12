@@ -6,7 +6,7 @@ import { BusinessesList } from "./list-client";
 
 export default async function BusinessesPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/account");
   if (!isAdmin(user)) redirect("/dashboard");
 
   const data = await readStore();

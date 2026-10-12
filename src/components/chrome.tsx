@@ -39,9 +39,11 @@ export function ProductNav({
   const onDemo = pathname === "/demo" || pathname.startsWith("/demo/");
   const onFaq = pathname === "/faq";
   const onContact = pathname === "/contact";
-  const onLogin = pathname === "/login";
-  const onSignup = pathname === "/signup" || pathname === "/buy";
-  const onAccount = pathname === "/account";
+  const onBuy = pathname === "/buy";
+  const onAccount =
+    pathname === "/account" ||
+    pathname === "/login" ||
+    pathname === "/signup";
   const onBilling = pathname === "/billing" || pathname.startsWith("/billing/");
   const onMessages = pathname === "/dashboard/messages" || pathname.startsWith("/dashboard/messages/");
   const onBusinesses =
@@ -98,13 +100,13 @@ export function ProductNav({
         </Link>
       ) : (
         <>
-          <Link href="/login" className={navClass(undefined, onLogin)}>
-            Sign in
+          <Link href="/account" className={navClass(undefined, onAccount)}>
+            Account
           </Link>
           {showBuy && (
             <Link
               href="/buy"
-              className={navClass("text-fg", onSignup)}
+              className={navClass("text-fg", onBuy)}
             >
               Buy
             </Link>

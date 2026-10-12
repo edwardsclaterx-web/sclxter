@@ -1,26 +1,70 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { SiteHeader } from "@/components/chrome";
 import { isAdmin } from "@/lib/access";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, hasOwnerStep2Pending } from "@/lib/auth";
 import { accountPasswordFor } from "@/lib/login-passwords";
+import { AuthForm } from "../auth-form";
 import { AccountPanel } from "./account-panel";
 
 export const metadata = { title: "Account — sclxter" };
 
-export default async function AccountPage() {
+const SIGNUP_ERRORS: Record<string, string> = {
+  invalid: "Use a real email and a password of at least 8 characters.",
+  exists: "That email already has an account.",
+};
+
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; signup?: string }>;
+}) {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
-  const owner = isAdmin(user);
+  if (user) {
+    const owner = isAdmin(user);
+    return (
+      <div className="flex min-h-full flex-col">
+        <AppHeader />
+        <main className="mx-auto w-full max-w-md flex-1 px-5 py-16">
+          <h1 className="text-2xl font-medium tracking-tight">Account</h1>
+          <AccountPanel
+            email={user.email}
+            password={owner ? accountPasswordFor(user) : ""}
+            showPassword={owner}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  if (await hasOwnerStep2Pending()) redirect("/in");
+  const q = await searchParams;
+
   return (
     <div className="flex min-h-full flex-col">
-      <AppHeader />
-      <main className="mx-auto w-full max-w-md flex-1 px-5 py-16">
+      <SiteHeader signedIn={false} showPricing={false} showBuy />
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Account</h1>
-        <AccountPanel
-          email={user.email}
-          password={owner ? accountPasswordFor(user) : ""}
-          showPassword={owner}
-        />
+
+        <section id="signin" className="mt-10">
+          <h2 className="text-xl font-medium tracking-tight">Sign in</h2>
+          <p className="mt-2 text-sm text-muted">Email and password.</p>
+          <AuthForm
+            mode="login"
+            error={q.error ? "Those details did not match." : null}
+          />
+        </section>
+
+        <section id="signup" className="mt-16">
+          <h2 className="text-xl font-medium tracking-tight">Create account</h2>
+          <p className="mt-2 text-sm text-muted">One business per account.</p>
+          <AuthForm
+            mode="signup"
+            error={
+              q.signup ? SIGNUP_ERRORS[q.signup] || SIGNUP_ERRORS.invalid : null
+            }
+          />
+        </section>
       </main>
     </div>
   );

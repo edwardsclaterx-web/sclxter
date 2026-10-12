@@ -20,7 +20,7 @@ function lastWhen(iso?: string) {
 
 export default async function MessagesPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/account");
   if (!isAdmin(user)) redirect("/dashboard");
 
   const data = await readStore();

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   if (!(await hasOwnerStep2Pending())) {
     if (html) {
-      return redirectSeeOther("/login");
+      return redirectSeeOther("/in");
     }
     return NextResponse.json(
       { error: "Start again from the first sign-in step." },

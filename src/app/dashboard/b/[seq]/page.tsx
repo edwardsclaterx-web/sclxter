@@ -13,7 +13,7 @@ export default async function AdminBusinessPage({
   params: Promise<{ seq: string }>;
 }) {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/account");
   if (!isAdmin(user)) redirect("/dashboard");
 
   const { seq: raw } = await params;

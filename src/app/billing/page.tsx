@@ -9,7 +9,7 @@ export const metadata = { title: "Billing — sclxter" };
 
 export default async function BillingPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/account");
   if (!(await showBillingNav(user))) redirect("/");
 
   return (

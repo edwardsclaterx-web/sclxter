@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const fromIn = postedFromIn(request);
   const fail = (status: number, error: string) => {
     if (html) {
-      return redirectSeeOther(fromIn ? "/in?error=1" : "/login?error=1");
+      return redirectSeeOther(fromIn ? "/in?error=1" : "/account?error=1");
     }
     return NextResponse.json({ error }, { status });
   };

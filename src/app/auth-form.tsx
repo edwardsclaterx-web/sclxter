@@ -25,8 +25,9 @@ export function AuthForm({
         <Input
           id="email"
           name="email"
-          type="email"
+          type={signup ? "email" : "text"}
           autoComplete={signup ? "email" : "username"}
+          inputMode={signup ? "email" : "text"}
           defaultValue=""
           required
         />

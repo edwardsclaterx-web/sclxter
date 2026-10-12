@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { ensureDemoIndustry, seedIfEmpty } from "./seed";
+import { ensureDemoIndustry, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
 import { normalizeInstructions } from "./instructions";
 import type { Appearance, Business, StoreData } from "./types";
@@ -149,6 +149,7 @@ export async function readStore(): Promise<StoreData> {
       cache = normalize(cache);
       writeDisk(cache);
     } else {
+      ensureNorthgateShop(cache);
       ensureDemoIndustry(cache);
       cache.supportThreads = cache.supportThreads ?? [];
       cache.knowledgeGaps = cache.knowledgeGaps ?? [];
@@ -166,6 +167,7 @@ export async function updateStore<T>(
       seedIfEmpty(cache);
       cache = normalize(cache);
     }
+    ensureNorthgateShop(cache);
     cache.supportThreads = cache.supportThreads ?? [];
     cache.knowledgeGaps = cache.knowledgeGaps ?? [];
     const result = fn(cache);

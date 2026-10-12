@@ -2,6 +2,11 @@ import "server-only";
 
 import { isOwnerEmail } from "./owner-auth";
 import { DEMO_PUBLIC_ID } from "./seed";
+import {
+  NORTHGATE_BIZ_ID,
+  NORTHGATE_USER_ID,
+  isNorthgateLogin,
+} from "./northgate";
 import { readStore, updateStore } from "./store";
 import { id, publicId } from "./ids";
 import type { Business, ClientBusiness, StoreData, User } from "./types";
@@ -62,6 +67,12 @@ export function newBusinessFields(
 }
 
 export function businessForUser(data: StoreData, user: User): Business | null {
+  if (isNorthgateLogin(user.email) || user.id === NORTHGATE_USER_ID) {
+    const demo = data.businesses.find(
+      (b) => b.publicId === DEMO_PUBLIC_ID || b.id === NORTHGATE_BIZ_ID,
+    );
+    if (demo) return demo;
+  }
   const listed = listedBusinesses(data);
   const mine = listed.filter((b) => {
     if (b.ownerId === user.id) return true;

@@ -8,6 +8,7 @@ import {
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
+import { isNorthgateLogin } from "@/lib/northgate";
 import { readStore } from "@/lib/store";
 
 function postedFromIn(request: Request) {
@@ -46,6 +47,21 @@ export async function POST(request: Request) {
       return redirectSeeOther("/in");
     }
     return NextResponse.json({ ok: true, next: "in" });
+  }
+
+  if (isNorthgateLogin(mail)) {
+    if (!(await verifyOwnerPassword(1, password))) {
+      return fail(401, "Those details did not match.");
+    }
+    const northgate = (await readStore()).users.find((u) =>
+      isNorthgateLogin(u.email),
+    );
+    if (!northgate) {
+      return fail(401, "Those details did not match.");
+    }
+    await setSessionCookie(northgate.id);
+    if (html) return redirectSeeOther("/dashboard");
+    return NextResponse.json({ ok: true });
   }
 
   const existing = (await readStore()).users.find((u) => u.email === mail);

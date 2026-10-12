@@ -5,6 +5,7 @@ import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
+import { isNorthgateLogin } from "@/lib/northgate";
 import { readStore, updateStore } from "@/lib/store";
 
 export async function POST(request: Request) {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
       "invalid",
     );
   }
-  if (isOwnerEmail(mail)) {
+  if (isOwnerEmail(mail) || isNorthgateLogin(mail)) {
     return fail(409, "That email already has an account.", "exists");
   }
 

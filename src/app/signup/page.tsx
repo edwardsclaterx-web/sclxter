@@ -22,7 +22,7 @@ export default async function SignupPage({
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Create account</h1>
         <p className="mt-2 text-sm text-muted">
-          One business per account in this first version.
+          One business per account.
         </p>
         <AuthForm
           mode="signup"

@@ -147,7 +147,7 @@ export async function POST(request: Request) {
       [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
     if (gap && !isDemoBusiness(shop)) await recordKnowledgeGap(shop.id, asked);
     const thread = [...messages, { role: "assistant" as const, content: text }];
-    const persist = !isDemoBusiness(shop) && !ownerTest;
+    const persist = !ownerTest;
     let conversationId =
       typeof body.conversationId === "string" ? body.conversationId : "";
 

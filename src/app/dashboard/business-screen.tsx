@@ -91,7 +91,7 @@ export function BusinessScreen({
   const [pwNote, setPwNote] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
   const [openConvo, setOpenConvo] = useState<number | null>(null);
-  const [convosOpen, setConvosOpen] = useState(false);
+  const [convosOpen, setConvosOpen] = useState(true);
   const [period, setPeriod] = useState<Period>("week");
 
   const hist = useRef<string[]>([business.notepad]);
@@ -240,11 +240,7 @@ export function BusinessScreen({
       if (data.business) {
         patchPad(data.business.notepad);
       }
-      setSaveNote(
-        typeof data.pages === "number"
-          ? `Scanned ${data.pages} page${data.pages === 1 ? "" : "s"}.`
-          : "Scan finished.",
-      );
+      setSaveNote("Scan complete.");
       router.refresh();
     } catch {
       setScanError("Could not reach the server.");
@@ -413,7 +409,7 @@ export function BusinessScreen({
                         {c.lead ? " · lead" : ""}
                       </span>
                     </button>
-                    {open?.seq === c.seq && (
+                    {openConvo === c.seq && (
                       <div className="space-y-3 border-t border-line bg-surface px-4 py-4">
                         {c.messages.map((m, i) => (
                           <p key={i} className="text-sm leading-6">

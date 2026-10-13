@@ -15,7 +15,6 @@ export function DashHeader({
         admin={admin}
         purchaser={purchaser}
         showPricing={false}
-        showBuy={false}
       />
     </header>
   );

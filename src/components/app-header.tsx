@@ -4,7 +4,6 @@ import { SiteHeader } from "./chrome";
 
 export async function AppHeader({
   showPricing = false,
-  showBuy = false,
 }: {
   showPricing?: boolean;
   showBuy?: boolean;
@@ -18,7 +17,6 @@ export async function AppHeader({
       admin={admin}
       purchaser={purchaser}
       showPricing={showPricing}
-      showBuy={showBuy}
     />
   );
 }

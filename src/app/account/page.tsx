@@ -42,7 +42,7 @@ export default async function AccountPage({
 
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader signedIn={false} showPricing={false} showBuy />
+      <SiteHeader signedIn={false} showPricing={false} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Account</h1>
 

@@ -26,16 +26,13 @@ export default async function ContactPage() {
         >
           {EMAIL}
         </a>
-        {owned ? (
-          <OwnerSupport />
-        ) : (
-          <p className="mt-8 max-w-2xl text-sm leading-6 text-muted">
-            Buying a sclxter assistant also unlocks a priority chat on this
-            site. That chat is between real people only (no AIs), and is there
-            if you have questions or problems after you have an assistant. You
-            can email instead; the chat is usually the clearer route.
-          </p>
-        )}
+        <p className="mt-8 max-w-2xl text-sm leading-6 text-muted">
+          Buying a sclxter assistant also unlocks a priority chat on this
+          site. That chat is between real people only (no AIs), and is there
+          if you have questions or problems after you have an assistant. You
+          can email instead; the chat is usually the clearer route.
+        </p>
+        {owned ? <OwnerSupport /> : null}
       </main>
     </div>
   );

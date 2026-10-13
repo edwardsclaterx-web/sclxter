@@ -76,7 +76,10 @@ export function MessagesInbox({ rows }: { rows: InboxRow[] }) {
               </button>
               {open === r.seq && (
                 <div className="border-t border-line p-4">
-                  <SupportThread endpoint={`/api/support?seq=${r.seq}`} />
+                  <SupportThread
+                    endpoint={`/api/support?seq=${r.seq}`}
+                    viewer="admin"
+                  />
                 </div>
               )}
             </li>

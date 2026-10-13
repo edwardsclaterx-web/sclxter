@@ -23,7 +23,6 @@ export function ProductNav({
   extra,
   tail,
   showPricing = true,
-  showBuy = true,
 }: {
   signedIn?: boolean;
   admin?: boolean;
@@ -35,11 +34,9 @@ export function ProductNav({
 }) {
   const pathname = usePathname() || "/";
   const onHome = pathname === "/";
-  const showHome = !onHome && !admin;
   const onDemo = pathname === "/demo" || pathname.startsWith("/demo/");
   const onFaq = pathname === "/faq";
   const onContact = pathname === "/contact";
-  const onBuy = pathname === "/buy";
   const onAccount =
     pathname === "/account" ||
     pathname === "/login" ||
@@ -49,16 +46,19 @@ export function ProductNav({
   const onBusinesses =
     pathname === "/dashboard/businesses" ||
     pathname.startsWith("/dashboard/businesses/");
-  const onMyDash =
-    pathname === "/dashboard" ||
-    (pathname.startsWith("/dashboard/") && !onMessages && !onBusinesses);
-  const billing = Boolean(purchaser);
+  const billing = Boolean(purchaser) && !admin;
+  const owner = Boolean(signedIn) && !admin;
 
   return (
     <nav className="flex flex-wrap items-baseline justify-end gap-x-6 gap-y-2 text-sm text-muted">
-      {showHome && (
+      {!admin && (
         <Link href="/" className={navClass(undefined, onHome)}>
           Home
+        </Link>
+      )}
+      {owner && (
+        <Link href="/dashboard" className={navClass("text-fg")}>
+          My dashboard
         </Link>
       )}
       {showPricing && (
@@ -91,28 +91,7 @@ export function ProductNav({
             Messages
           </Link>
         </>
-      ) : signedIn ? (
-        <Link
-          href="/dashboard"
-          className={navClass("text-fg", onMyDash)}
-        >
-          My dashboard
-        </Link>
-      ) : (
-        <>
-          <Link href="/account" className={navClass(undefined, onAccount)}>
-            Account
-          </Link>
-          {showBuy && (
-            <Link
-              href="/buy"
-              className={navClass("text-fg", onBuy)}
-            >
-              Buy
-            </Link>
-          )}
-        </>
-      )}
+      ) : null}
       {billing ? (
         <Link href="/billing" className={navClass(undefined, onBilling)}>
           Billing
@@ -122,7 +101,16 @@ export function ProductNav({
         <Link href="/account" className={navClass(undefined, onAccount)}>
           Sign out
         </Link>
-      ) : null}
+      ) : (
+        <>
+          <Link href="/buy" className={navClass(undefined, onAccount)}>
+            Account
+          </Link>
+          <Link href="/buy" className="nav-item">
+            Buy
+          </Link>
+        </>
+      )}
       {tail}
     </nav>
   );
@@ -136,7 +124,6 @@ export function SiteHeader({
   extra,
   tail,
   showPricing,
-  showBuy,
 }: {
   right?: ReactNode;
   signedIn?: boolean;
@@ -159,7 +146,6 @@ export function SiteHeader({
           extra={extra}
           tail={tail}
           showPricing={showPricing}
-          showBuy={showBuy}
         />
       )}
     </header>

@@ -15,11 +15,14 @@ function stamp(iso: string) {
 export function SupportThread({
   endpoint,
   autoFocus,
+  viewer = "owner",
 }: {
   endpoint: string;
   autoFocus?: boolean;
+  viewer?: "owner" | "admin";
 }) {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [peerName, setPeerName] = useState("Owner");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,17 +30,26 @@ export function SupportThread({
 
   async function load() {
     const res = await fetch(endpoint);
-    const data = (await res.json()) as { messages?: SupportMessage[]; error?: string };
+    const data = (await res.json()) as {
+      messages?: SupportMessage[];
+      error?: string;
+      businessName?: string;
+    };
     if (!res.ok) {
       setError(data.error || "Could not load messages.");
       return;
     }
     setMessages(data.messages ?? []);
+    if (data.businessName) setPeerName(data.businessName);
     setError(null);
   }
 
   useEffect(() => {
     void load();
+    const tick = window.setInterval(() => {
+      void load();
+    }, 4000);
+    return () => window.clearInterval(tick);
   }, [endpoint]);
 
   useEffect(() => {
@@ -79,22 +91,22 @@ export function SupportThread({
     }
   }
 
+  const rightLabel = viewer === "owner" ? "You" : peerName;
+
   return (
-    <div id="support" className="flex min-h-[22rem] flex-col border border-line">
-      <div ref={box} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+    <div id="support" className="flex min-h-[28rem] flex-col border border-line">
+      <div ref={box} className="min-h-[22rem] flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="text-sm text-muted">No messages yet.</p>
         ) : (
           messages.map((m) => {
-            const mine = m.from === "owner";
+            const fromOwner = m.from === "owner";
             return (
-              <div key={m.id} className={mine ? "text-right" : "text-left"}>
+              <div key={m.id} className={fromOwner ? "text-right" : "text-left"}>
                 <p className="text-[10px] leading-4 text-muted">{stamp(m.createdAt)}</p>
-                {!mine && (
-                  <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-muted">
-                    Administrator
-                  </p>
-                )}
+                <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-muted">
+                  {fromOwner ? rightLabel : "Administrator"}
+                </p>
                 <p className="mt-1 inline-block max-w-[90%] whitespace-pre-wrap border border-line bg-surface px-3 py-2 text-sm leading-6">
                   {m.content}
                 </p>

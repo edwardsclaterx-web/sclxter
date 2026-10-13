@@ -1,10 +1,12 @@
 import { isDemoBusiness } from "./access";
 import { businessHasLiveAccess } from "./billing";
+import { CLARIFY } from "./chat-copy";
 import type { Business, StoreData } from "./types";
 
 const SITE_PUBLIC_ID = "sclxter";
 
-export const TRY_AGAIN = "Try again in a moment.";
+export { CLARIFY };
+export const TRY_AGAIN = CLARIFY;
 export const EMBED_OFF_SITE = "This assistant is not available on this site.";
 export const EMBED_UNAVAILABLE = "This assistant is unavailable.";
 

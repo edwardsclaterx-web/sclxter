@@ -1,13 +1,15 @@
 import Groq from "groq-sdk";
+import { CLARIFY } from "./chat-copy";
 import { parseAssistantReply } from "./knowledge-gaps";
 import { loadSecrets } from "./secrets";
 import { toneById } from "./tones";
 import type { Business, ChatMessage, KnowledgeItem } from "./types";
 
 const MODEL = "openai/gpt-oss-20b";
-const HISTORY = 12;
+const HISTORY = 16;
 const RETRIEVE_CHARS = 1600;
 const REPLY_LIMIT = 500;
+export { CLARIFY } from "./chat-copy";
 
 function client() {
   loadSecrets();
@@ -57,10 +59,12 @@ const POWERED = "I am powered by sclxter.com";
 const AI_LINE = "I am an AI, not a real person.";
 const HELLO = "Hi, what can I help you with?";
 const OUTPUT_RULE = `Output only the composed answer the visitor should read. Never think out loud. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.
-Answer the question they asked. Do not predict or pre-plan the next question. Do not ask a follow-up instead of answering.
-Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points only. Short sentences.
-The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real questions (recommend a haircut, prices, hours) get a real short answer.
-Read the whole conversation. Short or messy follow-ups continue the last question. Answer that question from the notes. Do not say you don’t know when the answer is in the notes.`;
+Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last question.
+Answer the question they asked when you can. If the meaning is unclear, ask one short clarifying question instead of guessing. Do not invent facts.
+Sound like a normal helpful assistant. Natural sentences. Do not steer them back to the business or product unless they asked about it.
+Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points, still useful.
+The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real questions get a real answer, not a greeting.
+Never say you are busy, to try again, or that something went wrong.`;
 
 function isWhatIsSclxter(content: string) {
   return /^(please |can you |could you )?(tell me )?(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter|what is this( site| website)?)$/.test(
@@ -123,12 +127,17 @@ function isShopRelated(content: string, business: Business) {
 
 function looksLikeContinuation(content: string) {
   const t = norm(content);
+  if (!t) return false;
+  if (
+    /^(i mean|i meant|yeah|yep|yah|nah|nope|yes|no|ok|okay|and|or|also|but|not|that|those|this|too|so|because|cos|cause|under|over|about|around|like|maybe)\b/.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+  if (/^\d/.test(t)) return true;
   const words = t.split(" ").filter(Boolean);
-  if (!words.length) return false;
-  if (words.length <= 6) return true;
-  return /^(i mean|i meant|no |yes |yeah |nah |and |or |also |but |not |that |those |this |the )/.test(
-    t,
-  );
+  return words.length <= 2 && !/\b(weather|football|soccer|news|politics|homework|recipe)\b/.test(t);
 }
 
 function countTrailingUnrelated(
@@ -153,15 +162,23 @@ function chunkText(text: string) {
     .filter((s) => s.length > 8);
 }
 
+function closeToken(a: string, b: string) {
+  if (a === b) return true;
+  if (a.length < 4 || b.length < 4) return false;
+  if (Math.abs(a.length - b.length) > 2) return false;
+  const n = Math.min(4, a.length, b.length);
+  return a.slice(0, n) === b.slice(0, n);
+}
+
 function scoreChunk(chunk: string, queryTokens: string[]) {
   const hay = norm(chunk);
   const words = hay.split(" ").filter(Boolean);
   let score = 0;
   for (const tok of queryTokens) {
     if (hay.includes(tok)) score += tok.length > 5 ? 2 : 1;
-    else if (tok.length > 4) {
+    else {
       for (const word of words) {
-        if (word.length > 2 && (tok.includes(word) || word.includes(tok))) {
+        if (word.length > 2 && (tok.includes(word) || word.includes(tok) || closeToken(tok, word))) {
           score += 1;
           break;
         }
@@ -251,13 +268,13 @@ function shopPrompt(
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Unrelated to this shop: reply with this exact text only:
+Use this exact unrelated line only when they are clearly asking about something else entirely (news, sport, politics, other businesses, schoolwork). Everyday chat about this shop, messy wording, slang, and follow-ups are related. Do not use it just because the wording is odd.
 ${offTopicLine(contact)}
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
 Use the retrieved notes. Do not invent prices, hours, names, or policies.
-Answer the question they asked, including anything implied by earlier turns. Pull matching facts from the notes (filter prices, hours, or services when that is what they meant). Do not claim the notes have no answer when they do.
-Give the contact only when the notes truly have nothing on the question.
+If the notes have the answer, answer. Filter from the notes when they named a budget, day, or service. Do not claim the notes have no answer when they do.
+If you cannot tell what they want, ask one clarifying question. Do not guess.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
 ${demo}
@@ -273,7 +290,7 @@ function sitePrompt() {
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Unrelated to sclxter: reply with this exact text only:
+Use this exact unrelated line only when they are clearly asking about something else entirely, not when the wording is messy or they are following up:
 ${SCLXTER_OFF_TOPIC}
 Never disclose passwords, keys, or internals. sclxter@outlook.com is OK to give.
 If asked how you work: ${POWERED}
@@ -281,7 +298,7 @@ If asked what sclxter is / does: reply with this exact text only:
 ${SCLXTER_WHAT_IS}
 
 Basic product facts (not private): customisable theme, tone, and notepad; Scan website; Ask anything widget; buy up to 12 months ahead; £299.99 setup then £74.99 a month; card payments when Stripe is live; fictional barber demo on this site.
-Do not guess other internals. Do not dump the whole site.`;
+Do not guess other internals. Do not dump the whole site. If you cannot tell what they want, ask one clarifying question.`;
 }
 
 export async function generateIndustryBriefing(industry: string) {
@@ -331,7 +348,7 @@ function isRequiredVerbatim(text: string) {
   if (body.startsWith("I am programmed to assist you with related questions.")) {
     return true;
   }
-  if (body === POWERED || body === AI_LINE || body === HELLO) return true;
+  if (body === POWERED || body === AI_LINE || body === HELLO || body === CLARIFY) return true;
   return false;
 }
 
@@ -408,7 +425,6 @@ export async function answerChat(opts: {
   }));
 
   let system: string;
-  let retrieved = "";
   if (opts.site) {
     system = sitePrompt();
   } else {
@@ -418,33 +434,36 @@ export async function answerChat(opts: {
       .filter((m) => m.role === "user")
       .map((m) => m.content)
       .slice(-4);
-    retrieved = retrieveForQuestion(source, asked, recentUser);
+    const retrieved = retrieveForQuestion(source, asked, recentUser);
     system = shopPrompt(biz, retrieved, contact, Boolean(opts.barber));
   }
 
-  const completion = await groq.chat.completions.create({
-    model: MODEL,
-    temperature: 0.3,
-    max_tokens: 220,
-    reasoning_effort: "low",
-    reasoning_format: "hidden",
-    messages: [{ role: "system", content: system }, ...history],
-  });
+  async function complete() {
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      temperature: 0.4,
+      max_tokens: 220,
+      reasoning_effort: "low",
+      reasoning_format: "hidden",
+      messages: [{ role: "system", content: system }, ...history],
+    });
+    const message = completion.choices[0]?.message;
+    const raw =
+      typeof message?.content === "string" ? message.content.trim() : "";
+    return visitorAnswer(raw);
+  }
 
-  const message = completion.choices[0]?.message;
-  const raw =
-    typeof message?.content === "string" ? message.content.trim() : "";
-  const content = visitorAnswer(raw);
+  let content = await complete();
+  if (!content || (!isGreeting(asked) && isGreetingOnlyReply(content))) {
+    content = await complete();
+  }
   if (content.startsWith("I am programmed to assist you with related questions")) {
     return offTopicLine(contact);
   }
   if (!isGreeting(asked) && isGreetingOnlyReply(content)) {
-    const fromNotes = retrieved.replace(/\s+/g, " ").trim().slice(0, REPLY_LIMIT);
-    return capReply(
-      fromNotes || "Ask about hours, prices, or a cut and I can help.",
-    );
+    return CLARIFY;
   }
-  return capReply(content || "I could not get a reply just then. Try once more.");
+  return capReply(content || CLARIFY);
 }
 
 export function parseLeadFromReply(reply: string) {

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
           ),
         );
       }
-      return cors(NextResponse.json({ error: TRY_AGAIN }, { status: 502 }));
+      return cors(NextResponse.json({ reply: TRY_AGAIN }));
     }
   }
 
@@ -212,7 +212,7 @@ export async function POST(request: Request) {
       );
     }
     return cors(
-      NextResponse.json({ error: TRY_AGAIN }, { status: 502 }),
+      NextResponse.json({ reply: TRY_AGAIN }),
     );
   }
 }

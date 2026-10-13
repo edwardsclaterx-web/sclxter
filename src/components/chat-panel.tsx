@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { CLARIFY } from "@/lib/chat-copy";
 import type { ChatMessage, WidgetTheme } from "@/lib/types";
 
 type Props = {
@@ -95,19 +96,35 @@ export function ChatPanel({
       };
       if (!res.ok) {
         const raw = data.error || "";
-        setError(
-          raw.includes("unavailable") || raw.includes("not available") || res.status === 400
-            ? raw || "The assistant is unavailable."
-            : "Try again in a moment.",
-        );
+        if (
+          raw.includes("unavailable") ||
+          raw.includes("not available") ||
+          res.status === 400
+        ) {
+          setError(raw || "The assistant is unavailable.");
+          return;
+        }
+        setMessages([
+          ...next,
+          {
+            role: "assistant",
+            content: data.reply || CLARIFY,
+          },
+        ]);
         return;
       }
       setMessages([
         ...next,
-        { role: "assistant", content: data.reply || "" },
+        {
+          role: "assistant",
+          content: data.reply || CLARIFY,
+        },
       ]);
     } catch {
-      setError("Try again in a moment.");
+      setMessages([
+        ...next,
+        { role: "assistant", content: CLARIFY },
+      ]);
     } finally {
       setBusy(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { CLARIFY } from "@/lib/chat-copy";
 import type { WidgetTheme } from "@/lib/types";
 
 export function WidgetForm({
@@ -119,19 +120,20 @@ export function WidgetForm({
           try{ sessionStorage.setItem(cidKey, conversationId); }catch(e3){}
         }
         var reply;
+        var clarify=${JSON.stringify(CLARIFY)};
         if(!x.ok){
           var code=x.d&&x.d.error;
           reply=code&&(code.indexOf('unavailable')!==-1||code.indexOf('not available')!==-1)
             ? code
-            : 'Try again in a moment.';
+            : (x.d&&x.d.reply)||clarify;
         }else{
-          reply=(x.d&&x.d.reply)||'Try again in a moment.';
+          reply=(x.d&&x.d.reply)||clarify;
         }
         history.push({role:'assistant', content:reply});
         save();
         bubble('assistant', reply);
       })
-      .catch(function(){ bubble('assistant','Try again in a moment.'); })
+      .catch(function(){ bubble('assistant',${JSON.stringify(CLARIFY)}); })
       .then(function(){ busy=false; send.textContent='Send'; send.removeAttribute('disabled'); });
   }
   form.addEventListener('submit', function(e){ e.preventDefault(); e.stopPropagation(); go(); });

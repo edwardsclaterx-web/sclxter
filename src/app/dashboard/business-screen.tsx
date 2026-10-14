@@ -299,9 +299,10 @@ export function BusinessScreen({
     <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
       {!admin && !live ? (
         <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
-          This account is unpaid. Your shop data is kept. The live assistant
-          on your website stays off until cover is current. Card payments when
-          Stripe is live.
+          This account is unpaid. Your shop data is kept. Scan, notepad, Test
+          AI, and conversations still work here. The live assistant on your
+          website stays off until cover is current. Card payments are not
+          taken on this site yet.
         </p>
       ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />
@@ -619,11 +620,13 @@ export function BusinessScreen({
       </div>
 
       <aside className="order-2 flex h-[calc(100vh-6rem)] min-h-[36rem] flex-col gap-4 lg:sticky lg:top-8 lg:order-3">
-        <div className="shrink-0 border border-line px-5 py-3">
-          <a href="/contact#support" className="text-sm text-fg">
-            Contact admin
-          </a>
-        </div>
+        {!admin ? (
+          <div className="shrink-0 border border-line px-5 py-3">
+            <a href="/contact#support" className="text-sm text-fg">
+              Contact admin
+            </a>
+          </div>
+        ) : null}
         <div className="flex min-h-0 flex-1 flex-col border border-line p-5">
           <h2 className="text-xl font-medium tracking-tight">Test AI</h2>
           <p className="mt-2 text-sm text-muted">
@@ -657,12 +660,11 @@ export function BusinessScreen({
             </div>
           </div>
           <div className="mt-4 shrink-0 border-t border-line pt-4">
-            <p className="text-sm text-fg">Preview widget</p>
+            <p className="text-sm text-fg">Widget button</p>
             <div className="mt-3">
               <button
                 type="button"
-                tabIndex={-1}
-                aria-label="Preview widget"
+                aria-label="Ask anything"
                 className="inline-flex h-[52px] min-w-[52px] items-center justify-center px-7 text-sm font-semibold tracking-[0.06em]"
                 style={{
                   boxSizing: "border-box",
@@ -673,6 +675,9 @@ export function BusinessScreen({
                   borderRadius: 20,
                   appearance: "none",
                   overflow: "visible",
+                }}
+                onClick={() => {
+                  document.getElementById("wa-input")?.focus();
                 }}
               >
                 Ask anything

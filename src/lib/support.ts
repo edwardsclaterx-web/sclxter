@@ -1,12 +1,21 @@
 import "server-only";
 
 import { id } from "./ids";
-import { listedBusinesses } from "./access";
+import { isDemoBusiness, listedBusinesses } from "./access";
+import { NORTHGATE_USER_ID, isNorthgateLogin } from "./northgate";
 import { readStore, updateStore } from "./store";
 import type { Business, SupportMessage, SupportThread, User } from "./types";
 
 export function findOwnerBusiness(user: User, data: Awaited<ReturnType<typeof readStore>>) {
-  return listedBusinesses(data).find((b) => b.ownerId === user.id) ?? null;
+  if (isNorthgateLogin(user.email) || user.id === NORTHGATE_USER_ID) return null;
+  const mine = listedBusinesses(data).filter((b) => {
+    if (isDemoBusiness(b)) return false;
+    if (b.ownerId === user.id) return true;
+    const owner = data.users.find((u) => u.id === b.ownerId);
+    return owner?.email === user.email;
+  });
+  mine.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return mine[0] ?? null;
 }
 
 export function threadForBusiness(

@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
-import {
-  isDemoBusiness,
-  nextConversationSeq,
-} from "@/lib/access";
+import { nextConversationSeq } from "@/lib/access";
 import {
   appOriginFromRequest,
   publicEmbedGate,
@@ -145,7 +142,7 @@ export async function POST(request: Request) {
     const { text, lead, gap } = parseLeadFromReply(raw);
     const asked =
       [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    if (gap && !isDemoBusiness(shop)) await recordKnowledgeGap(shop.id, asked);
+    if (gap) await recordKnowledgeGap(shop.id, asked);
     const thread = [...messages, { role: "assistant" as const, content: text }];
     const persist = !ownerTest;
     let conversationId =

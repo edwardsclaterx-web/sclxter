@@ -103,7 +103,7 @@ export function ProductNav({
         </Link>
       ) : (
         <>
-          <Link href="/buy" className={navClass(undefined, onAccount)}>
+          <Link href="/account" className={navClass(undefined, onAccount)}>
             Account
           </Link>
           <Link href="/buy" className="nav-item">

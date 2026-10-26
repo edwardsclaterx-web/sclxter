@@ -1,12 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { ensureDemoIndustry, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
 import { normalizeInstructions } from "./instructions";
+import { readPersistedStore, writePersistedStore } from "./persist";
 import type { Appearance, Business, StoreData } from "./types";
 import { normalizeTheme } from "./widget-theme";
-
-const DATA_PATH = join(process.cwd(), "data", "store.json");
 
 const empty = (): StoreData => ({
   users: [],
@@ -22,13 +19,13 @@ const empty = (): StoreData => ({
 let cache: StoreData | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 
-function withLock<T>(fn: () => T): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.then(
+function withLock<T>(fn: () => T | Promise<T>): Promise<T> {
+  const run = queue.then(() => fn(), () => fn());
+  queue = Promise.resolve(run).then(
     () => undefined,
     () => undefined,
   );
-  return run;
+  return Promise.resolve(run);
 }
 
 function patchAppearance(a?: Partial<Appearance> | null): Appearance {
@@ -126,29 +123,22 @@ function normalize(data: StoreData): StoreData {
   return data;
 }
 
-function readDisk(): StoreData {
-  if (!existsSync(DATA_PATH)) return empty();
-  const raw = readFileSync(DATA_PATH, "utf8");
-  const parsed = JSON.parse(raw) as StoreData;
+function hydrate(parsed: StoreData | null): StoreData {
+  const data = parsed ?? empty();
   return normalize({
-    users: parsed.users ?? [],
-    businesses: parsed.businesses ?? [],
-    knowledge: parsed.knowledge ?? [],
-    leads: parsed.leads ?? [],
-    conversations: parsed.conversations ?? [],
-    supportThreads: parsed.supportThreads ?? [],
-    knowledgeGaps: parsed.knowledgeGaps ?? [],
-    settings: parsed.settings ?? { instructions: [] },
+    users: data.users ?? [],
+    businesses: data.businesses ?? [],
+    knowledge: data.knowledge ?? [],
+    leads: data.leads ?? [],
+    conversations: data.conversations ?? [],
+    supportThreads: data.supportThreads ?? [],
+    knowledgeGaps: data.knowledgeGaps ?? [],
+    settings: data.settings ?? { instructions: [] },
   });
 }
 
-function writeDisk(data: StoreData) {
-  mkdirSync(dirname(DATA_PATH), { recursive: true });
-  writeFileSync(DATA_PATH, JSON.stringify(normalize(data), null, 2));
-}
-
-function loadStore(): StoreData {
-  let data = readDisk();
+async function loadStore(): Promise<StoreData> {
+  let data = hydrate(await readPersistedStore());
   seedIfEmpty(data);
   ensureNorthgateShop(data);
   ensureDemoIndustry(data);
@@ -166,11 +156,11 @@ export async function readStore(): Promise<StoreData> {
 export async function updateStore<T>(
   fn: (data: StoreData) => T,
 ): Promise<T> {
-  return withLock(() => {
-    const data = loadStore();
+  return withLock(async () => {
+    const data = await loadStore();
     const result = fn(data);
-    writeDisk(data);
     cache = data;
+    await writePersistedStore(normalize(data));
     return result;
   });
 }

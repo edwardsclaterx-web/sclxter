@@ -24,8 +24,12 @@ function readMap(): Store {
 }
 
 function writeMap(map: Store) {
-  mkdirSync(dirname(PATH), { recursive: true });
-  writeFileSync(PATH, JSON.stringify(map), { mode: 0o600 });
+  try {
+    mkdirSync(dirname(PATH), { recursive: true });
+    writeFileSync(PATH, JSON.stringify(map), { mode: 0o600 });
+  } catch {
+    /* serverless filesystems are often read-only */
+  }
 }
 
 function isOwnerSecret(password: string) {

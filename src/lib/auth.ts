@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { connection } from "next/server";
 import type { NextResponse } from "next/server";
 import { loadSecrets } from "./secrets";
+import { NORTHGATE_USER_ID, isNorthgateLogin } from "./northgate";
+import { OWNER_USER_ID, ownerUserRecord } from "./owner-auth";
 import { readStore } from "./store";
 import type { Business, User } from "./types";
 import { getOwnedBusiness } from "./access";
@@ -39,7 +41,7 @@ function cookieFlags(request?: Request) {
     httpOnly: true,
     sameSite: "lax" as const,
     path: "/",
-    secure: proto === "https",
+    secure: proto === "https" || process.env.VERCEL === "1",
   };
 }
 
@@ -74,7 +76,13 @@ export async function getSessionUser(): Promise<User | null> {
   const userId = await getUserIdFromToken(jar.get(COOKIE)?.value);
   if (!userId) return null;
   const data = await readStore();
-  return data.users.find((u) => u.id === userId) ?? null;
+  const found = data.users.find((u) => u.id === userId);
+  if (found) return found;
+  if (userId === OWNER_USER_ID) return ownerUserRecord();
+  if (userId === NORTHGATE_USER_ID) {
+    return data.users.find((u) => isNorthgateLogin(u.email)) ?? null;
+  }
+  return null;
 }
 
 export async function requireUser() {

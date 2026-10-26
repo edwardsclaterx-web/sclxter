@@ -29,6 +29,8 @@ App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 
 In this environment the server also reads `GROQ_API_KEY` from the private secrets file if `.env.local` is empty.
 
+On Vercel, shop data cannot live in a local JSON file. Set a KV store (`KV_REST_API_URL` and `KV_REST_API_TOKEN`) or a Blob store (`BLOB_READ_WRITE_TOKEN`) on the project. Never commit those values.
+
 ## Widget
 
 From the dashboard, copy the snippet. The barber demo already loads:

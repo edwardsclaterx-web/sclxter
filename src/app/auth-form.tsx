@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
 import { FieldError } from "@/components/chrome";
 import { PasswordField } from "@/components/password-field";
 import { Button } from "@/components/ui/button";
@@ -12,6 +15,48 @@ export function AuthForm({
   error?: string | null;
 }) {
   const signup = mode === "signup";
+  const [busy, setBusy] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(error ?? null);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const email = String(data.get("email") ?? "");
+    const password = String(data.get("password") ?? "");
+    setBusy(true);
+    setLocalError(null);
+    try {
+      const res = await fetch(signup ? "/api/auth/signup" : "/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ email, password }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        next?: string;
+        ok?: boolean;
+      };
+      if (!res.ok) {
+        setLocalError(body.error || "Those details did not match.");
+        return;
+      }
+      if (body.next === "in") {
+        window.location.assign("/in");
+        return;
+      }
+      window.location.assign("/dashboard");
+    } catch {
+      setLocalError("Those details did not match.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <form
       method="post"
@@ -19,6 +64,7 @@ export function AuthForm({
       encType="application/x-www-form-urlencoded"
       className="mt-8 space-y-5"
       autoComplete={signup ? "off" : "on"}
+      onSubmit={onSubmit}
     >
       <div>
         <Label htmlFor={`${mode}-email`}>Email</Label>
@@ -26,7 +72,7 @@ export function AuthForm({
           id={`${mode}-email`}
           name="email"
           type={signup ? "email" : "text"}
-          autoComplete={signup ? "email" : "username"}
+          autoComplete={signup ? "email" : "off"}
           inputMode={signup ? "email" : "text"}
           defaultValue=""
           required
@@ -42,8 +88,8 @@ export function AuthForm({
           required
         />
       </div>
-      <FieldError>{error}</FieldError>
-      <Button type="submit" className="w-full">
+      <FieldError>{localError}</FieldError>
+      <Button type="submit" className="w-full" disabled={busy}>
         {signup ? "Create account" : "Sign in"}
       </Button>
     </form>

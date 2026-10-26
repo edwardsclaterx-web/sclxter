@@ -1,6 +1,7 @@
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { loadSecrets } from "./secrets";
 import { readStore } from "./store";
 import type { Business, User } from "./types";
@@ -30,16 +31,29 @@ export async function signSession(userId: string) {
     .sign(secretKey());
 }
 
-export async function setSessionCookie(userId: string) {
+const SESSION_COOKIE = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 60 * 60 * 24 * 30,
+};
+
+const PENDING_COOKIE = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 60 * 15,
+};
+
+export async function setSessionCookie(userId: string, res?: NextResponse) {
   const token = await signSession(userId);
   const store = await cookies();
-  store.set(COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  store.set(COOKIE, token, SESSION_COOKIE);
   store.delete(PENDING);
+  if (res) {
+    res.cookies.set(COOKIE, token, SESSION_COOKIE);
+    res.cookies.delete(PENDING);
+  }
 }
 
 export async function clearSessionCookie() {
@@ -48,19 +62,15 @@ export async function clearSessionCookie() {
   store.delete(PENDING);
 }
 
-export async function setOwnerStep2Cookie() {
+export async function setOwnerStep2Cookie(res?: NextResponse) {
   const token = await new SignJWT({ purpose: "owner-step2" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("15m")
     .sign(secretKey());
   const store = await cookies();
-  store.set(PENDING, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 15,
-  });
+  store.set(PENDING, token, PENDING_COOKIE);
+  if (res) res.cookies.set(PENDING, token, PENDING_COOKIE);
 }
 
 export async function hasOwnerStep2Pending() {

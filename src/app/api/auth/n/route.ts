@@ -7,8 +7,10 @@ import {
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
+import { loadSecrets } from "@/lib/secrets";
 
 export async function POST(request: Request) {
+  loadSecrets();
   const { password, n } = await readLoginBody(request);
   const html = wantsHtml(request);
   const fail = (status: number, error: string) => {
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
     return fail(503, "Sign in is not configured on this server.");
   }
 
-  if (n !== "7") {
+  if (n.trim() !== "7") {
     return fail(401, "Those details did not match.");
   }
 
@@ -41,9 +43,9 @@ export async function POST(request: Request) {
   }
 
   const user = await ensureOwnerUser();
-  await setSessionCookie(user.id);
-  if (html) {
-    return redirectSeeOther("/dashboard");
-  }
-  return NextResponse.json({ ok: true });
+  const res = html
+    ? redirectSeeOther("/dashboard")
+    : NextResponse.json({ ok: true });
+  await setSessionCookie(user.id, res);
+  return res;
 }

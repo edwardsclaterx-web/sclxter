@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const data = await readStore();
 
   if (isAdmin(user)) {
-    if (typeof seq !== "number" || !Number.isFinite(seq) || seq < 1) {
+    if (typeof seq !== "number" || !Number.isFinite(seq) || seq < 0) {
       return NextResponse.json({ error: "Not found." }, { status: 404 });
     }
     const biz = await getBusinessBySeq(seq);
@@ -54,7 +54,9 @@ export async function POST(request: Request) {
   const data = await readStore();
   if (isAdmin(user)) {
     const seq = typeof body.seq === "number" ? body.seq : null;
-    if (!seq) return NextResponse.json({ error: "Not found." }, { status: 404 });
+    if (seq == null || !Number.isFinite(seq) || seq < 0) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
     const biz = await getBusinessBySeq(seq);
     if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
     const thread = await appendSupportMessage({

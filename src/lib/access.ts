@@ -24,6 +24,15 @@ export function listedBusinesses(data: StoreData) {
   return data.businesses.filter((b) => !isDemoBusiness(b));
 }
 
+export function messageableBusinesses(data: StoreData) {
+  const listed = listedBusinesses(data);
+  const demo = data.businesses.find(isDemoBusiness);
+  if (demo && !listed.some((b) => b.id === demo.id)) {
+    return [...listed, demo];
+  }
+  return listed;
+}
+
 export function nextJoinSeq(data: StoreData) {
   const seqs = listedBusinesses(data).map((b) => b.seq || 0);
   return (seqs.length ? Math.max(...seqs) : 0) + 1;
@@ -95,7 +104,7 @@ export async function showBillingNav(user: User): Promise<boolean> {
 
 export async function getBusinessBySeq(seq: number): Promise<Business | null> {
   const data = await readStore();
-  return listedBusinesses(data).find((b) => b.seq === seq) ?? null;
+  return messageableBusinesses(data).find((b) => b.seq === seq) ?? null;
 }
 
 export async function resolveBusiness(

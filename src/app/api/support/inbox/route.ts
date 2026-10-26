@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { isAdmin, listedBusinesses } from "@/lib/access";
+import { isAdmin, messageableBusinesses } from "@/lib/access";
 import { readStore } from "@/lib/store";
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
   if (!isAdmin(user)) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
   const data = await readStore();
-  const rows = listedBusinesses(data).map((b) => {
+  const rows = messageableBusinesses(data).map((b) => {
     const thread = data.supportThreads.find((t) => t.businessId === b.id);
     const last = thread?.messages[thread.messages.length - 1];
     return {

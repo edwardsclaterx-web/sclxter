@@ -74,7 +74,14 @@ export function SupportThread({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           content,
-          seq: Number(new URLSearchParams(endpoint.split("?")[1] || "").get("seq")) || undefined,
+          seq: (() => {
+            const raw = new URLSearchParams(endpoint.split("?")[1] || "").get(
+              "seq",
+            );
+            if (raw == null || raw === "") return undefined;
+            const n = Number(raw);
+            return Number.isFinite(n) ? n : undefined;
+          })(),
         }),
       });
       const data = (await res.json()) as { messages?: SupportMessage[]; error?: string };

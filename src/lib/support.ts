@@ -2,12 +2,22 @@ import "server-only";
 
 import { id } from "./ids";
 import { isDemoBusiness, listedBusinesses } from "./access";
-import { NORTHGATE_USER_ID, isNorthgateLogin } from "./northgate";
+import {
+  NORTHGATE_BIZ_ID,
+  NORTHGATE_USER_ID,
+  isNorthgateLogin,
+} from "./northgate";
 import { readStore, updateStore } from "./store";
 import type { Business, SupportMessage, SupportThread, User } from "./types";
 
 export function findOwnerBusiness(user: User, data: Awaited<ReturnType<typeof readStore>>) {
-  if (isNorthgateLogin(user.email) || user.id === NORTHGATE_USER_ID) return null;
+  if (isNorthgateLogin(user.email) || user.id === NORTHGATE_USER_ID) {
+    return (
+      data.businesses.find(
+        (b) => b.id === NORTHGATE_BIZ_ID || isDemoBusiness(b),
+      ) ?? null
+    );
+  }
   const mine = listedBusinesses(data).filter((b) => {
     if (isDemoBusiness(b)) return false;
     if (b.ownerId === user.id) return true;

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { isAdmin, listedBusinesses } from "@/lib/access";
+import { isAdmin, messageableBusinesses } from "@/lib/access";
 import { readStore } from "@/lib/store";
 import { MessagesInbox } from "./inbox-client";
 
@@ -24,7 +24,7 @@ export default async function MessagesPage() {
   if (!isAdmin(user)) redirect("/dashboard");
 
   const data = await readStore();
-  const rows = listedBusinesses(data).map((b) => {
+  const rows = messageableBusinesses(data).map((b) => {
     const thread = data.supportThreads.find((t) => t.businessId === b.id);
     const last = thread?.messages[thread.messages.length - 1];
     return {

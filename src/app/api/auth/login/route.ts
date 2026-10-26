@@ -9,6 +9,7 @@ import {
 } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import { isNorthgateLogin } from "@/lib/northgate";
+import { loadSecrets } from "@/lib/secrets";
 import { readStore } from "@/lib/store";
 
 function postedFromIn(request: Request) {
@@ -22,6 +23,7 @@ function postedFromIn(request: Request) {
 }
 
 export async function POST(request: Request) {
+  loadSecrets();
   const { email, password } = await readLoginBody(request);
   const html = wantsHtml(request);
   const fromIn = postedFromIn(request);
@@ -42,11 +44,11 @@ export async function POST(request: Request) {
       return fail(401, "Those details did not match.");
     }
     rememberDavidFirstPassword(password);
-    await setOwnerStep2Cookie();
-    if (html) {
-      return redirectSeeOther("/in");
-    }
-    return NextResponse.json({ ok: true, next: "in" });
+    const res = html
+      ? redirectSeeOther("/in")
+      : NextResponse.json({ ok: true, next: "in" });
+    await setOwnerStep2Cookie(res);
+    return res;
   }
 
   if (isNorthgateLogin(mail)) {
@@ -59,16 +61,20 @@ export async function POST(request: Request) {
     if (!northgate) {
       return fail(401, "Those details did not match.");
     }
-    await setSessionCookie(northgate.id);
-    if (html) return redirectSeeOther("/dashboard");
-    return NextResponse.json({ ok: true });
+    const res = html
+      ? redirectSeeOther("/dashboard")
+      : NextResponse.json({ ok: true });
+    await setSessionCookie(northgate.id, res);
+    return res;
   }
 
   const existing = (await readStore()).users.find((u) => u.email === mail);
   if (!existing || !(await checkPassword(password, existing.passwordHash))) {
     return fail(401, "Those details did not match.");
   }
-  await setSessionCookie(existing.id);
-  if (html) return redirectSeeOther("/dashboard");
-  return NextResponse.json({ ok: true });
+  const res = html
+    ? redirectSeeOther("/dashboard")
+    : NextResponse.json({ ok: true });
+  await setSessionCookie(existing.id, res);
+  return res;
 }

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { hashPassword, checkPassword } from "./auth";
@@ -42,6 +43,13 @@ function writeHashes(hashes: OwnerHashes) {
   writeFileSync(HASH_PATH, JSON.stringify(hashes), { mode: 0o600 });
 }
 
+function secretEqual(given: string, expected: string) {
+  const a = Buffer.from(given, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
 async function syncHashesFromEnv() {
   loadSecrets();
   const first = process.env.SCLXTER_PASSWORD;
@@ -54,6 +62,10 @@ async function syncHashesFromEnv() {
 }
 
 export async function ownerAuthReady() {
+  loadSecrets();
+  if (process.env.SCLXTER_PASSWORD && process.env.SCLXTER_PASSWORD_2) {
+    return true;
+  }
   if (!syncStarted) {
     syncStarted = true;
     await syncHashesFromEnv();
@@ -66,6 +78,10 @@ export async function verifyOwnerPassword(
   password: string,
 ): Promise<boolean> {
   if (!password) return false;
+  loadSecrets();
+  const expected =
+    layer === 1 ? process.env.SCLXTER_PASSWORD : process.env.SCLXTER_PASSWORD_2;
+  if (expected && secretEqual(password, expected)) return true;
   await ownerAuthReady();
   const hashes = readHashes();
   if (!hashes) return false;

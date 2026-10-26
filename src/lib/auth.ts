@@ -31,46 +31,45 @@ export async function signSession(userId: string) {
     .sign(secretKey());
 }
 
-const SESSION_COOKIE = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 60 * 60 * 24 * 30,
-};
+function cookieFlags(request?: Request) {
+  const proto =
+    request?.headers.get("x-forwarded-proto") ||
+    (request ? new URL(request.url).protocol.replace(":", "") : "http");
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    secure: proto === "https",
+  };
+}
 
-const PENDING_COOKIE = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 60 * 15,
-};
-
-export async function setSessionCookie(userId: string, res?: NextResponse) {
+export async function setSessionCookie(
+  userId: string,
+  res: NextResponse,
+  request?: Request,
+) {
   const token = await signSession(userId);
-  const store = await cookies();
-  store.set(COOKIE, token, SESSION_COOKIE);
-  store.delete(PENDING);
-  if (res) {
-    res.cookies.set(COOKIE, token, SESSION_COOKIE);
-    res.cookies.delete(PENDING);
-  }
+  const flags = cookieFlags(request);
+  res.cookies.set(COOKIE, token, { ...flags, maxAge: 60 * 60 * 24 * 30 });
+  res.cookies.set(PENDING, "", { ...flags, maxAge: 0 });
 }
 
-export async function clearSessionCookie() {
-  const store = await cookies();
-  store.delete(COOKIE);
-  store.delete(PENDING);
+export function clearSessionCookie(res: NextResponse, request?: Request) {
+  const flags = cookieFlags(request);
+  res.cookies.set(COOKIE, "", { ...flags, maxAge: 0 });
+  res.cookies.set(PENDING, "", { ...flags, maxAge: 0 });
 }
 
-export async function setOwnerStep2Cookie(res?: NextResponse) {
+export async function setOwnerStep2Cookie(res: NextResponse, request?: Request) {
   const token = await new SignJWT({ purpose: "owner-step2" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("15m")
     .sign(secretKey());
-  const store = await cookies();
-  store.set(PENDING, token, PENDING_COOKIE);
-  if (res) res.cookies.set(PENDING, token, PENDING_COOKIE);
+  res.cookies.set(PENDING, token, {
+    ...cookieFlags(request),
+    maxAge: 60 * 15,
+  });
 }
 
 export async function hasOwnerStep2Pending() {

@@ -35,10 +35,12 @@ export async function POST(request: Request) {
     if (!(await checkPassword(password, existing.passwordHash))) {
       return fail(409, "That email already has an account.", "exists");
     }
-    await setSessionCookie(existing.id);
+    const signedIn = html
+      ? redirectSeeOther("/dashboard")
+      : NextResponse.json({ ok: true, signedIn: true });
+    await setSessionCookie(existing.id, signedIn, request);
     await createBusinessForSignup(existing);
-    if (html) return redirectSeeOther("/dashboard");
-    return NextResponse.json({ ok: true, signedIn: true });
+    return signedIn;
   }
 
   const passwordHash = await hashPassword(password);
@@ -58,10 +60,10 @@ export async function POST(request: Request) {
     return fail(409, "That email already has an account.", "exists");
   }
 
-  await setSessionCookie(user.id);
+  const createdRes = html
+    ? redirectSeeOther("/dashboard")
+    : NextResponse.json({ ok: true });
+  await setSessionCookie(user.id, createdRes, request);
   await createBusinessForSignup(user);
-  if (html) {
-    return redirectSeeOther("/dashboard");
-  }
-  return NextResponse.json({ ok: true });
+  return createdRes;
 }

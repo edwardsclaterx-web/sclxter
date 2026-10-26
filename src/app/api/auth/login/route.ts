@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const res = html
       ? redirectSeeOther("/in")
       : NextResponse.json({ ok: true, next: "in" });
-    await setOwnerStep2Cookie(res);
+    await setOwnerStep2Cookie(res, request);
     return res;
   }
 
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     const res = html
       ? redirectSeeOther("/dashboard")
       : NextResponse.json({ ok: true });
-    await setSessionCookie(northgate.id, res);
+    await setSessionCookie(northgate.id, res, request);
     return res;
   }
 
@@ -75,6 +75,6 @@ export async function POST(request: Request) {
   const res = html
     ? redirectSeeOther("/dashboard")
     : NextResponse.json({ ok: true });
-  await setSessionCookie(existing.id, res);
+  await setSessionCookie(existing.id, res, request);
   return res;
 }

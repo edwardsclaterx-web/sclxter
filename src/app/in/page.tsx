@@ -11,7 +11,7 @@ export default async function InPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const user = await getSessionUser();
-  if (user) redirect("/dashboard");
+  if (user) redirect("/dashboard/businesses");
   const q = await searchParams;
   if (await hasOwnerStep2Pending()) {
     return (

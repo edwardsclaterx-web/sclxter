@@ -23,7 +23,8 @@ export function BlankEntry() {
         credentials: "same-origin",
       });
       if (res.ok) {
-        window.location.assign("/dashboard");
+        const body = (await res.json().catch(() => ({}))) as { next?: string };
+        window.location.replace(body.next || "/dashboard/businesses");
         return;
       }
     } catch {

@@ -43,9 +43,10 @@ export async function POST(request: Request) {
   }
 
   const user = await ensureOwnerUser();
+  const next = "/dashboard/businesses";
   const res = html
-    ? redirectSeeOther("/dashboard")
-    : NextResponse.json({ ok: true });
-  await setSessionCookie(user.id, res);
+    ? redirectSeeOther(next)
+    : NextResponse.json({ ok: true, next });
+  await setSessionCookie(user.id, res, request);
   return res;
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { checkPassword, setOwnerStep2Cookie, setSessionCookie } from "@/lib/auth";
+import { checkPassword, setSessionCookie } from "@/lib/auth";
 import { redirectSeeOther } from "@/lib/http-redirect";
-import { rememberDavidFirstPassword } from "@/lib/login-passwords";
 import {
+  ensureOwnerUser,
   isOwnerEmail,
   ownerAuthReady,
   verifyOwnerPassword,
@@ -12,24 +12,13 @@ import { isNorthgateLogin } from "@/lib/northgate";
 import { loadSecrets } from "@/lib/secrets";
 import { readStore } from "@/lib/store";
 
-function postedFromIn(request: Request) {
-  const raw = request.headers.get("referer");
-  if (!raw) return false;
-  try {
-    return new URL(raw, request.url).pathname === "/in";
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: Request) {
   loadSecrets();
   const { email, password } = await readLoginBody(request);
   const html = wantsHtml(request);
-  const fromIn = postedFromIn(request);
   const fail = (status: number, error: string) => {
     if (html) {
-      return redirectSeeOther(fromIn ? "/in?error=1" : "/account?error=1");
+      return redirectSeeOther("/account?error=1");
     }
     return NextResponse.json({ error }, { status });
   };
@@ -40,19 +29,20 @@ export async function POST(request: Request) {
     if (!(await ownerAuthReady())) {
       return fail(503, "Sign in is not configured on this server.");
     }
-    if (!(await verifyOwnerPassword(1, password))) {
+    if (!(await verifyOwnerPassword(password))) {
       return fail(401, "Those details did not match.");
     }
-    rememberDavidFirstPassword(password);
+    const user = await ensureOwnerUser();
+    const next = "/dashboard/businesses";
     const res = html
-      ? redirectSeeOther("/in")
-      : NextResponse.json({ ok: true, next: "in" });
-    await setOwnerStep2Cookie(res, request);
+      ? redirectSeeOther(next)
+      : NextResponse.json({ ok: true, next });
+    await setSessionCookie(user.id, res, request);
     return res;
   }
 
   if (isNorthgateLogin(mail)) {
-    if (!(await verifyOwnerPassword(1, password))) {
+    if (!(await verifyOwnerPassword(password))) {
       return fail(401, "Those details did not match.");
     }
     const northgate = (await readStore()).users.find((u) =>

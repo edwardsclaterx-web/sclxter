@@ -1,6 +1,7 @@
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import type { NextResponse } from "next/server";
 import { loadSecrets } from "./secrets";
 import { readStore } from "./store";
@@ -8,7 +9,6 @@ import type { Business, User } from "./types";
 import { getOwnedBusiness } from "./access";
 
 const COOKIE = "sclxter_session";
-const PENDING = "sclxter_login_pending";
 
 function secretKey() {
   loadSecrets();
@@ -51,37 +51,11 @@ export async function setSessionCookie(
   const token = await signSession(userId);
   const flags = cookieFlags(request);
   res.cookies.set(COOKIE, token, { ...flags, maxAge: 60 * 60 * 24 * 30 });
-  res.cookies.set(PENDING, "", { ...flags, maxAge: 0 });
 }
 
 export function clearSessionCookie(res: NextResponse, request?: Request) {
   const flags = cookieFlags(request);
   res.cookies.set(COOKIE, "", { ...flags, maxAge: 0 });
-  res.cookies.set(PENDING, "", { ...flags, maxAge: 0 });
-}
-
-export async function setOwnerStep2Cookie(res: NextResponse, request?: Request) {
-  const token = await new SignJWT({ purpose: "owner-step2" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("15m")
-    .sign(secretKey());
-  res.cookies.set(PENDING, token, {
-    ...cookieFlags(request),
-    maxAge: 60 * 15,
-  });
-}
-
-export async function hasOwnerStep2Pending() {
-  const jar = await cookies();
-  const token = jar.get(PENDING)?.value;
-  if (!token) return false;
-  try {
-    const { payload } = await jwtVerify(token, secretKey());
-    return payload.purpose === "owner-step2";
-  } catch {
-    return false;
-  }
 }
 
 export async function getUserIdFromToken(token: string | undefined) {
@@ -95,6 +69,7 @@ export async function getUserIdFromToken(token: string | undefined) {
 }
 
 export async function getSessionUser(): Promise<User | null> {
+  await connection();
   const jar = await cookies();
   const userId = await getUserIdFromToken(jar.get(COOKIE)?.value);
   if (!userId) return null;

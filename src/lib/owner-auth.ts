@@ -15,7 +15,6 @@ const HASH_PATH = join(process.cwd(), "data", "owner-auth.json");
 
 type OwnerHashes = {
   passwordHash: string;
-  password2Hash: string;
 };
 
 let syncStarted = false;
@@ -26,11 +25,9 @@ function readHashes(): OwnerHashes | null {
     const parsed = JSON.parse(readFileSync(HASH_PATH, "utf8")) as OwnerHashes;
     if (
       typeof parsed.passwordHash === "string" &&
-      parsed.passwordHash.startsWith("$2") &&
-      typeof parsed.password2Hash === "string" &&
-      parsed.password2Hash.startsWith("$2")
+      parsed.passwordHash.startsWith("$2")
     ) {
-      return parsed;
+      return { passwordHash: parsed.passwordHash };
     }
   } catch {
     return null;
@@ -50,43 +47,40 @@ function secretEqual(given: string, expected: string) {
   return timingSafeEqual(a, b);
 }
 
-async function syncHashesFromEnv() {
+async function syncHashFromEnv() {
   loadSecrets();
-  const first = process.env.SCLXTER_PASSWORD;
-  const second = process.env.SCLXTER_PASSWORD_2;
-  if (!first || !second) return;
-  writeHashes({
-    passwordHash: await hashPassword(first),
-    password2Hash: await hashPassword(second),
-  });
+  const password = process.env.SCLXTER_PASSWORD;
+  if (!password) return;
+  const existing = readHashes();
+  if (existing && (await checkPassword(password, existing.passwordHash))) {
+    return;
+  }
+  writeHashes({ passwordHash: await hashPassword(password) });
 }
 
 export async function ownerAuthReady() {
   loadSecrets();
-  if (process.env.SCLXTER_PASSWORD && process.env.SCLXTER_PASSWORD_2) {
-    return true;
-  }
+  if (process.env.SCLXTER_PASSWORD) return true;
   if (!syncStarted) {
     syncStarted = true;
-    await syncHashesFromEnv();
+    await syncHashFromEnv();
   }
   return Boolean(readHashes());
 }
 
-export async function verifyOwnerPassword(
-  layer: 1 | 2,
-  password: string,
-): Promise<boolean> {
+export async function verifyOwnerPassword(password: string): Promise<boolean> {
   if (!password) return false;
   loadSecrets();
-  const expected =
-    layer === 1 ? process.env.SCLXTER_PASSWORD : process.env.SCLXTER_PASSWORD_2;
-  if (expected && secretEqual(password, expected)) return true;
+  const expected = process.env.SCLXTER_PASSWORD;
+  if (expected && secretEqual(password, expected)) {
+    void syncHashFromEnv();
+    return true;
+  }
   await ownerAuthReady();
+  await syncHashFromEnv();
   const hashes = readHashes();
   if (!hashes) return false;
-  const stored = layer === 1 ? hashes.passwordHash : hashes.password2Hash;
-  return checkPassword(password, stored);
+  return checkPassword(password, hashes.passwordHash);
 }
 
 export function isOwnerEmail(email: string) {

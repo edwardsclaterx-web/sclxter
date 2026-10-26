@@ -3,6 +3,8 @@ import { isAdmin, showBillingNav } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { DashHeader } from "./dash-header";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

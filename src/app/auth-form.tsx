@@ -45,11 +45,7 @@ export function AuthForm({
         setLocalError(body.error || "Those details did not match.");
         return;
       }
-      if (body.next === "in") {
-        window.location.assign("/in");
-        return;
-      }
-      window.location.assign("/dashboard");
+      window.location.assign(body.next || "/dashboard");
     } catch {
       setLocalError("Those details did not match.");
     } finally {

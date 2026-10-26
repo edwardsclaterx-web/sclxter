@@ -141,37 +141,30 @@ function writeDisk(data: StoreData) {
   writeFileSync(DATA_PATH, JSON.stringify(normalize(data), null, 2));
 }
 
+function loadStore(): StoreData {
+  let data = readDisk();
+  seedIfEmpty(data);
+  ensureNorthgateShop(data);
+  ensureDemoIndustry(data);
+  data.supportThreads = data.supportThreads ?? [];
+  data.knowledgeGaps = data.knowledgeGaps ?? [];
+  data = normalize(data);
+  cache = data;
+  return data;
+}
+
 export async function readStore(): Promise<StoreData> {
-  return withLock(() => {
-    if (!cache) {
-      cache = readDisk();
-      seedIfEmpty(cache);
-      cache = normalize(cache);
-      writeDisk(cache);
-    } else {
-      ensureNorthgateShop(cache);
-      ensureDemoIndustry(cache);
-      cache.supportThreads = cache.supportThreads ?? [];
-      cache.knowledgeGaps = cache.knowledgeGaps ?? [];
-    }
-    return cache;
-  });
+  return withLock(() => loadStore());
 }
 
 export async function updateStore<T>(
   fn: (data: StoreData) => T,
 ): Promise<T> {
   return withLock(() => {
-    if (!cache) {
-      cache = readDisk();
-      seedIfEmpty(cache);
-      cache = normalize(cache);
-    }
-    ensureNorthgateShop(cache);
-    cache.supportThreads = cache.supportThreads ?? [];
-    cache.knowledgeGaps = cache.knowledgeGaps ?? [];
-    const result = fn(cache);
-    writeDisk(cache);
+    const data = loadStore();
+    const result = fn(data);
+    writeDisk(data);
+    cache = data;
     return result;
   });
 }

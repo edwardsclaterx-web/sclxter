@@ -1,9 +1,8 @@
-import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
+
 import { AppHeader } from "@/components/app-header";
 import { SiteHeader } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
-import { getSessionUser, hasOwnerStep2Pending } from "@/lib/auth";
-import { accountPasswordFor } from "@/lib/login-passwords";
+import { getSessionUser } from "@/lib/auth";
 import { AuthForm } from "../auth-form";
 import { AccountPanel } from "./account-panel";
 
@@ -21,23 +20,17 @@ export default async function AccountPage({
 }) {
   const user = await getSessionUser();
   if (user) {
-    const owner = isAdmin(user);
     return (
       <div className="flex min-h-full flex-col">
         <AppHeader />
         <main className="mx-auto w-full max-w-md flex-1 px-5 py-16">
           <h1 className="text-2xl font-medium tracking-tight">Account</h1>
-          <AccountPanel
-            email={user.email}
-            password={owner ? accountPasswordFor(user) : ""}
-            showPassword={owner}
-          />
+          <AccountPanel email={user.email} />
         </main>
       </div>
     );
   }
 
-  if (await hasOwnerStep2Pending()) redirect("/in");
   const q = await searchParams;
 
   return (

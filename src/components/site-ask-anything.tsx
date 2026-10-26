@@ -30,9 +30,7 @@ function skipPath() {
     p === "/buy" ||
     p.indexOf("/buy/") === 0 ||
     p === "/billing" ||
-    p.indexOf("/billing/") === 0 ||
-    p === "/in" ||
-    p.indexOf("/in/") === 0
+    p.indexOf("/billing/") === 0
   );
 }
 

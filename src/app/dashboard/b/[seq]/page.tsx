@@ -18,7 +18,7 @@ export default async function AdminBusinessPage({
 
   const { seq: raw } = await params;
   const seq = Number(raw);
-  if (!Number.isFinite(seq) || seq < 1) notFound();
+  if (!Number.isInteger(seq) || seq < 0) notFound();
   let biz = await getBusinessBySeq(seq);
   if (!biz) notFound();
   biz = await ensureIndustryBriefing(biz);

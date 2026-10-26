@@ -23,7 +23,7 @@ function currentEndMs(current?: string | null) {
   return Number.isFinite(t) ? t : NaN;
 }
 
-/** Stripe (later) and signup renew both call this. Adds one 30-day month onto remaining cover, or from now if lapsed. Refuses if that would put remaining cover past 12 months from now. */
+/** After Stripe confirms a paid Checkout session, add 30-day months onto remaining cover, or from now if lapsed. Refuses if that would put remaining cover past 12 months from now. */
 export function applyPaidMonth(
   current?: string | null,
   now = Date.now(),
@@ -61,6 +61,16 @@ export function applyPaidMonths(
     applied += 1;
   }
   return { applied, paidUntil, refused: n - applied };
+}
+
+export function monthsPurchasable(
+  current?: string | null,
+  now = Date.now(),
+) {
+  for (let n = MAX_COVER_MONTHS; n >= 1; n -= 1) {
+    if (applyPaidMonths(current, n, now).applied === n) return n;
+  }
+  return 0;
 }
 
 export function userHasLiveAccess(user: User | null | undefined) {

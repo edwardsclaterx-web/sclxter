@@ -68,6 +68,12 @@ function normalize(data: StoreData): StoreData {
   data.users = (data.users ?? []).map((u) => ({
     ...u,
     paidUntil: typeof u.paidUntil === "string" ? u.paidUntil : undefined,
+    setupPaid: u.setupPaid === true,
+    stripeCustomerId:
+      typeof u.stripeCustomerId === "string" ? u.stripeCustomerId : undefined,
+    processedCheckoutIds: Array.isArray(u.processedCheckoutIds)
+      ? u.processedCheckoutIds.filter((id) => typeof id === "string")
+      : undefined,
   }));
   data.knowledge = data.knowledge ?? [];
   data.leads = (data.leads ?? []).map((l) => ({

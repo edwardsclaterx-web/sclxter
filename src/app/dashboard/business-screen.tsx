@@ -304,8 +304,7 @@ export function BusinessScreen({
         <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
           This account is unpaid. Your shop data is kept. Scan, notepad, Test
           AI, and conversations still work here. The live assistant on your
-          website stays off until cover is current. Card payments are not
-          taken on this site yet.
+          website stays off until cover is current. Pay on Billing.
         </p>
       ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />

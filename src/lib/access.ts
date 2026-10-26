@@ -112,7 +112,7 @@ export async function resolveBusiness(
   seq?: number | null,
 ): Promise<Business | null> {
   if (isAdmin(user)) {
-    if (typeof seq === "number" && seq > 0) {
+    if (typeof seq === "number" && Number.isFinite(seq) && seq >= 0) {
       return getBusinessBySeq(seq);
     }
     return null;

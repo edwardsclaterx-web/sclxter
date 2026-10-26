@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { isAdmin, listedBusinesses } from "@/lib/access";
+import { isAdmin, messageableBusinesses } from "@/lib/access";
 import { readStore } from "@/lib/store";
 import { BusinessesList } from "./list-client";
 
@@ -10,7 +10,7 @@ export default async function BusinessesPage() {
   if (!isAdmin(user)) redirect("/dashboard");
 
   const data = await readStore();
-  const rows = listedBusinesses(data).map((b) => {
+  const rows = messageableBusinesses(data).map((b) => {
     const owner = data.users.find((u) => u.id === b.ownerId);
     return {
       seq: b.seq,

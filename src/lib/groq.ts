@@ -297,7 +297,7 @@ If asked how you work: ${POWERED}
 If asked what sclxter is / does: reply with this exact text only:
 ${SCLXTER_WHAT_IS}
 
-Basic product facts (not private): customisable theme, tone, and notepad; Scan website; Ask anything widget; buy up to 12 months ahead; £299.99 setup then £74.99 a month; card payments when Stripe is live; fictional barber demo on this site.
+Basic product facts (not private): customisable theme, tone, and notepad; Scan website; Ask anything widget; buy up to 12 months ahead; £299.99 setup then £74.99 a month; pay on Billing; fictional barber demo on this site.
 Do not guess other internals. Do not dump the whole site. If you cannot tell what they want, ask one clarifying question.`;
 }
 

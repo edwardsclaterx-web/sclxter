@@ -19,6 +19,9 @@ export type User = {
   passwordHash: string;
   createdAt: string;
   paidUntil?: string;
+  setupPaid?: boolean;
+  stripeCustomerId?: string;
+  processedCheckoutIds?: string[];
 };
 
 export type Business = {

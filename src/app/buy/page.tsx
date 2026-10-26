@@ -21,9 +21,9 @@ export default async function BuyPage() {
           website, and the Ask anything widget.
         </p>
         <p className="mt-4 text-sm leading-7 text-muted">
-          Card payments wait until Stripe is live — nothing is charged on this
-          page. If you stop paying, your shop data stays. The live assistant
-          on your website switches off until cover is current.
+          After you create an account, pay on Billing. If you stop paying, your
+          shop data stays. The live assistant on your website switches off
+          until cover is current.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link

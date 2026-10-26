@@ -40,6 +40,9 @@ type Props = {
 
 type Period = "day" | "week" | "month";
 
+const SCAN_FAIL =
+  "error with scan send your website to administrator for information to be extracted";
+
 function formatStamp(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -234,7 +237,7 @@ export function BusinessScreen({
         business?: ClientBusiness;
       };
       if (!res.ok) {
-        setScanError(data.error || "Scan failed.");
+        setScanError(SCAN_FAIL);
         return;
       }
       if (data.business) {
@@ -243,7 +246,7 @@ export function BusinessScreen({
       setSaveNote("Scan complete.");
       router.refresh();
     } catch {
-      setScanError("Could not reach the server.");
+      setScanError(SCAN_FAIL);
     } finally {
       setScanning(false);
     }

@@ -43,7 +43,15 @@ export async function POST(request: Request) {
   }
 
   const { pages, error, skipped } = await scanSite(start);
-  if (error) return NextResponse.json({ error }, { status: 422 });
+  if (error) {
+    return NextResponse.json(
+      {
+        error:
+          "error with scan send your website to administrator for information to be extracted",
+      },
+      { status: 422 },
+    );
+  }
 
   const block = compilePages(pages, new Date().toISOString());
   const updated = await updateStore((data) => {

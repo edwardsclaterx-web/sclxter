@@ -5,6 +5,7 @@ import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
+import { isLeavesakeLogin } from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
 import { readStore, updateStore } from "@/lib/store";
 
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       "invalid",
     );
   }
-  if (isOwnerEmail(mail) || isNorthgateLogin(mail)) {
+  if (isOwnerEmail(mail) || isNorthgateLogin(mail) || isLeavesakeLogin(mail)) {
     return fail(409, "That email already has an account.", "exists");
   }
 

@@ -7,6 +7,7 @@ import { formatHadSclxter } from "@/lib/cover";
 
 type Row = {
   seq: number;
+  publicId: string;
   name: string;
   websiteUrl: string;
   industry: string;
@@ -97,7 +98,7 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
             </thead>
             <tbody>
               {shown.map((r) => (
-                <tr key={r.seq} className="border-b border-line hover:bg-surface">
+                <tr key={r.publicId || String(r.seq)} className="border-b border-line hover:bg-surface">
                   <td className="py-3 pr-4">
                     <Link href={`/dashboard/b/${r.seq}`} className="text-fg">
                       {r.name || "Untitled"}

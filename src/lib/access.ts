@@ -3,6 +3,12 @@ import "server-only";
 import { isOwnerEmail } from "./owner-auth";
 import { DEMO_PUBLIC_ID } from "./seed";
 import {
+  LEAVESAKE_BIZ_ID,
+  LEAVESAKE_PUBLIC_ID,
+  LEAVESAKE_USER_ID,
+  isLeavesakeLogin,
+} from "./leavesake";
+import {
   NORTHGATE_BIZ_ID,
   NORTHGATE_USER_ID,
   isNorthgateLogin,
@@ -17,20 +23,25 @@ export function isAdmin(user: User) {
 }
 
 export function isDemoBusiness(b: Business) {
-  return b.publicId === DEMO_PUBLIC_ID || b.id === "biz_northgate";
+  return b.publicId === DEMO_PUBLIC_ID || b.id === NORTHGATE_BIZ_ID;
+}
+
+export function isShowcaseBusiness(b: Business) {
+  if (isDemoBusiness(b)) return true;
+  return b.publicId === LEAVESAKE_PUBLIC_ID || b.id === LEAVESAKE_BIZ_ID;
 }
 
 export function listedBusinesses(data: StoreData) {
-  return data.businesses.filter((b) => !isDemoBusiness(b));
+  return data.businesses.filter((b) => !isShowcaseBusiness(b));
 }
 
 export function messageableBusinesses(data: StoreData) {
   const listed = listedBusinesses(data);
-  const demo = data.businesses.find(isDemoBusiness);
-  if (demo && !listed.some((b) => b.id === demo.id)) {
-    return [...listed, demo];
-  }
-  return listed;
+  const extra = data.businesses.filter(
+    (b) => isShowcaseBusiness(b) && !listed.some((row) => row.id === b.id),
+  );
+  extra.sort((a, b) => a.seq - b.seq);
+  return [...listed, ...extra];
 }
 
 export function nextJoinSeq(data: StoreData) {
@@ -81,6 +92,12 @@ export function businessForUser(data: StoreData, user: User): Business | null {
       (b) => b.publicId === DEMO_PUBLIC_ID || b.id === NORTHGATE_BIZ_ID,
     );
     if (demo) return demo;
+  }
+  if (isLeavesakeLogin(user.email) || user.id === LEAVESAKE_USER_ID) {
+    const shop = data.businesses.find(
+      (b) => b.publicId === LEAVESAKE_PUBLIC_ID || b.id === LEAVESAKE_BIZ_ID,
+    );
+    if (shop) return shop;
   }
   const listed = listedBusinesses(data);
   const mine = listed.filter((b) => {

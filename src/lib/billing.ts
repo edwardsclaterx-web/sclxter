@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isOwnerEmail } from "./owner-auth";
-import { isDemoBusiness } from "./access";
+import { isShowcaseBusiness } from "./access";
 import type { Business, StoreData, User } from "./types";
 
 export const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
@@ -82,7 +82,7 @@ export function userHasLiveAccess(user: User | null | undefined) {
 }
 
 export function businessHasLiveAccess(business: Business, data: StoreData) {
-  if (isDemoBusiness(business)) return true;
+  if (isShowcaseBusiness(business)) return true;
   if (!business.ownerId) return false;
   const owner = data.users.find((u) => u.id === business.ownerId);
   if (!owner) return false;

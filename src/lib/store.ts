@@ -1,5 +1,7 @@
-import { ensureDemoIndustry, ensureNorthgateShop, seedIfEmpty } from "./seed";
+import { ensureDemoIndustry, ensureLeavesakeShop, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
+import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "./leavesake";
+import { NORTHGATE_BIZ_ID } from "./northgate";
 import { normalizeInstructions } from "./instructions";
 import { readPersistedStore, writePersistedStore } from "./persist";
 import type { Appearance, Business, StoreData } from "./types";
@@ -104,10 +106,18 @@ function normalize(data: StoreData): StoreData {
   ensureDemoIndustry(data);
 
   const listed = data.businesses.filter(
-    (b) => b.publicId !== DEMO_PUBLIC_ID && b.id !== "biz_northgate",
+    (b) =>
+      b.publicId !== DEMO_PUBLIC_ID &&
+      b.id !== NORTHGATE_BIZ_ID &&
+      b.publicId !== LEAVESAKE_PUBLIC_ID &&
+      b.id !== LEAVESAKE_BIZ_ID,
   );
   listed.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const claimed = new Set<number>();
+  for (const b of data.businesses) {
+    if (listed.includes(b)) continue;
+    if (b.seq >= 1) claimed.add(b.seq);
+  }
   for (const b of listed) {
     if (b.seq >= 1 && !claimed.has(b.seq)) claimed.add(b.seq);
     else b.seq = 0;
@@ -141,6 +151,7 @@ async function loadStore(): Promise<StoreData> {
   let data = hydrate(await readPersistedStore());
   seedIfEmpty(data);
   ensureNorthgateShop(data);
+  ensureLeavesakeShop(data);
   ensureDemoIndustry(data);
   data.supportThreads = data.supportThreads ?? [];
   data.knowledgeGaps = data.knowledgeGaps ?? [];

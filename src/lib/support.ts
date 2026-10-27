@@ -1,7 +1,12 @@
 import "server-only";
 
 import { id } from "./ids";
-import { isDemoBusiness, listedBusinesses } from "./access";
+import { isDemoBusiness, isShowcaseBusiness, listedBusinesses } from "./access";
+import {
+  LEAVESAKE_BIZ_ID,
+  LEAVESAKE_USER_ID,
+  isLeavesakeLogin,
+} from "./leavesake";
 import {
   NORTHGATE_BIZ_ID,
   NORTHGATE_USER_ID,
@@ -18,8 +23,11 @@ export function findOwnerBusiness(user: User, data: Awaited<ReturnType<typeof re
       ) ?? null
     );
   }
+  if (isLeavesakeLogin(user.email) || user.id === LEAVESAKE_USER_ID) {
+    return data.businesses.find((b) => b.id === LEAVESAKE_BIZ_ID) ?? null;
+  }
   const mine = listedBusinesses(data).filter((b) => {
-    if (isDemoBusiness(b)) return false;
+    if (isShowcaseBusiness(b)) return false;
     if (b.ownerId === user.id) return true;
     const owner = data.users.find((u) => u.id === b.ownerId);
     return owner?.email === user.email;

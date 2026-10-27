@@ -1,4 +1,12 @@
 import {
+  LEAVESAKE_BIZ_ID,
+  LEAVESAKE_LOGIN,
+  LEAVESAKE_PUBLIC_ID,
+  LEAVESAKE_SITE,
+  LEAVESAKE_USER_ID,
+  isLeavesakeLogin,
+} from "./leavesake";
+import {
   NORTHGATE_BIZ_ID,
   NORTHGATE_LOGIN,
   NORTHGATE_USER_ID,
@@ -134,6 +142,124 @@ export function ensureNorthgateShop(data: StoreData) {
   ensureKnowledge(data);
 }
 
+const LEAVESAKE_NOTES: Array<{ title: string; body: string }> = [
+  {
+    title: "What it is",
+    body: "Leavesake is a personal running site at leavesake.com. Tagline: Run. Reflect. Repeat. Articles on cadence, headspace, weather, and why we keep going — honestly told, not expert coaching.",
+  },
+  {
+    title: "Writing",
+    body: "Pieces include easy pace, sub-25 5K, winter miles, racing, starting running, running when sick or injured, watches and data, and saying hello on the trail. It is not a coaching service.",
+  },
+  {
+    title: "Site",
+    body: "Public site https://leavesake.com. Running articles and tools. Contact through the site.",
+  },
+];
+
+export const LEAVESAKE_NOTEPAD = LEAVESAKE_NOTES.map(
+  (note) => `### ${note.title}\n${note.body}`,
+).join("\n\n");
+
+function leavesakeBusiness(seq: number) {
+  return {
+    id: LEAVESAKE_BIZ_ID,
+    seq,
+    ownerId: LEAVESAKE_USER_ID,
+    name: "Leavesake",
+    websiteUrl: LEAVESAKE_SITE,
+    industry: "Running",
+    contactPhone: "",
+    contactEmail: "",
+    contactOther: LEAVESAKE_SITE,
+    tone: "warm",
+    notepad: LEAVESAKE_NOTEPAD,
+    lastScanText: "",
+    scannedAt: null,
+    industryBriefing: "",
+    industryBriefingFor: "",
+    publicId: LEAVESAKE_PUBLIC_ID,
+    appearance: {
+      assistantName: "Leavesake",
+      colour: "#ffffff",
+      welcome: "Ask about the running articles, cadence, or the site.",
+      theme: {
+        outline: "#222222",
+        primary: "#ffffff",
+        text: "#000000",
+      },
+    },
+    widgetConnectedAt: null,
+    createdAt: now,
+  };
+}
+
+function ensureLeavesakeKnowledge(data: StoreData) {
+  for (const note of LEAVESAKE_NOTES) {
+    const kid = `know_leavesake_${note.title.toLowerCase().replace(/\s+/g, "_")}`;
+    if (data.knowledge.some((k) => k.id === kid)) continue;
+    data.knowledge.push({
+      id: kid,
+      businessId: LEAVESAKE_BIZ_ID,
+      source: "note",
+      title: note.title,
+      body: note.body,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+}
+
+function nextUnusedSeq(data: StoreData, selfId: string) {
+  const taken = new Set(
+    data.businesses.filter((b) => b.id !== selfId).map((b) => b.seq),
+  );
+  let seq = 0;
+  while (taken.has(seq)) seq += 1;
+  return seq;
+}
+
+export function ensureLeavesakeShop(data: StoreData) {
+  let user = data.users.find(
+    (u) => u.id === LEAVESAKE_USER_ID || isLeavesakeLogin(u.email),
+  );
+  if (!user) {
+    user = {
+      id: LEAVESAKE_USER_ID,
+      email: LEAVESAKE_LOGIN,
+      passwordHash: "!",
+      createdAt: now,
+    };
+    data.users.push(user);
+  } else {
+    user.email = LEAVESAKE_LOGIN;
+    user.passwordHash = "!";
+  }
+  if (!user.paidUntil) {
+    user.paidUntil = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+  }
+
+  let shop = data.businesses.find(
+    (b) => b.publicId === LEAVESAKE_PUBLIC_ID || b.id === LEAVESAKE_BIZ_ID,
+  );
+  if (!shop) {
+    data.businesses.push(leavesakeBusiness(nextUnusedSeq(data, LEAVESAKE_BIZ_ID)));
+  } else {
+    shop.ownerId = LEAVESAKE_USER_ID;
+    shop.publicId = LEAVESAKE_PUBLIC_ID;
+    shop.seq = nextUnusedSeq(data, LEAVESAKE_BIZ_ID);
+    if (!(shop.name || "").trim()) shop.name = "Leavesake";
+    if (!(shop.websiteUrl || "").trim()) shop.websiteUrl = LEAVESAKE_SITE;
+    if (!(shop.industry || "").trim()) shop.industry = "Running";
+    if (!(shop.notepad || "").trim()) shop.notepad = LEAVESAKE_NOTEPAD;
+    if (!(shop.contactOther || "").trim()) shop.contactOther = LEAVESAKE_SITE;
+  }
+  ensureLeavesakeKnowledge(data);
+}
+
 export function seedIfEmpty(data: StoreData) {
   ensureNorthgateShop(data);
+  ensureLeavesakeShop(data);
 }

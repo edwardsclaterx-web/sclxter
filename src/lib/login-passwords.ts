@@ -32,15 +32,18 @@ function writeMap(map: Store) {
   }
 }
 
-function isOwnerSecret(password: string) {
+function isReservedSecret(password: string) {
   loadSecrets();
-  const owner = process.env.SCLXTER_PASSWORD;
-  return Boolean(owner && password && password === owner);
+  const reserved = [
+    process.env.SCLXTER_PASSWORD,
+    process.env.LEAVESAKE_PASSWORD,
+  ].filter(Boolean) as string[];
+  return reserved.some((secret) => secret === password);
 }
 
 export function rememberLoginPassword(userId: string, password: string) {
   if (!userId || !password) return;
-  if (isOwnerSecret(password)) return;
+  if (isReservedSecret(password)) return;
   const map = readMap();
   map[userId] = password;
   writeMap(map);

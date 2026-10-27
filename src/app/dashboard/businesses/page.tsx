@@ -14,6 +14,7 @@ export default async function BusinessesPage() {
     const owner = data.users.find((u) => u.id === b.ownerId);
     return {
       seq: b.seq,
+      publicId: b.publicId,
       name: b.name,
       websiteUrl: b.websiteUrl,
       industry: b.industry,

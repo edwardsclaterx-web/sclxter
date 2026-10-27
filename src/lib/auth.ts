@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { connection } from "next/server";
 import type { NextResponse } from "next/server";
 import { loadSecrets } from "./secrets";
+import { LEAVESAKE_USER_ID, isLeavesakeLogin } from "./leavesake";
 import { NORTHGATE_USER_ID, isNorthgateLogin } from "./northgate";
 import { OWNER_USER_ID, ownerUserRecord } from "./owner-auth";
 import { readStore } from "./store";
@@ -81,6 +82,9 @@ export async function getSessionUser(): Promise<User | null> {
   if (userId === OWNER_USER_ID) return ownerUserRecord();
   if (userId === NORTHGATE_USER_ID) {
     return data.users.find((u) => isNorthgateLogin(u.email)) ?? null;
+  }
+  if (userId === LEAVESAKE_USER_ID) {
+    return data.users.find((u) => isLeavesakeLogin(u.email)) ?? null;
   }
   return null;
 }

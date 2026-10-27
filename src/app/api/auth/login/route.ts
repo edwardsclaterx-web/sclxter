@@ -8,6 +8,10 @@ import {
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
+import {
+  isLeavesakeLogin,
+  verifyLeavesakePassword,
+} from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
 import { loadSecrets } from "@/lib/secrets";
 import { readStore } from "@/lib/store";
@@ -55,6 +59,23 @@ export async function POST(request: Request) {
       ? redirectSeeOther("/dashboard")
       : NextResponse.json({ ok: true });
     await setSessionCookie(northgate.id, res, request);
+    return res;
+  }
+
+  if (isLeavesakeLogin(mail)) {
+    if (!verifyLeavesakePassword(password)) {
+      return fail(401, "Those details did not match.");
+    }
+    const leavesake = (await readStore()).users.find((u) =>
+      isLeavesakeLogin(u.email),
+    );
+    if (!leavesake) {
+      return fail(401, "Those details did not match.");
+    }
+    const res = html
+      ? redirectSeeOther("/dashboard")
+      : NextResponse.json({ ok: true });
+    await setSessionCookie(leavesake.id, res, request);
     return res;
   }
 

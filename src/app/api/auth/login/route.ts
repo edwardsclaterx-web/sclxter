@@ -3,7 +3,7 @@ import { checkPassword, setSessionCookie } from "@/lib/auth";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import {
   ensureOwnerUser,
-  isOwnerEmail,
+  isOwnerLogin,
   ownerAuthReady,
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   const mail = email.trim().toLowerCase();
 
-  if (isOwnerEmail(mail)) {
+  if (isOwnerLogin(mail)) {
     if (!(await ownerAuthReady())) {
       return fail(503, "Sign in is not configured on this server.");
     }

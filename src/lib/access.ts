@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isOwnerEmail } from "./owner-auth";
+import { isOwnerUser } from "./owner-auth";
 import { DEMO_PUBLIC_ID } from "./seed";
 import {
   LEAVESAKE_BIZ_ID,
@@ -19,7 +19,7 @@ import type { Business, ClientBusiness, StoreData, User } from "./types";
 import { DEFAULT_WIDGET_THEME, normalizeTheme } from "./widget-theme";
 
 export function isAdmin(user: User) {
-  return isOwnerEmail(user.email);
+  return isOwnerUser(user);
 }
 
 export function isDemoBusiness(b: Business) {

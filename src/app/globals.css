@@ -81,6 +81,18 @@ a.nav-item.here {
   color: #ffffff;
 }
 
+@media (max-width: 767px) {
+  #sclxter-site-ask-hint {
+    display: none !important;
+  }
+}
+
+#wa-input,
+#support-input,
+input[name="message"] {
+  font-size: 16px !important;
+}
+
 #northgate-ask-btn,
 #sclxter-site-ask-btn {
   appearance: none !important;

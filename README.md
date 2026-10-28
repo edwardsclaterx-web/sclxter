@@ -14,7 +14,7 @@ Needs Node 22+.
 npm install
 cp .env.example .env.local
 # Put GROQ_API_KEY in .env.local. Never commit it. Never put it on a customer website.
-# Owner password: SCLXTER_PASSWORD — hashed on the server, never in git, HTML, or the browser.
+# Owner Sign in identity is scl. Password: SCLXTER_PASSWORD — server only, never in git, HTML, or the browser.
 # Leavesake test shop: LEAVESAKE_PASSWORD — server only, never in git or the browser.
 # Stripe test keys: STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY — server only. Never commit them.
 npm run dev

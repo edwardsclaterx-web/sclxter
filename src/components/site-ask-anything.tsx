@@ -53,7 +53,10 @@ function applyOpen(panel: HTMLElement, btn: HTMLElement, open: boolean) {
   btn.setAttribute("aria-label", open ? "Minimise" : "Ask anything");
   btn.style.setProperty("border-radius", "20px", "important");
   const h = document.getElementById(HINT_ID);
-  if (h) h.style.display = open ? "none" : "flex";
+  if (h) {
+    const mobile = window.matchMedia("(max-width: 767px)").matches;
+    h.style.display = open || mobile ? "none" : "flex";
+  }
   try {
     sessionStorage.setItem(OPEN_KEY, open ? "1" : "0");
   } catch {
@@ -143,6 +146,11 @@ function boot() {
   w[BOOT_FLAG] = true;
   onRoute();
   window.addEventListener("popstate", onRoute);
+  window.addEventListener("resize", () => {
+    const p = document.getElementById(PANEL_ID);
+    const b = document.getElementById(BTN_ID);
+    if (p && b) applyOpen(p, b, b.getAttribute("aria-expanded") === "true");
+  });
   const push = history.pushState.bind(history);
   history.pushState = (...args) => {
     push(...args);

@@ -299,7 +299,7 @@ export function BusinessScreen({
     : TEST_AI_BLOCKED;
 
   return (
-    <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-10 md:px-8">
+    <main className="mx-auto w-full min-w-0 max-w-[96rem] flex-1 overflow-x-hidden px-4 py-6 md:px-8 md:py-10">
       {!admin && !live ? (
         <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
           This account is unpaid. Your shop data is kept. Scan, notepad, Test
@@ -310,7 +310,7 @@ export function BusinessScreen({
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <div className="order-1 min-w-0">
-      <aside className="flex min-h-[48rem] flex-col border border-line p-5">
+      <aside className="flex min-h-0 flex-col border border-line p-4 lg:min-h-[48rem] lg:p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Your website&apos;s data
         </h2>
@@ -324,7 +324,7 @@ export function BusinessScreen({
           </Button>
         </div>
         <Textarea
-          className="mt-3 min-h-[32rem] flex-1 text-[0.9375rem] leading-6"
+          className="mt-3 min-h-[16rem] flex-1 text-[0.9375rem] leading-6 lg:min-h-[32rem]"
           value={notepad}
           onChange={(e) => patchPad(e.target.value)}
           placeholder="Scan website to fill"
@@ -621,7 +621,7 @@ export function BusinessScreen({
         </section>
       </div>
 
-      <aside className="order-2 flex h-[calc(100vh-6rem)] min-h-[36rem] flex-col gap-4 lg:sticky lg:top-8 lg:order-3">
+      <aside className="order-2 flex min-h-[22rem] flex-col gap-4 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:min-h-[36rem]">
         {!admin ? (
           <div className="shrink-0 border border-line px-5 py-3">
             <a href="/contact#support" className="text-sm text-fg">

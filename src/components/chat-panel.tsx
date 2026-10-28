@@ -251,7 +251,7 @@ export function ChatPanel({
             placeholder="Ask anything"
             aria-label="Ask anything"
             disabled={Boolean(blocked)}
-            className={`box-border h-10 min-h-10 max-h-10 ${themed ? "bg-transparent" : ""}`}
+            className={`box-border h-10 min-h-10 max-h-10 text-[16px] ${themed ? "bg-transparent" : ""}`}
             style={{
               paddingLeft: 16,
               paddingRight: 16,

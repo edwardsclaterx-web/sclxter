@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isOwnerEmail } from "./owner-auth";
+import { isOwnerUser } from "./owner-auth";
 import { isShowcaseBusiness } from "./access";
 import type { Business, StoreData, User } from "./types";
 
@@ -75,7 +75,7 @@ export function monthsPurchasable(
 
 export function userHasLiveAccess(user: User | null | undefined) {
   if (!user) return false;
-  if (isOwnerEmail(user.email)) return true;
+  if (isOwnerUser(user)) return true;
   if (!user.paidUntil) return false;
   const t = Date.parse(user.paidUntil);
   return Number.isFinite(t) && t > Date.now();

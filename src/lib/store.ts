@@ -1,3 +1,4 @@
+import { migrateOwnerIdentity } from "./owner-auth";
 import { ensureDemoIndustry, ensureLeavesakeShop, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
 import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "./leavesake";
@@ -150,6 +151,7 @@ function hydrate(parsed: StoreData | null): StoreData {
 async function loadStore(): Promise<StoreData> {
   let data = hydrate(await readPersistedStore());
   seedIfEmpty(data);
+  migrateOwnerIdentity(data);
   ensureNorthgateShop(data);
   ensureLeavesakeShop(data);
   ensureDemoIndustry(data);

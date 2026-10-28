@@ -3,7 +3,7 @@ import { checkPassword, hashPassword, setSessionCookie } from "@/lib/auth";
 import { createBusinessForSignup } from "@/lib/access";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
-import { isOwnerEmail } from "@/lib/owner-auth";
+import { isOwnerEmail, isOwnerLogin } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import { isLeavesakeLogin } from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
@@ -27,7 +27,12 @@ export async function POST(request: Request) {
       "invalid",
     );
   }
-  if (isOwnerEmail(mail) || isNorthgateLogin(mail) || isLeavesakeLogin(mail)) {
+  if (
+    isOwnerLogin(mail) ||
+    isOwnerEmail(mail) ||
+    isNorthgateLogin(mail) ||
+    isLeavesakeLogin(mail)
+  ) {
     return fail(409, "That email already has an account.", "exists");
   }
 

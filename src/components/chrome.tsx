@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,13 +17,15 @@ function navClass(className?: string, active?: boolean) {
   return ["nav-item", className, active ? "here" : null].filter(Boolean).join(" ");
 }
 
-export function ProductNav({
+function ProductNavLinks({
   signedIn,
   admin,
   purchaser,
   extra,
   tail,
   showPricing = true,
+  stacked,
+  onNavigate,
 }: {
   signedIn?: boolean;
   admin?: boolean;
@@ -30,7 +33,8 @@ export function ProductNav({
   extra?: ReactNode;
   tail?: ReactNode;
   showPricing?: boolean;
-  showBuy?: boolean;
+  stacked?: boolean;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname() || "/";
   const onHome = pathname === "/";
@@ -48,9 +52,20 @@ export function ProductNav({
     pathname.startsWith("/dashboard/businesses/");
   const billing = Boolean(purchaser) && !admin;
   const owner = Boolean(signedIn) && !admin;
+  const wrap = stacked ? "flex flex-col items-end gap-5 text-sm text-muted" : undefined;
 
   return (
-    <nav className="flex flex-wrap items-baseline justify-end gap-x-6 gap-y-2 text-sm text-muted">
+    <nav
+      className={
+        wrap ||
+        "flex flex-wrap items-baseline justify-end gap-x-6 gap-y-2 text-sm text-muted"
+      }
+      onClick={(e) => {
+        if (!onNavigate) return;
+        const t = e.target as HTMLElement | null;
+        if (t?.closest("a")) onNavigate();
+      }}
+    >
       {!admin && (
         <Link href="/" className={navClass(undefined, onHome)}>
           Home
@@ -113,6 +128,107 @@ export function ProductNav({
       )}
       {tail}
     </nav>
+  );
+}
+
+export function ProductNav({
+  signedIn,
+  admin,
+  purchaser,
+  extra,
+  tail,
+  showPricing = true,
+}: {
+  signedIn?: boolean;
+  admin?: boolean;
+  purchaser?: boolean;
+  extra?: ReactNode;
+  tail?: ReactNode;
+  showPricing?: boolean;
+  showBuy?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname() || "/";
+  const titleId = useId();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const links = {
+    signedIn,
+    admin,
+    purchaser,
+    extra,
+    tail,
+    showPricing,
+  };
+
+  return (
+    <>
+      <div className="hidden md:block">
+        <ProductNavLinks {...links} />
+      </div>
+      <button
+        type="button"
+        className="relative z-20 flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] md:hidden"
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+        aria-controls="site-menu-panel"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="block h-[2px] w-6 bg-white" />
+        <span className="block h-[2px] w-6 bg-white" />
+        <span className="block h-[2px] w-6 bg-white" />
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/55 md:hidden"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            id="site-menu-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="fixed inset-y-0 right-0 z-50 flex w-[60vw] flex-col bg-bg px-6 py-5 shadow-[-28px_0_48px_rgba(0,0,0,0.55)] md:hidden"
+          >
+            <div className="flex items-center justify-between">
+              <p id={titleId} className="text-xs tracking-[0.22em] text-muted">
+                menu
+              </p>
+              <button
+                type="button"
+                className="text-sm text-fg"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-8">
+              <ProductNavLinks {...links} stacked onNavigate={() => setOpen(false)} />
+            </div>
+          </div>
+        </>
+      ) : null}
+    </>
   );
 }
 

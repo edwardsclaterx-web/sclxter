@@ -41,7 +41,9 @@ export default async function AccountPage({
 
         <section id="signin" className="mt-10">
           <h2 className="text-xl font-medium tracking-tight">Sign in</h2>
-          <p className="mt-2 text-sm text-muted">Email and password.</p>
+          <p className="mt-2 text-sm text-muted">
+            Identity or email, and password.
+          </p>
           <AuthForm
             mode="login"
             error={q.error ? "Those details did not match." : null}

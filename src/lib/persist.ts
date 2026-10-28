@@ -4,9 +4,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { StoreData } from "./types";
+import type { StoreData, SupportThread } from "./types";
 
 const KEY = "sclxter-store";
+const SUPPORT_KEY = "sclxter-support-threads";
 const FILE_LOCAL = join(process.cwd(), "data", "store.json");
 const FILE_TMP = join(tmpdir(), "sclxter-store.json");
 
@@ -77,6 +78,46 @@ async function writeKv(data: StoreData) {
   return Boolean(out);
 }
 
+function asThreads(raw: unknown): SupportThread[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw.filter(
+    (t): t is SupportThread =>
+      Boolean(t) &&
+      typeof t === "object" &&
+      typeof (t as SupportThread).id === "string" &&
+      typeof (t as SupportThread).businessId === "string",
+  );
+}
+
+function mergeThreads(a: SupportThread[] = [], b: SupportThread[] = []) {
+  const byBiz = new Map<string, SupportThread>();
+  for (const t of [...a, ...b]) {
+    const prev = byBiz.get(t.businessId);
+    if (!prev || (t.updatedAt || "") >= (prev.updatedAt || "")) {
+      byBiz.set(t.businessId, t);
+    }
+  }
+  return [...byBiz.values()];
+}
+
+async function readKvThreads(): Promise<SupportThread[] | null> {
+  const out = await kvRun(["GET", SUPPORT_KEY]);
+  const result = out?.result;
+  if (typeof result === "string") {
+    try {
+      return asThreads(JSON.parse(result));
+    } catch {
+      return null;
+    }
+  }
+  return asThreads(result);
+}
+
+async function writeKvThreads(threads: SupportThread[]) {
+  const out = await kvRun(["SET", SUPPORT_KEY, JSON.stringify(threads)]);
+  return Boolean(out);
+}
+
 async function readBlob(): Promise<StoreData | null> {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) return null;
@@ -118,21 +159,47 @@ function onVercel() {
   return process.env.VERCEL === "1";
 }
 
+function withThreads(data: StoreData | null, extra: SupportThread[] | null) {
+  if (!data) return null;
+  if (extra?.length) {
+    data.supportThreads = mergeThreads(data.supportThreads, extra);
+  }
+  data.supportThreads = data.supportThreads ?? [];
+  return data;
+}
+
 export async function readPersistedStore(): Promise<StoreData | null> {
+  const extra = await readKvThreads();
   const fromKv = await readKv();
-  if (fromKv) return fromKv;
+  if (fromKv) return withThreads(fromKv, extra);
   const fromBlob = await readBlob();
-  if (fromBlob) return fromBlob;
+  if (fromBlob) return withThreads(fromBlob, extra);
   if (!onVercel()) {
     const local = readFile(FILE_LOCAL);
-    if (local) return local;
+    if (local) return withThreads(local, extra);
   }
-  return readFile(FILE_TMP);
+  const tmp = withThreads(readFile(FILE_TMP), extra);
+  if (tmp) return tmp;
+  if (extra?.length) {
+    return {
+      users: [],
+      businesses: [],
+      knowledge: [],
+      leads: [],
+      conversations: [],
+      supportThreads: extra,
+      knowledgeGaps: [],
+      settings: { instructions: [] },
+    };
+  }
+  return null;
 }
 
 export async function writePersistedStore(data: StoreData): Promise<void> {
   const json = JSON.parse(JSON.stringify(data)) as StoreData;
+  json.supportThreads = json.supportThreads ?? [];
   const kv = await writeKv(json);
+  await writeKvThreads(json.supportThreads);
   if (!kv) await writeBlob(json);
   try {
     if (!onVercel()) writeFile(FILE_LOCAL, json);

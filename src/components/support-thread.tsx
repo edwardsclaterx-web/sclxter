@@ -129,6 +129,7 @@ export function SupportThread({
           onChange={(e) => setText(e.target.value)}
           placeholder="Message"
           aria-label="Message"
+          className="text-[16px]"
         />
         <Button type="submit" disabled={busy}>
           {busy ? "…" : "Send"}

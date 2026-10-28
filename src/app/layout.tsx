@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { RenewWatch } from "@/components/renew-watch";
 import { SiteAskAnything } from "@/components/site-ask-anything";
@@ -14,6 +14,12 @@ export const metadata: Metadata = {
   title: "sclxter",
   description:
     "The most advanced AI assistant. An AI on your site. It learns your website and the information you have, then interacts with customers - times, prices and more. It's that simple.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

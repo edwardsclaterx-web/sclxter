@@ -203,8 +203,8 @@ export function WidgetForm({
             name="message"
             className={
               theme
-                ? "h-10 w-full border px-3 text-sm outline-none"
-                : "h-10 w-full border border-line bg-surface px-3 text-sm text-fg outline-none placeholder:text-muted focus:border-fg"
+                ? "h-10 w-full border px-3 text-[16px] outline-none"
+                : "h-10 w-full border border-line bg-surface px-3 text-[16px] text-fg outline-none placeholder:text-muted focus:border-fg"
             }
             style={
               theme

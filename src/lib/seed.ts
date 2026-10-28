@@ -249,7 +249,9 @@ export function ensureLeavesakeShop(data: StoreData) {
   } else {
     shop.ownerId = LEAVESAKE_USER_ID;
     shop.publicId = LEAVESAKE_PUBLIC_ID;
-    shop.seq = nextUnusedSeq(data, LEAVESAKE_BIZ_ID);
+    if (typeof shop.seq !== "number" || shop.seq < 0) {
+      shop.seq = nextUnusedSeq(data, LEAVESAKE_BIZ_ID);
+    }
     if (!(shop.name || "").trim()) shop.name = "Leavesake";
     if (!(shop.websiteUrl || "").trim()) shop.websiteUrl = LEAVESAKE_SITE;
     if (!(shop.industry || "").trim()) shop.industry = "Running";

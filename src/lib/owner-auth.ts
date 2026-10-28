@@ -1,7 +1,7 @@
 import "server-only";
 
 import { timingSafeEqual } from "node:crypto";
-import { loadSecrets } from "./secrets";
+import { envSecret } from "./secrets";
 import type { StoreData, User } from "./types";
 
 /** Public contact address. Not the Sign in identity. */
@@ -17,16 +17,15 @@ function secretEqual(given: string, expected: string) {
 }
 
 export async function ownerAuthReady() {
-  loadSecrets();
-  return Boolean(process.env.SCLXTER_PASSWORD);
+  return Boolean(envSecret("SCLXTER_PASSWORD"));
 }
 
 export async function verifyOwnerPassword(password: string): Promise<boolean> {
   if (!password) return false;
-  loadSecrets();
-  const expected = process.env.SCLXTER_PASSWORD;
+  const expected = envSecret("SCLXTER_PASSWORD");
   if (!expected) return false;
-  return secretEqual(password, expected);
+  const given = password.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/[\r\n]+$/g, "");
+  return secretEqual(given, expected);
 }
 
 /** Sign in identity: `scl`, case-insensitive, no @. */

@@ -2,7 +2,7 @@ import "server-only";
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { loadSecrets } from "./secrets";
+import { envSecret } from "./secrets";
 
 const PATH = join(process.cwd(), "data", "login-passwords.json");
 
@@ -33,11 +33,10 @@ function writeMap(map: Store) {
 }
 
 function isReservedSecret(password: string) {
-  loadSecrets();
   const reserved = [
-    process.env.SCLXTER_PASSWORD,
-    process.env.LEAVESAKE_PASSWORD,
-  ].filter(Boolean) as string[];
+    envSecret("SCLXTER_PASSWORD"),
+    envSecret("LEAVESAKE_PASSWORD"),
+  ].filter(Boolean);
   return reserved.some((secret) => secret === password);
 }
 

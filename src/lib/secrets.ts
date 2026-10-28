@@ -12,9 +12,11 @@ function applyEnvLine(line: string) {
   // or strip them. Do not unquote — secrets must not be stored with wrapping quotes.
   const value = trimmed.slice(eq + 1).trimEnd();
   const leading = value.trimStart();
-  if (key && leading) {
-    process.env[key] = leading;
-  }
+  if (!key || !leading) return;
+  // Vercel / already-set runtime env wins. Never overwrite a live value with the file.
+  const existing = process.env[key];
+  if (typeof existing === "string" && existing.length > 0) return;
+  process.env[key] = leading;
 }
 
 export function loadSecrets() {
@@ -27,7 +29,22 @@ export function loadSecrets() {
   }
 }
 
-export function groqKeyPresent() {
+/** Runtime env (bracket access so Next does not inline at build). Never log the value. */
+export function envSecret(name: string): string {
   loadSecrets();
-  return Boolean(process.env.GROQ_API_KEY);
+  const raw = process.env[name];
+  if (typeof raw !== "string" || !raw) return "";
+  let v = raw.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  if (v.length >= 2) {
+    const a = v[0];
+    const b = v[v.length - 1];
+    if ((a === '"' && b === '"') || (a === "'" && b === "'")) {
+      v = v.slice(1, -1);
+    }
+  }
+  return v.replace(/[\r\n]+$/g, "");
+}
+
+export function groqKeyPresent() {
+  return Boolean(envSecret("GROQ_API_KEY"));
 }

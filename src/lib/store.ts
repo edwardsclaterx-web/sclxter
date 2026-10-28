@@ -1,7 +1,7 @@
 import { migrateOwnerIdentity } from "./owner-auth";
 import { ensureDemoIndustry, ensureLeavesakeShop, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
-import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "./leavesake";
+import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID, LEAVESAKE_USER_ID } from "./leavesake";
 import { NORTHGATE_BIZ_ID } from "./northgate";
 import { normalizeInstructions } from "./instructions";
 import { readPersistedStore, writePersistedStore } from "./persist";
@@ -150,6 +150,9 @@ function hydrate(parsed: StoreData | null): StoreData {
 
 async function loadStore(): Promise<StoreData> {
   let data = hydrate(await readPersistedStore());
+  const hadLeavesake = data.users.some(
+    (u) => u.id === LEAVESAKE_USER_ID || u.email.trim().toLowerCase() === "leavesake",
+  );
   seedIfEmpty(data);
   migrateOwnerIdentity(data);
   ensureNorthgateShop(data);
@@ -158,6 +161,12 @@ async function loadStore(): Promise<StoreData> {
   data.supportThreads = data.supportThreads ?? [];
   data.knowledgeGaps = data.knowledgeGaps ?? [];
   data = normalize(data);
+  const hasLeavesake = data.users.some(
+    (u) => u.id === LEAVESAKE_USER_ID || u.email.trim().toLowerCase() === "leavesake",
+  );
+  if (hasLeavesake && !hadLeavesake) {
+    await writePersistedStore(data);
+  }
   cache = data;
   return data;
 }

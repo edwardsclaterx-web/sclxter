@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
 import { checkPassword, setSessionCookie } from "@/lib/auth";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import {
@@ -9,7 +11,9 @@ import {
 } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import {
+  ensureLeavesakeUser,
   isLeavesakeLogin,
+  leavesakeAuthReady,
   verifyLeavesakePassword,
 } from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
@@ -63,19 +67,23 @@ export async function POST(request: Request) {
   }
 
   if (isLeavesakeLogin(mail)) {
-    if (!verifyLeavesakePassword(password)) {
+    if (!leavesakeAuthReady()) {
+      return fail(503, "Sign in is not configured on this server.");
+    }
+    if (!(await verifyLeavesakePassword(password))) {
       return fail(401, "Those details did not match.");
     }
-    const leavesake = (await readStore()).users.find((u) =>
-      isLeavesakeLogin(u.email),
-    );
-    if (!leavesake) {
-      return fail(401, "Those details did not match.");
+    let user;
+    try {
+      user = await ensureLeavesakeUser();
+    } catch {
+      return fail(503, "Sign in is not configured on this server.");
     }
+    const next = "/dashboard";
     const res = html
-      ? redirectSeeOther("/dashboard")
-      : NextResponse.json({ ok: true });
-    await setSessionCookie(leavesake.id, res, request);
+      ? redirectSeeOther(next)
+      : NextResponse.json({ ok: true, next });
+    await setSessionCookie(user.id, res, request);
     return res;
   }
 

@@ -1,7 +1,7 @@
 import Groq from "groq-sdk";
 import { CLARIFY } from "./chat-copy";
 import { parseAssistantReply } from "./knowledge-gaps";
-import { loadSecrets } from "./secrets";
+import { envSecret } from "./secrets";
 import { toneById } from "./tones";
 import type { Business, ChatMessage, KnowledgeItem } from "./types";
 
@@ -12,8 +12,7 @@ const REPLY_LIMIT = 500;
 export { CLARIFY } from "./chat-copy";
 
 function client() {
-  loadSecrets();
-  const key = process.env.GROQ_API_KEY;
+  const key = envSecret("GROQ_API_KEY");
   if (!key) throw new Error("GROQ_UNCONFIGURED");
   return new Groq({ apiKey: key });
 }

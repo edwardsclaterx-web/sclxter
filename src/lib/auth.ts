@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import type { NextResponse } from "next/server";
-import { loadSecrets } from "./secrets";
+import { envSecret } from "./secrets";
 import { LEAVESAKE_USER_ID, isLeavesakeLogin } from "./leavesake";
 import { NORTHGATE_USER_ID, isNorthgateLogin } from "./northgate";
 import { OWNER_USER_ID, ownerUserRecord } from "./owner-auth";
@@ -14,8 +14,7 @@ import { getOwnedBusiness } from "./access";
 const COOKIE = "sclxter_session";
 
 function secretKey() {
-  loadSecrets();
-  return new TextEncoder().encode(process.env.SESSION_SECRET);
+  return new TextEncoder().encode(envSecret("SESSION_SECRET"));
 }
 
 export async function hashPassword(password: string) {

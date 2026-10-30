@@ -37,7 +37,7 @@ export function ThemePicker({
 
   return (
     <section>
-      <h2 className="text-xl font-medium tracking-tight">Ask anything theme</h2>
+      <h2 className="text-xl font-medium tracking-tight">Change colour</h2>
       <p className="mt-2 text-sm text-muted">
         Colours for this business’s live widget. Text and primary cannot be
         the same. Outline may match either.

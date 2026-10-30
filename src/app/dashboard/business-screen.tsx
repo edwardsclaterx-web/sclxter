@@ -430,7 +430,7 @@ export function BusinessScreen({
         <ThemePicker theme={theme} onChange={(next) => void onTheme(next)} error={themeError} />
 
         <section>
-          <h2 className="text-xl font-medium tracking-tight">Embed Ask anything</h2>
+          <h2 className="text-xl font-medium tracking-tight">How to use</h2>
           <p className="mt-2 text-sm text-muted">
             This snippet is this business’s assistant. Paste it before the
             closing body tag. It loads from sclxter.com.

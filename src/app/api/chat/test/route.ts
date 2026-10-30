@@ -5,7 +5,6 @@ import { answerChat, parseLeadFromReply } from "@/lib/groq";
 import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
 import { TRY_AGAIN } from "@/lib/embed-host";
 import { groqKeyPresent } from "@/lib/secrets";
-import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import type { ChatMessage } from "@/lib/types";
 
@@ -42,9 +41,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const ready = await ensureIndustryBriefing(biz);
     const raw = await answerChat({
-      business: ready,
+      business: biz,
       knowledge: [],
       messages,
       notesOnly: true,

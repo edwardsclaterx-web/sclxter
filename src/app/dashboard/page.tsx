@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getOwnedBusiness, isAdmin } from "@/lib/access";
 import { userHasLiveAccess } from "@/lib/billing";
-import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { readStore } from "@/lib/store";
 import { toClientBusiness } from "@/lib/access";
 import { normalizeInstructions } from "@/lib/instructions";
@@ -28,8 +27,6 @@ export default async function DashboardPage() {
       </main>
     );
   }
-
-  biz = await ensureIndustryBriefing(biz);
 
   const data = await readStore();
   const conversations = data.conversations

@@ -145,15 +145,15 @@ export function ensureNorthgateShop(data: StoreData) {
 const LEAVESAKE_NOTES: Array<{ title: string; body: string }> = [
   {
     title: "What it is",
-    body: "Leavesake is a personal running site at leavesake.com. Tagline: Run. Reflect. Repeat. Articles on cadence, headspace, weather, and why we keep going — honestly told, not expert coaching.",
+    body: "Leavesake is a personal running site at https://leavesake.com. Tagline: Run. Reflect. Repeat. Personal articles on cadence, headspace, weather, and why we keep going — honestly told, not expert coaching. It is not a coaching service.",
   },
   {
-    title: "Writing",
-    body: "Pieces include easy pace, sub-25 5K, winter miles, racing, starting running, running when sick or injured, watches and data, and saying hello on the trail. It is not a coaching service.",
+    title: "Running index",
+    body: "Source: https://leavesake.com/running/\n23 personal articles. Index: What they miss https://leavesake.com/running/what-they-miss/ ; Do you say hello? https://leavesake.com/running/do-you-say-hello/ ; I love the watch. I still cannot see my running. https://leavesake.com/running/i-love-the-watch/ ; What do you need for a sub-25 5K? https://leavesake.com/running/what-do-you-need-for-a-sub-25-5k/ ; What Is an Easy Pace Anyway? https://leavesake.com/running/what-is-an-easy-pace-anyway/ ; Three Years Later https://leavesake.com/running/three-years-later/ ; Where Did the Time Go? https://leavesake.com/running/where-did-the-time-go/ ; Breaking Up Is Hard https://leavesake.com/running/breaking-up-is-hard/ ; Finding Your Rhythm https://leavesake.com/running/finding-your-rhythm/ ; Running as Meditation https://leavesake.com/running/running-as-meditation/ ; Who Cares About V02 Max https://leavesake.com/running/who-cares-about-v02-max/ ; Winter Miles For Summer Smiles https://leavesake.com/running/winter-miles-for-summer-smiles/ ; 7 Benefits of Running You Might Not Know https://leavesake.com/running/7-benefits-of-running-you-might-not-know/ ; 10 Tips for Setting and Achieving Your Running Goals https://leavesake.com/running/10-tips-for-setting-and-achieving-your-running-goals/ ; 10 Tips to Improve Your Running Speed https://leavesake.com/running/10-tips-to-improve-your-running-speed/ ; New Years Resolution To Run https://leavesake.com/running/new-years-resolution-to-run/ ; Go Running on Christmas Day? https://leavesake.com/running/go-running-on-christmas-day/ ; Can A Book Help Me To Run? https://leavesake.com/running/can-a-book-help-me-to-run/ ; How Can I Motivate Myself To Run? https://leavesake.com/running/how-can-i-motivate-myself-to-run/ ; Should I Run If Sick or Injured? https://leavesake.com/running/should-i-run-if-sick-or-injured/ ; Do I Think When Running? https://leavesake.com/running/do-i-think-when-running/ ; Do I Have To Race If I Run? https://leavesake.com/running/do-i-have-to-race-if-i-run/ ; Should I Start Running? https://leavesake.com/running/should-i-start-running/",
   },
   {
-    title: "Site",
-    body: "Public site https://leavesake.com. Running articles and tools. Contact through the site.",
+    title: "Tools",
+    body: "Source: https://leavesake.com/running-tools/\nRunning tools including Can I run my target time? https://leavesake.com/running-tools/can-i-run-my-target-time/",
   },
 ];
 
@@ -255,7 +255,13 @@ export function ensureLeavesakeShop(data: StoreData) {
     if (!(shop.name || "").trim()) shop.name = "Leavesake";
     if (!(shop.websiteUrl || "").trim()) shop.websiteUrl = LEAVESAKE_SITE;
     if (!(shop.industry || "").trim()) shop.industry = "Running";
-    if (!(shop.notepad || "").trim()) shop.notepad = LEAVESAKE_NOTEPAD;
+    if (
+      !(shop.notepad || "").trim() ||
+      (!(shop.lastScanText || "").trim() &&
+        !/leavesake\.com\/running\//.test(shop.notepad || ""))
+    ) {
+      shop.notepad = LEAVESAKE_NOTEPAD;
+    }
     if (!(shop.contactOther || "").trim()) shop.contactOther = LEAVESAKE_SITE;
   }
   ensureLeavesakeKnowledge(data);

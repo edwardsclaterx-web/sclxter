@@ -11,7 +11,6 @@ import { answerChat, parseLeadFromReply, SCLXTER_SITE_ID } from "@/lib/groq";
 import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
-import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { DEMO_PUBLIC_ID } from "@/lib/seed";
 import { readStore, updateStore } from "@/lib/store";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
@@ -128,12 +127,11 @@ export async function POST(request: Request) {
   const knowledge = data.knowledge.filter((k) => k.businessId === shop.id);
 
   try {
-    const ready = await ensureIndustryBriefing(shop);
     const barber =
       !ownerTest &&
-      (ready.publicId === DEMO_PUBLIC_ID || ready.id === "biz_northgate");
+      (shop.publicId === DEMO_PUBLIC_ID || shop.id === "biz_northgate");
     const raw = await answerChat({
-      business: ready,
+      business: shop,
       knowledge,
       messages,
       barber,

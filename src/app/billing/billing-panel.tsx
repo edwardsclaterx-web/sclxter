@@ -116,8 +116,7 @@ export function BillingPanel({
         <p className="mt-3 text-sm leading-7 text-muted">
           {gbp(SETUP)} setup
           {setupPaid ? " (already paid on this account)" : ""}, then {gbp(MONTH)}{" "}
-          a month. Buy 1 to 12 months, never more than 12 months ahead. Stripe
-          test mode is fine.
+          a month. Buy 1 to 12 months, never more than 12 months ahead.
         </p>
 
         {!checkoutReady ? (

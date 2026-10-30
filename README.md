@@ -1,8 +1,6 @@
 # SCLXTER
 
-Embeddable site assistant for independent businesses. The owner scans public pages, types extra notes, and visitors ask in plain language. Answers come only from that shop’s pages and notes.
-
-This first slice is a local app: owner sign-in (one password, hashed on the server only), a dashboard, a HTML scan, a Groq-backed test chat on the server, and a fictional UK barber shop at `/demo`.
+Embeddable site assistant for independent businesses. The owner scans public pages, types extra notes, and visitors ask in plain language. Answers come from that shop’s pages and notes.
 
 The product UI and the barber demo share one look: black and white, Inter, quiet.
 
@@ -16,7 +14,7 @@ cp .env.example .env.local
 # Put GROQ_API_KEY in .env.local. Never commit it. Never put it on a customer website.
 # Owner Sign in identity is scl. Password: SCLXTER_PASSWORD — server only, never in git, HTML, or the browser.
 # Leavesake test shop: LEAVESAKE_PASSWORD — server only, never in git or the browser.
-# Stripe test keys: STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY — server only. Never commit them.
+# Stripe keys: STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY — server only. Never commit them.
 npm run dev
 ```
 
@@ -37,11 +35,7 @@ On Vercel, shop data cannot live in a local JSON file. Set a KV store (`KV_REST_
 From the dashboard, copy the snippet. The barber demo already loads:
 
 ```html
-<script src="http://127.0.0.1:4731/embed.js" data-id="northgate" async></script>
+<script src="https://sclxter.com/embed.js" data-id="northgate" async></script>
 ```
 
 Chat always runs on the SCLXTER server. The customer site only loads a small script and an iframe.
-
-## Honest limits
-
-Groq’s free key is for proving the product. Rate limits and outages happen. A paid model on an adult-owned account comes later, before live customer sites.

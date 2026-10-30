@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
-import { ensureIndustryBriefing } from "@/lib/industry-briefing";
 import { readStore, updateStore } from "@/lib/store";
 import { TONES } from "@/lib/tones";
 import { parseThemeInput } from "@/lib/widget-theme";
@@ -82,7 +81,6 @@ export async function PATCH(request: Request) {
     }
     return row;
   });
-  updated = await ensureIndustryBriefing(updated);
 
   const data = await readStore();
   const owner = data.users.find((u) => u.id === updated.ownerId);

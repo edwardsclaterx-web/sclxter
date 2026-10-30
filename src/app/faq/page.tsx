@@ -114,10 +114,9 @@ const items: { q: ReactNode; a: ReactNode }[] = [
     q: <>What does Scan website do?</>,
     a: (
       <>
-        After you save your public URL, Scan website reads about 16 public
-        HTML pages in a few seconds and adds that text to your notepad. It
-        does not wipe notes you typed. JavaScript-heavy or blocked pages can
-        come back thin. You still review and correct the notepad.
+        After you save your public URL, Scan website reads public pages on
+        that address and adds the text to your notepad. It does not wipe notes
+        you typed. You still review and correct the notepad.
       </>
     ),
   },

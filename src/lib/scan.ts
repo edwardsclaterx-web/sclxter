@@ -1,13 +1,13 @@
 import { spawn } from "node:child_process";
 import { load } from "cheerio";
 
-const MAX_PAGES = 16;
+const MAX_PAGES = 28;
 const MAX_BYTES = 250_000;
 const MAX_DOWNLOAD = 1_500_000;
-const MAX_BLOCKS = 80;
-const MAX_BODY = 8_000;
-const FETCH_MS = 4_000;
-const SCAN_MS = 16_000;
+const MAX_BLOCKS = 140;
+const MAX_BODY = 12_000;
+const FETCH_MS = 5_000;
+const SCAN_MS = 28_000;
 const BATCH = 4;
 const ARCHIVE_BATCH = 2;
 const MAX_ARCHIVE = 8;
@@ -41,6 +41,19 @@ const PATH_GUESSES = [
   "/team",
   "/staff",
   "/our-story",
+  "/blog",
+  "/articles",
+  "/posts",
+  "/news",
+  "/journal",
+  "/running",
+  "/running/",
+  "/running-tools",
+  "/running-tools/",
+  "/tools",
+  "/apps",
+  "/privacy",
+  "/privacy-policy",
 ];
 
 function isHttpUrl(value: string) {
@@ -81,12 +94,14 @@ const INFRA_PATH = /^\/(\.well-known|cdn-cgi)(\/|$)/i;
 
 const USEFUL_PATH: Array<{ re: RegExp; rank: number }> = [
   { re: /about|our-story|who-we-are/, rank: 1 },
-  { re: /service|cuts?|menu|treatments?/, rank: 2 },
-  { re: /pric|cost|fees?/, rank: 3 },
-  { re: /contact|find-us|location|visit/, rank: 4 },
-  { re: /book|walk-?in|hours|opening/, rank: 5 },
-  { re: /staff|team|barbers?/, rank: 6 },
-  { re: /polic|terms/, rank: 7 },
+  { re: /(^|\/)(blog|articles?|posts?|journal|news|running|writing)(\/|$)/, rank: 2 },
+  { re: /service|cuts?|menu|treatments?/, rank: 3 },
+  { re: /pric|cost|fees?/, rank: 4 },
+  { re: /contact|find-us|location|visit/, rank: 5 },
+  { re: /book|walk-?in|hours|opening/, rank: 6 },
+  { re: /staff|team|barbers?/, rank: 7 },
+  { re: /tool|apps?/, rank: 8 },
+  { re: /polic|terms/, rank: 9 },
 ];
 
 export function isJunkPath(pathname: string) {
@@ -122,8 +137,23 @@ function looksJunkLabel(value: string) {
   );
 }
 
+function isFluffBit(text: string) {
+  const s = text.toLowerCase().replace(/[.:]+$/g, "").trim();
+  if (s.length < 2) return true;
+  if (
+    /^(home|menu|skip to (content|main)|cookie(s)?|accept( all)?|privacy( policy)?|all rights reserved|share|tweet|follow us|log in|sign in|subscribe|newsletter|back to top|read more)$/.test(
+      s,
+    )
+  ) {
+    return true;
+  }
+  if (/cookie (policy|banner|consent)/.test(s) && s.length < 80) return true;
+  return false;
+}
+
 function isJunkBit(text: string) {
   const s = text.toLowerCase();
+  if (isFluffBit(text)) return true;
   if (looksJunkLabel(s)) return true;
   if (/[★⭐]/.test(text)) return true;
   if (/\b\d(?:\.\d)?\s*(?:\/\s*5|stars?)\b/.test(s) && /review|rating|star/.test(s)) {
@@ -135,7 +165,7 @@ function isJunkBit(text: string) {
 
 function isUsefulBit(text: string) {
   const s = text.toLowerCase();
-  return /£|\$\d|price|hours?|\bam\b|\bpm\b|monday|tuesday|wednesday|thursday|friday|saturday|sunday|walk-?in|book|appointment|phone|tel\.?|email|contact|street|road|lane|about|staff|team|barber|fade|cut|beard|policy|cancel|location|address/.test(
+  return /£|\$\d|price|hours?|\bam\b|\bpm\b|monday|tuesday|wednesday|thursday|friday|saturday|sunday|walk-?in|book|appointment|phone|tel\.?|email|contact|street|road|lane|about|staff|team|barber|fade|cut|beard|policy|cancel|location|address|https?:\/\/|\/[a-z0-9-]+\/[a-z0-9-]+|pace|cadence|article|km\b|5k|run/.test(
     s,
   );
 }
@@ -268,6 +298,21 @@ function unwrapArchiveUrl(href: string) {
   return m?.[1] || href;
 }
 
+function canonicalizePageUrl(href: string) {
+  try {
+    const u = new URL(unwrapArchiveUrl(href));
+    u.hash = "";
+    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"].forEach(
+      (k) => u.searchParams.delete(k),
+    );
+    u.hostname = u.hostname.toLowerCase();
+    u.pathname = u.pathname.replace(/\/{2,}/g, "/");
+    return u.href;
+  } catch {
+    return href;
+  }
+}
+
 function extract(html: string, pageUrl: string) {
   const $ = load(html);
   const extra = schemaBits(html, $);
@@ -281,25 +326,43 @@ function extract(html: string, pageUrl: string) {
     const t = cleanText($(el).text());
     if (!t) return;
     if (isJunkBit(t)) return;
-    const useful = isUsefulBit(t);
-    if (!useful && t.length < 12) return;
-    if (useful && t.length < 3) return;
+    if (t.length < 12 && !isUsefulBit(t)) return;
     bits.push(t);
   });
-  bits.sort((a, b) => Number(isUsefulBit(b)) - Number(isUsefulBit(a)));
-  const body = bits.slice(0, MAX_BLOCKS).join("\n");
   const links: string[] = [];
+  const seenHref = new Set<string>();
+  let pageOrigin: URL | null = null;
+  try {
+    pageOrigin = new URL(pageUrl);
+  } catch {
+    pageOrigin = null;
+  }
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href");
     if (!href) return;
-    if (/^(mailto:|tel:|javascript:)/i.test(href)) return;
+    if (/^(mailto:|tel:|javascript:|#)/i.test(href)) return;
     try {
-      const abs = unwrapArchiveUrl(new URL(href, pageUrl).href.split("#")[0]);
-      links.push(abs);
+      const abs = canonicalizePageUrl(new URL(href, pageUrl).href);
+      if (seenHref.has(abs)) return;
+      seenHref.add(abs);
+      const absUrl = new URL(abs);
+      const onSite = pageOrigin ? sameSite(pageOrigin, absUrl) : false;
+      if (onSite) links.push(abs);
+      const label = cleanText($(el).text());
+      if (
+        onSite &&
+        label &&
+        label.length >= 8 &&
+        !isFluffBit(label) &&
+        !/^(home|running|tools|apps|privacy)$/i.test(label)
+      ) {
+        bits.push(`${label} ${abs}`);
+      }
     } catch {
       /* skip */
     }
   });
+  const body = bits.slice(0, MAX_BLOCKS).join("\n");
   return { title, body, links };
 }
 
@@ -475,12 +538,9 @@ export async function scanSite(
   }
 
   const started = Date.now();
-  const start = new URL(startUrl);
+  const start = new URL(canonicalizePageUrl(startUrl));
   const seen = new Set<string>();
   const wanted = new Set<string>([start.href]);
-  for (const path of PATH_GUESSES) {
-    wanted.add(new URL(path, start.origin).href);
-  }
   const pages: ScanPage[] = [];
   let skipped = 0;
   let liveBlocked = false;
@@ -488,9 +548,10 @@ export async function scanSite(
 
   function allow(href: string): string | null {
     try {
-      const next = new URL(unwrapArchiveUrl(href));
+      const next = new URL(canonicalizePageUrl(href));
       if (!sameSite(start, next)) return null;
       if (isJunkPath(next.pathname) || SKIP_FILE.test(next.pathname)) return null;
+      if (/cdn-cgi/i.test(next.pathname)) return null;
       const key = urlKey(next.href);
       if (seen.has(key) || seen.has(next.href)) return null;
       return next.href;
@@ -499,21 +560,35 @@ export async function scanSite(
     }
   }
 
+  const discovered = new Set<string>([start.href]);
+  const guessed = new Set<string>();
+  for (const path of PATH_GUESSES) {
+    guessed.add(new URL(path, start.origin).href);
+  }
+
   function rememberLinks(links: string[]) {
     for (const href of links) {
       const next = allow(href);
       if (!next) continue;
+      discovered.add(next);
       wanted.add(next);
     }
   }
 
   function takeBatch() {
-    const open = [...wanted].filter((u) => {
-      const key = urlKey(u);
-      return !seen.has(key) && !seen.has(u);
-    });
-    open.sort((a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname));
-    return open.slice(0, liveBlocked ? ARCHIVE_BATCH : BATCH);
+    const unused = (pool: Set<string>) =>
+      [...pool].filter((u) => {
+        const key = urlKey(u);
+        return !seen.has(key) && !seen.has(u);
+      });
+    const fromSite = unused(discovered);
+    fromSite.sort((a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname));
+    if (fromSite.length) {
+      return fromSite.slice(0, liveBlocked ? ARCHIVE_BATCH : BATCH);
+    }
+    const fromGuess = unused(guessed);
+    fromGuess.sort((a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname));
+    return fromGuess.slice(0, liveBlocked ? ARCHIVE_BATCH : BATCH);
   }
 
   while (pages.length < MAX_PAGES) {
@@ -539,14 +614,20 @@ export async function scanSite(
         continue;
       }
       try {
-        const { title, body, links } = extract(got.html, got.url);
+        let pageUrl = canonicalizePageUrl(got.url || url);
+        try {
+          if (!sameSite(start, new URL(pageUrl))) pageUrl = canonicalizePageUrl(url);
+        } catch {
+          pageUrl = canonicalizePageUrl(url);
+        }
+        const { title, body, links } = extract(got.html, pageUrl);
         rememberLinks(links);
         if (
           body.length >= 12 &&
           !/^(403|404|429)\b/.test(title) &&
           !/forbidden|access denied|page not found|couldn't find that page/i.test(title)
         ) {
-          pages.push({ url: got.url, title, body: body.slice(0, MAX_BODY) });
+          pages.push({ url: pageUrl, title, body: body.slice(0, MAX_BODY) });
         } else {
           skipped += 1;
         }

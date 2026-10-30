@@ -7,7 +7,7 @@ import type { Business, ChatMessage, KnowledgeItem } from "./types";
 
 const MODEL = "openai/gpt-oss-20b";
 const HISTORY = 16;
-const RETRIEVE_CHARS = 1600;
+const RETRIEVE_CHARS = 3200;
 const REPLY_LIMIT = 500;
 export { CLARIFY } from "./chat-copy";
 
@@ -119,7 +119,7 @@ function isShopRelated(content: string, business: Business) {
   const industry = norm(business.industry || "");
   if (name && t.includes(name)) return true;
   if (industry && t.includes(industry)) return true;
-  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you|pound|£)\b/.test(
+  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you|pound|£|article|articles|pace|cadence|run|running|post|posts|tool|tools|km|5k|watch|race|sick|injured)\b/.test(
     t,
   );
 }
@@ -187,9 +187,9 @@ function scoreChunk(chunk: string, queryTokens: string[]) {
   return score;
 }
 
-function coreShopChunks(source: string) {
+function factChunks(source: string) {
   return chunkText(source).filter((c) =>
-    /£|\$\d|price|hour|open|closed?|cut|service|fade|beard|monday|tuesday|wednesday|thursday|friday|saturday|sunday/i.test(
+    /source:\s*https?:\/\/|https?:\/\/|\/[a-z0-9-]+\/[a-z0-9-]+|£|\$\d|price|hour|open|closed?|cut|service|fade|beard|monday|tuesday|wednesday|thursday|friday|saturday|sunday|pace|cadence|km\b|5k/i.test(
       c,
     ),
   );
@@ -231,7 +231,7 @@ function retrieveForQuestion(
   const ranked = retrieveRelevant(source, combined);
   const seen = new Set<string>();
   const parts: string[] = [];
-  for (const c of [...coreShopChunks(source), ...chunkText(ranked)]) {
+  for (const c of [...factChunks(source), ...chunkText(ranked)]) {
     if (!c || seen.has(c)) continue;
     seen.add(c);
     parts.push(c);
@@ -271,8 +271,11 @@ Use this exact unrelated line only when they are clearly asking about something 
 ${offTopicLine(contact)}
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
-Use the retrieved notes. Do not invent prices, hours, names, or policies.
-If the notes have the answer, answer. Filter from the notes when they named a budget, day, or service. Do not claim the notes have no answer when they do.
+Use only the retrieved notes. Do not use general industry knowledge. Do not write generic genre advice.
+Do not invent prices, hours, names, policies, article titles, paths, or URLs.
+Only mention a URL or page path if it appears verbatim in the notes. If it is not in the notes, do not invent one.
+If the notes have the answer, answer with those specific facts (titles, quotes, paths that are written there).
+If the notes do not have the fact, say you do not have that on this site. Do not fill the gap with typical running, barber, or other industry waffle.
 If you cannot tell what they want, ask one clarifying question. Do not guess.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
@@ -374,6 +377,37 @@ function visitorAnswer(text: string) {
   return "";
 }
 
+function notesAllowUrl(notes: string, value: string) {
+  const hay = notes.toLowerCase();
+  const raw = value.replace(/[.,;:]+$/, "");
+  if (hay.includes(raw.toLowerCase())) return true;
+  try {
+    const u = new URL(raw);
+    const path = u.pathname.replace(/\/+$/, "").toLowerCase();
+    if (path.length > 1 && hay.includes(path)) return true;
+    if (hay.includes(u.href.replace(/\/+$/, "").toLowerCase())) return true;
+  } catch {
+    const path = raw.replace(/\/+$/, "").toLowerCase();
+    if (path.length > 2 && hay.includes(path)) return true;
+  }
+  return false;
+}
+
+function stripUnknownLinks(text: string, notes: string) {
+  if (!text) return text;
+  let out = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|\/[^)]+)\)/g, (full, label, href) => {
+    return notesAllowUrl(notes, href) ? full : String(label);
+  });
+  out = out.replace(/https?:\/\/[^\s)\]>'"]+/gi, (url) => {
+    const clean = url.replace(/[.,;:]+$/, "");
+    return notesAllowUrl(notes, clean) ? url : "";
+  });
+  out = out.replace(/\/(?:running|blog|articles?|posts?|journal|news)\/[a-z0-9/-]+/gi, (path) => {
+    return notesAllowUrl(notes, path) ? path : "";
+  });
+  return out.replace(/[ \t]{2,}/g, " ").replace(/ \./g, ".").trim();
+}
+
 function capReply(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return trimmed;
@@ -424,6 +458,7 @@ export async function answerChat(opts: {
   }));
 
   let system: string;
+  let retrievedNotes = "";
   if (opts.site) {
     system = sitePrompt();
   } else {
@@ -433,14 +468,14 @@ export async function answerChat(opts: {
       .filter((m) => m.role === "user")
       .map((m) => m.content)
       .slice(-4);
-    const retrieved = retrieveForQuestion(source, asked, recentUser);
-    system = shopPrompt(biz, retrieved, contact, Boolean(opts.barber));
+    retrievedNotes = retrieveForQuestion(source, asked, recentUser);
+    system = shopPrompt(biz, retrievedNotes, contact, Boolean(opts.barber));
   }
 
   async function complete() {
     const completion = await groq.chat.completions.create({
       model: MODEL,
-      temperature: 0.4,
+      temperature: opts.site ? 0.4 : 0.2,
       max_tokens: 220,
       reasoning_effort: "low",
       reasoning_format: "hidden",
@@ -461,6 +496,9 @@ export async function answerChat(opts: {
   }
   if (!isGreeting(asked) && isGreetingOnlyReply(content)) {
     return CLARIFY;
+  }
+  if (!opts.site) {
+    content = stripUnknownLinks(content, retrievedNotes);
   }
   return capReply(content || CLARIFY);
 }

@@ -4,7 +4,7 @@ export const INSTRUCTIONS_KICKER = "please read before starting";
 export const DEFAULT_INSTRUCTION_STEPS = [
   "Fill in all the information below, using your business's details.",
   "Select the tone for the AI Assistant, which you can customise for your store.",
-  'Press "Scan website" then leave it to work — it reads public pages on the URL you saved (about 16 pages, a few seconds). Add or correct anything it misses.',
+  'Press "Scan website" then leave it to work — it reads public pages on the URL you saved. Add or correct anything it misses.',
   "Read through the notepad. The assistant answers from that text and the details you typed. It cannot search the live internet.",
   "Test your AI assistant. Ask a large variety of questions and look for any errors it makes. If it does so, you can type in the data box what it should remember.",
   "Change the colour settings of your assistant. Please note you cannot select the same primary colour and text colour.",

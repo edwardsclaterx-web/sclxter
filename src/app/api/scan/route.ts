@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const maxDuration = 20;
+export const maxDuration = 30;
 import { getSessionUser } from "@/lib/auth";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
 import { applyScanToNotepad } from "@/lib/notepad-scan";
@@ -12,7 +12,7 @@ function compilePages(
   scannedAt: string,
 ) {
   const parts = pages.map(
-    (p) => `### ${p.title}\n${p.url}\n${p.body}`.trim(),
+    (p) => `### ${p.title}\nSource: ${p.url}\n${p.body}`.trim(),
   );
   return `## Scan ${scannedAt}\n\n${parts.join("\n\n")}`;
 }

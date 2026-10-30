@@ -602,9 +602,7 @@ export function BusinessScreen({
           <h2 className="text-xl font-medium tracking-tight">Embed Ask anything</h2>
           <p className="mt-2 text-sm text-muted">
             This snippet is this business’s assistant. Paste it before the
-            closing body tag. It loads from sclxter.com, not from 127.0.0.1.
-            Until that host is public, Ask anything on this app still uses
-            this server.
+            closing body tag. It loads from sclxter.com.
           </p>
           <pre className="mt-4 overflow-x-auto border border-line bg-surface p-4 text-xs leading-6">
             {snippet}

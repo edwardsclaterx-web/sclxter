@@ -9,7 +9,7 @@ export const DEFAULT_INSTRUCTION_STEPS = [
   "Test your AI assistant. Ask a large variety of questions and look for any errors it makes. If it does so, you can type in the data box what it should remember.",
   "Change the colour settings of your assistant. Please note you cannot select the same primary colour and text colour.",
   "Finally, go to the bottom and setup the assistant. Follow the instructions based on how your website runs. If you have any problems contact sclxter@outlook.com or message an administrator in the Contact page (recommended).",
-  "Once it's set up, view conversations from customers on your website. See what improvements can be made with the questions which can't be answered, and update your data.",
+  "Once it's set up, use Test AI and add anything the assistant misses into the notepad.",
 ] as const;
 
 export function normalizeInstructions(_steps?: unknown): string[] {

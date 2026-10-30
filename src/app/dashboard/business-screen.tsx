@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { WidgetForm } from "@/app/widget/[publicId]/widget-form";
 import { FieldError } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ChatMessage, ClientBusiness, WidgetTheme } from "@/lib/types";
+import type { ClientBusiness, WidgetTheme } from "@/lib/types";
 import { NOTEPAD_NOTICE, TONES } from "@/lib/tones";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import { normalizeTheme } from "@/lib/widget-theme";
@@ -16,59 +16,20 @@ import { EmbedGuide } from "./embed-guide";
 import { InstructionsBanner } from "./instructions-banner";
 import { ThemePicker } from "./theme-picker";
 
-type Convo = {
-  seq: number;
-  lead: boolean;
-  updatedAt: string;
-  createdAt: string;
-  messages: ChatMessage[];
-};
-
-type LeadRow = { createdAt: string; message: string };
-type GapRow = { question: string };
-
 type Props = {
   admin: boolean;
   business: ClientBusiness;
-  conversations: Convo[];
-  leads: LeadRow[];
-  gaps: GapRow[];
   instructions: string[];
-  asOf: number;
   live?: boolean;
 };
-
-type Period = "day" | "week" | "month";
 
 const SCAN_FAIL =
   "error with scan send your website to administrator for information to be extracted";
 
-function formatStamp(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
-}
-
-function within(iso: string, period: Period, now: number) {
-  const t = new Date(iso).getTime();
-  const ms =
-    period === "day"
-      ? 24 * 60 * 60 * 1000
-      : period === "week"
-        ? 7 * 24 * 60 * 60 * 1000
-        : 30 * 24 * 60 * 60 * 1000;
-  return now - t <= ms;
-}
-
 export function BusinessScreen({
   admin,
   business,
-  conversations,
-  leads,
-  gaps,
   instructions,
-  asOf,
   live = true,
 }: Props) {
   const router = useRouter();
@@ -93,10 +54,6 @@ export function BusinessScreen({
   const [newPassword, setNewPassword] = useState("");
   const [pwNote, setPwNote] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
-  const [openConvo, setOpenConvo] = useState<number | null>(null);
-  const [convosOpen, setConvosOpen] = useState(true);
-  const [period, setPeriod] = useState<Period>("week");
-
   const hist = useRef<string[]>([business.notepad]);
   const histI = useRef(0);
 
@@ -276,17 +233,6 @@ export function BusinessScreen({
 
   const snippet = `<script src="https://sclxter.com/embed.js" data-id="${business.publicId}" async></script>`;
 
-  const convoCount = conversations.filter((c) =>
-    within(c.createdAt, period, asOf),
-  ).length;
-  const leadCount = leads.filter((l) => within(l.createdAt, period, asOf)).length;
-  const periodLeads = leads.filter((l) => within(l.createdAt, period, asOf));
-
-  const open = useMemo(
-    () => conversations.find((c) => c.seq === openConvo) ?? null,
-    [conversations, openConvo],
-  );
-
   const testBlocked = businessReadyForTest({
     name,
     websiteUrl,
@@ -302,9 +248,9 @@ export function BusinessScreen({
     <main className="mx-auto w-full min-w-0 max-w-[96rem] flex-1 overflow-x-hidden px-4 py-6 md:px-8 md:py-10">
       {!admin && !live ? (
         <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
-          This account is unpaid. Your shop data is kept. Scan, notepad, Test
-          AI, and conversations still work here. The live assistant on your
-          website stays off until cover is current. Pay on Billing.
+          This account is unpaid. Your shop data is kept. Scan, notepad, and
+          Test AI still work here. The live assistant on your website stays
+          off until cover is current. Pay on Billing.
         </p>
       ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />
@@ -342,120 +288,23 @@ export function BusinessScreen({
           You can edit all of the information.
         </p>
       </aside>
-      <section className="mt-8">
-        <h2 className="text-xl font-bold tracking-tight text-fg">Stats</h2>
-        <div className="mt-4 flex gap-2">
-          {(["day", "week", "month"] as const).map((p) => (
-            <Button
-              key={p}
-              type="button"
-              variant={period === p ? "primary" : "ghost"}
-              onClick={() => setPeriod(p)}
-            >
-              {p === "day" ? "Day" : p === "week" ? "Week" : "Month"}
-            </Button>
-          ))}
-        </div>
-        <p className="mt-4 text-sm">Conversations made: {convoCount}</p>
-        <p className="mt-2 text-sm">Potential leads: {leadCount}</p>
-        {periodLeads.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">
-            No potential leads in this window. Only chats flagged as closer
-            to buying appear here.
-          </p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm text-muted">
-            {periodLeads.map((l, i) => (
-              <li key={i}>
-                {formatStamp(l.createdAt)} — {l.message}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section className="mt-8">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between text-left"
-          aria-expanded={convosOpen}
-          onClick={() => setConvosOpen((v) => !v)}
-        >
-          <h2 className="text-xl font-bold tracking-tight text-fg">
-            Conversations
-          </h2>
-          <span className="text-sm text-muted">
-            {convosOpen ? "Close" : "Open"}
-          </span>
-        </button>
-        {convosOpen ? (
-          conversations.length === 0 ? (
-            <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
-              No conversations yet.
-            </p>
-          ) : (
-            <ul className="mt-4 divide-y divide-line border border-line">
-              {conversations
-                .slice()
-                .sort((a, b) => a.seq - b.seq)
-                .map((c) => (
-                  <li key={c.seq}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between px-4 py-3 text-left text-sm hover:bg-surface"
-                      onClick={() =>
-                        setOpenConvo((n) => (n === c.seq ? null : c.seq))
-                      }
-                    >
-                      <span>id {c.seq}</span>
-                      <span className="text-muted">
-                        {formatStamp(c.updatedAt)}
-                        {c.lead ? " · lead" : ""}
-                      </span>
-                    </button>
-                    {openConvo === c.seq && (
-                      <div className="space-y-3 border-t border-line bg-surface px-4 py-4">
-                        {c.messages.map((m, i) => (
-                          <p key={i} className="text-sm leading-6">
-                            <span className="text-xs uppercase tracking-[0.14em] text-muted">
-                              {m.role === "user" ? "Visitor" : "Assistant"}
-                            </span>
-                            <span className="mt-1 block whitespace-pre-wrap">
-                              {m.content}
-                            </span>
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                ))}
-            </ul>
-          )
-        ) : (
-          <p className="mt-2 text-sm text-muted">
-            Closed. Open to view all conversations.
-          </p>
-        )}
-      </section>
-      <section className="mt-8">
+      <section className="mt-8 border border-line p-4 lg:p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
-          Non answered questions
+          Scan website
         </h2>
         <p className="mt-2 text-sm text-muted">
-          These are the top 5 most asked questions from your website which
-          the assistant can&apos;t answer. Review them and add extra
-          information into the data notepad.
+          Fetches public pages on the URL you saved and adds the text to the
+          notepad. Confirm once, then it runs.
         </p>
-        {gaps.length === 0 ? (
-          <p className="mt-4 border border-dashed border-line px-4 py-8 text-sm text-muted">
-            No unanswered questions yet.
-          </p>
-        ) : (
-          <ol className="mt-4 list-decimal space-y-3 border border-line px-8 py-4 text-sm leading-6">
-            {gaps.map((g) => (
-              <li key={g.question}>{g.question}</li>
-            ))}
-          </ol>
-        )}
+        <Button
+          type="button"
+          className="mt-5 h-12 w-full text-base font-medium"
+          disabled={scanning || !websiteUrl.trim()}
+          onClick={() => void scan()}
+        >
+          {scanning ? "Scanning…" : "Scan website"}
+        </Button>
+        <FieldError>{scanError}</FieldError>
       </section>
       </div>
 
@@ -579,24 +428,6 @@ export function BusinessScreen({
         </section>
 
         <ThemePicker theme={theme} onChange={(next) => void onTheme(next)} error={themeError} />
-
-        <section>
-          <h2 className="text-xl font-medium tracking-tight">Scan data</h2>
-          <p className="mt-2 text-sm text-muted">
-            Fetches public pages on the URL above and adds the text to the
-            notepad. Confirm once, then it runs.
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            className="mt-4"
-            disabled={scanning || !websiteUrl.trim()}
-            onClick={() => void scan()}
-          >
-            {scanning ? "Scanning…" : "Scan website"}
-          </Button>
-          <FieldError>{scanError}</FieldError>
-        </section>
 
         <section>
           <h2 className="text-xl font-medium tracking-tight">Embed Ask anything</h2>

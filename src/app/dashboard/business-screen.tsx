@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { WidgetForm } from "@/app/widget/[publicId]/widget-form";
 import { FieldError } from "@/components/chrome";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,19 @@ type Props = {
 
 const SCAN_FAIL =
   "error with scan send your website to administrator for information to be extracted";
+const DEBOUNCE_MS = 500;
+
+type Draft = {
+  name: string;
+  websiteUrl: string;
+  industry: string;
+  contactPhone: string;
+  contactEmail: string;
+  contactOther: string;
+  tone: string;
+  notepad: string;
+  theme: WidgetTheme;
+};
 
 export function BusinessScreen({
   admin,
@@ -46,143 +59,129 @@ export function BusinessScreen({
   );
   const [themeError, setThemeError] = useState<string | null>(null);
   const [notepad, setNotepad] = useState(business.notepad);
-  const [saveNote, setSaveNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pwNote, setPwNote] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
-  const hist = useRef<string[]>([business.notepad]);
-  const histI = useRef(0);
 
-  function patchPad(next: string, record = true) {
-    setNotepad(next);
-    if (!record) return;
-    const h = hist.current.slice(0, histI.current + 1);
-    if (h[h.length - 1] === next) return;
-    h.push(next);
-    hist.current = h.slice(-80);
-    histI.current = hist.current.length - 1;
+  const draft = useRef<Draft>({
+    name: business.name,
+    websiteUrl: business.websiteUrl,
+    industry: business.industry,
+    contactPhone: business.contactPhone,
+    contactEmail: business.contactEmail,
+    contactOther: business.contactOther,
+    tone: business.tone || "plain",
+    notepad: business.notepad,
+    theme: normalizeTheme(business.theme),
+  });
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const again = useRef(false);
+  const running = useRef<Promise<boolean> | null>(null);
+
+  function queueSave() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      void flushSave();
+    }, DEBOUNCE_MS);
   }
 
-  function undo() {
-    if (histI.current <= 0) return;
-    histI.current -= 1;
-    setNotepad(hist.current[histI.current]);
+  function bump(patch: Partial<Draft>) {
+    const next = { ...draft.current, ...patch };
+    draft.current = next;
+    if (patch.name !== undefined) setName(next.name);
+    if (patch.websiteUrl !== undefined) setWebsiteUrl(next.websiteUrl);
+    if (patch.industry !== undefined) setIndustry(next.industry);
+    if (patch.contactPhone !== undefined) setContactPhone(next.contactPhone);
+    if (patch.contactEmail !== undefined) setContactEmail(next.contactEmail);
+    if (patch.contactOther !== undefined) setContactOther(next.contactOther);
+    if (patch.tone !== undefined) setTone(next.tone);
+    if (patch.notepad !== undefined) setNotepad(next.notepad);
+    if (patch.theme !== undefined) setTheme(next.theme);
+    queueSave();
   }
 
-  function redo() {
-    if (histI.current >= hist.current.length - 1) return;
-    histI.current += 1;
-    setNotepad(hist.current[histI.current]);
-  }
-
-  async function saveFields(extra?: Record<string, string>) {
-    setSaving(true);
-    setSaveNote(null);
+  async function writeDraft() {
     setSaveError(null);
+    let ok = true;
     try {
-      const res = await fetch("/api/business", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          seq,
-          name,
-          websiteUrl,
-          industry,
-          contactPhone,
-          contactEmail,
-          contactOther,
-          tone,
-          notepad,
-          ...extra,
-        }),
-      });
-      if (!res.ok) {
-        setSaveError("Could not save.");
-        return false;
-      }
-      setSaveNote("Saved.");
-      router.refresh();
-      return true;
+      do {
+        again.current = false;
+        const body = draft.current;
+        const res = await fetch("/api/business", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ seq, ...body }),
+        });
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { error?: string };
+          if (data.error?.toLowerCase().includes("colour")) {
+            setThemeError(data.error);
+          } else {
+            setSaveError(data.error || "Could not save.");
+          }
+          ok = false;
+        }
+      } while (again.current);
     } catch {
       setSaveError("Could not reach the server.");
-      return false;
-    } finally {
-      setSaving(false);
+      ok = false;
     }
+    return ok;
   }
 
-  async function onSave(e: FormEvent) {
-    e.preventDefault();
-    await saveFields();
+  function flushSave() {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    if (running.current) {
+      again.current = true;
+      return running.current;
+    }
+    const job = writeDraft().finally(() => {
+      running.current = null;
+    });
+    running.current = job;
+    return job;
   }
 
-  async function onTheme(next: WidgetTheme) {
+  const flushSaveRef = useRef(flushSave);
+  flushSaveRef.current = flushSave;
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+      void flushSaveRef.current();
+    };
+  }, []);
+
+  function onTheme(next: WidgetTheme) {
     if (next.primary === next.text) {
       setThemeError("Text and primary must be different colours.");
       return;
     }
-    setTheme(next);
     setThemeError(null);
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/business", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ seq, theme: next }),
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        setThemeError(data.error || "Could not save theme.");
-        return;
-      }
-      setSaveNote("Theme saved. The live widget will use it.");
-      router.refresh();
-    } catch {
-      setThemeError("Could not reach the server.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function onTone(id: string) {
-    setTone(id);
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/business", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ seq, tone: id }),
-      });
-      if (!res.ok) {
-        setSaveError("Could not save tone.");
-        return;
-      }
-      setSaveNote("Tone saved. The live assistant will use it.");
-      router.refresh();
-    } catch {
-      setSaveError("Could not reach the server.");
-    } finally {
-      setSaving(false);
-    }
+    bump({ theme: next });
   }
 
   async function scan() {
     setScanError(null);
-    if (!websiteUrl.trim()) {
-      setScanError("Save a website URL first.");
+    setScanNote(null);
+    const url = draft.current.websiteUrl.trim();
+    if (!url) {
+      setScanError("Enter a website URL first.");
       return;
     }
-    const ok = window.confirm(`Scan ${websiteUrl.trim()} now?`);
+    const ok = window.confirm(`Scan ${url} now?`);
     if (!ok) return;
     setScanning(true);
     try {
-      await saveFields();
+      await flushSave();
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -198,9 +197,10 @@ export function BusinessScreen({
         return;
       }
       if (data.business) {
-        patchPad(data.business.notepad);
+        draft.current = { ...draft.current, notepad: data.business.notepad };
+        setNotepad(data.business.notepad);
       }
-      setSaveNote("Scan complete.");
+      setScanNote("Scan complete.");
       router.refresh();
     } catch {
       setScanError(SCAN_FAIL);
@@ -261,32 +261,17 @@ export function BusinessScreen({
           Your website&apos;s data
         </h2>
         <p className="mt-2 text-sm text-muted">{NOTEPAD_NOTICE}</p>
-        <div className="mt-3 flex gap-2">
-          <Button type="button" variant="quiet" onClick={undo}>
-            Undo
-          </Button>
-          <Button type="button" variant="quiet" onClick={redo}>
-            Redo
-          </Button>
-        </div>
         <Textarea
           className="mt-3 min-h-[16rem] flex-1 text-[0.9375rem] leading-6 lg:min-h-[32rem]"
           value={notepad}
-          onChange={(e) => patchPad(e.target.value)}
+          onChange={(e) => bump({ notepad: e.target.value })}
           placeholder="Scan website to fill"
           aria-label="Your website's data"
         />
-        <Button
-          type="button"
-          className="mt-3"
-          disabled={saving}
-          onClick={() => void saveFields({ notepad })}
-        >
-          Save notepad
-        </Button>
         <p className="mt-3 text-sm text-muted">
           You can edit all of the information.
         </p>
+        <FieldError>{saveError}</FieldError>
       </aside>
       <section className="mt-8 border border-line p-4 lg:p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
@@ -304,6 +289,7 @@ export function BusinessScreen({
         >
           {scanning ? "Scanning…" : "Scan website"}
         </Button>
+        {scanNote && <p className="mt-3 text-sm text-muted">{scanNote}</p>}
         <FieldError>{scanError}</FieldError>
       </section>
       </div>
@@ -350,13 +336,13 @@ export function BusinessScreen({
           </section>
         )}
 
-        <form onSubmit={onSave} className="space-y-5">
+        <div className="space-y-5">
           <div>
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => bump({ name: e.target.value })}
             />
           </div>
           <div>
@@ -364,7 +350,7 @@ export function BusinessScreen({
             <Input
               id="url"
               value={websiteUrl}
-              onChange={(e) => setWebsiteUrl(e.target.value)}
+              onChange={(e) => bump({ websiteUrl: e.target.value })}
               placeholder="https://yourshop.example"
             />
           </div>
@@ -373,7 +359,7 @@ export function BusinessScreen({
             <Input
               id="industry"
               value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
+              onChange={(e) => bump({ industry: e.target.value })}
             />
           </div>
           <div>
@@ -381,32 +367,25 @@ export function BusinessScreen({
             <div className="space-y-3">
               <Input
                 value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                onChange={(e) => bump({ contactPhone: e.target.value })}
                 placeholder="Phone"
                 aria-label="Phone"
               />
               <Input
                 value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
+                onChange={(e) => bump({ contactEmail: e.target.value })}
                 placeholder="Email"
                 aria-label="Contact email"
               />
               <Input
                 value={contactOther}
-                onChange={(e) => setContactOther(e.target.value)}
+                onChange={(e) => bump({ contactOther: e.target.value })}
                 placeholder="Other"
                 aria-label="Other contact"
               />
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </Button>
-            {saveNote && <span className="text-sm text-muted">{saveNote}</span>}
-          </div>
-          <FieldError>{saveError}</FieldError>
-        </form>
+        </div>
 
         <section>
           <h2 className="text-xl font-medium tracking-tight">Tone</h2>
@@ -416,7 +395,7 @@ export function BusinessScreen({
           <select
             className="mt-4 h-10 w-full max-w-md border border-line bg-surface px-3 text-sm text-fg outline-none focus:border-fg"
             value={tone}
-            onChange={(e) => void onTone(e.target.value)}
+            onChange={(e) => bump({ tone: e.target.value })}
             aria-label="Tone"
           >
             {TONES.map((t) => (

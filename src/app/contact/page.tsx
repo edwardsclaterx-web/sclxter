@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-header";
+import { SiteFooter } from "@/components/chrome";
 import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { findOwnerBusiness } from "@/lib/support";
@@ -37,6 +38,7 @@ export default async function ContactPage() {
           </p>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }

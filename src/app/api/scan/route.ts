@@ -23,10 +23,17 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     seq?: number;
     confirm?: boolean;
+    ack?: boolean;
   };
   if (!body.confirm) {
     return NextResponse.json(
       { error: "Confirm the scan first." },
+      { status: 400 },
+    );
+  }
+  if (!body.ack) {
+    return NextResponse.json(
+      { error: "Acknowledge the scan first." },
       { status: 400 },
     );
   }

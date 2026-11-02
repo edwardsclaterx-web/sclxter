@@ -47,6 +47,7 @@ export function BusinessScreen({
 }: Props) {
   const router = useRouter();
   const seq = admin ? business.seq : undefined;
+  const [scanAck, setScanAck] = useState(false);
   const [name, setName] = useState(business.name);
   const [websiteUrl, setWebsiteUrl] = useState(business.websiteUrl);
   const [industry, setIndustry] = useState(business.industry);
@@ -177,6 +178,10 @@ export function BusinessScreen({
       setScanError("Enter a website URL first.");
       return;
     }
+    if (!scanAck) {
+      setScanError("Acknowledge the scan first.");
+      return;
+    }
     const ok = window.confirm(`Scan ${url} now?`);
     if (!ok) return;
     setScanning(true);
@@ -185,7 +190,7 @@ export function BusinessScreen({
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ seq, confirm: true }),
+        body: JSON.stringify({ seq, confirm: true, ack: true }),
       });
       const data = (await res.json()) as {
         error?: string;
@@ -281,10 +286,29 @@ export function BusinessScreen({
           Fetches public pages on the URL you saved and adds the text to the
           notepad. Confirm once, then it runs.
         </p>
+        <label className="mt-4 flex items-start gap-3 text-sm leading-6 text-muted">
+          <input
+            type="checkbox"
+            checked={scanAck}
+            onChange={(e) => setScanAck(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 accent-white"
+          />
+          <span>
+            I authorise sclxter to scan the public website URL I saved, fetch
+            those pages, and process that content so the assistant can answer
+            visitors. I confirm I have the right to do this. Text on those
+            pages may include personal data; we process it on your
+            instructions under UK GDPR. See the{" "}
+            <a href="/dpa" className="text-fg underline underline-offset-2">
+              DPA
+            </a>
+            .
+          </span>
+        </label>
         <Button
           type="button"
           className="mt-5 h-12 w-full text-base font-medium"
-          disabled={scanning || !websiteUrl.trim()}
+          disabled={scanning || !websiteUrl.trim() || !scanAck}
           onClick={() => void scan()}
         >
           {scanning ? "Scanning…" : "Scan website"}

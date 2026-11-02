@@ -248,7 +248,7 @@ export function WidgetForm({
         </button>
       </form>
       <p className="mt-2 text-center text-[10px] leading-4 tracking-wide text-muted opacity-45">
-        powered by sclxter.com
+        AI powered by sclxter.com
       </p>
     </div>
   );

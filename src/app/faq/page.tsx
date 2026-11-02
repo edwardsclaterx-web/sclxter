@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppHeader } from "@/components/app-header";
+import { SiteFooter } from "@/components/chrome";
 
 export const metadata = { title: "FAQ — sclxter" };
 
@@ -156,6 +157,7 @@ export default async function FaqPage() {
           ))}
         </dl>
       </main>
+      <SiteFooter />
     </div>
   );
 }

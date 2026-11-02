@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
+import { SiteFooter } from "@/components/chrome";
 import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 
@@ -137,6 +138,7 @@ export default async function Home() {
           </div>
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

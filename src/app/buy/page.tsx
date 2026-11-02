@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SiteHeader } from "@/components/chrome";
+import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 
 export const metadata = { title: "Buy — sclxter" };
@@ -40,6 +40,7 @@ export default async function BuyPage() {
           </Link>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

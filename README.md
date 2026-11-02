@@ -25,6 +25,7 @@ App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 - Dashboard `/dashboard`
 - Demo `/demo` — fictional Northgate Barbers (not the homepage)
 - FAQ `/faq` and Contact `/contact` (`sclxter@outlook.com`)
+- Privacy `/privacy`, Terms `/terms`, DPA `/dpa` (plain English, UK GDPR-flavoured; not legal advice)
 
 In this environment the server also reads `GROQ_API_KEY` from the private secrets file if `.env.local` is empty.
 

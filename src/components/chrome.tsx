@@ -268,6 +268,18 @@ export function SiteHeader({
   );
 }
 
+export function SiteFooter() {
+  return (
+    <footer className="mt-auto border-t border-line px-5 py-8 md:px-10">
+      <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+        <Link href="/privacy">Privacy</Link>
+        <Link href="/terms">Terms</Link>
+        <Link href="/dpa">DPA</Link>
+      </nav>
+    </footer>
+  );
+}
+
 export function FieldError({ children }: { children?: string | null }) {
   if (!children) return null;
   return <p className="mt-2 text-sm text-muted">{children}</p>;

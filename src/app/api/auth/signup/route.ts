@@ -10,7 +10,7 @@ import { isNorthgateLogin } from "@/lib/northgate";
 import { readStore, updateStore } from "@/lib/store";
 
 export async function POST(request: Request) {
-  const { email, password } = await readLoginBody(request);
+  const { email, password, terms } = await readLoginBody(request);
   const html = wantsHtml(request);
   const fail = (status: number, error: string, code: string) => {
     if (html) {
@@ -20,6 +20,13 @@ export async function POST(request: Request) {
   };
 
   const mail = email.trim().toLowerCase();
+  if (!terms) {
+    return fail(
+      400,
+      "Accept the Terms of Service to create an account.",
+      "terms",
+    );
+  }
   if (!mail.includes("@") || password.length < 8) {
     return fail(
       400,

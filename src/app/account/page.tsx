@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { AppHeader } from "@/components/app-header";
-import { SiteHeader } from "@/components/chrome";
+import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
 import { AuthForm } from "../auth-form";
 import { AccountPanel } from "./account-panel";
@@ -11,6 +11,7 @@ export const metadata = { title: "Account — sclxter" };
 const SIGNUP_ERRORS: Record<string, string> = {
   invalid: "Use a real email and a password of at least 8 characters.",
   exists: "That email already has an account.",
+  terms: "Accept the Terms of Service to create an account.",
 };
 
 export default async function AccountPage({
@@ -61,6 +62,7 @@ export default async function AccountPage({
           />
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

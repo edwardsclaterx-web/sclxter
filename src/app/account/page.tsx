@@ -18,7 +18,13 @@ const SIGNUP_ERRORS: Record<string, string> = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; signup?: string; verify?: string; otp?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    signup?: string;
+    verify?: string;
+    otp?: string;
+    mail?: string;
+  }>;
 }) {
   const user = await getSessionUser();
   if (user) {
@@ -44,16 +50,21 @@ export default async function AccountPage({
 
         <section id="signin" className="mt-10">
           <h2 className="text-xl font-medium tracking-tight">
-            {pending ? "Enter your code" : "Sign in"}
+            {pending || q.verify ? "Enter your code" : "Sign in"}
           </h2>
           <p className="mt-2 text-sm text-muted">
-            {pending
-              ? "Password matched. We emailed a 6-digit code."
+            {pending || q.verify
+              ? "Password matched. Enter the 6-digit code we email you."
               : "Identity or email, and password."}
           </p>
           <AuthForm
             mode="login"
-            otpDest={pending?.dest ?? null}
+            otpDest={pending?.dest ?? (q.verify ? "the email on this account" : null)}
+            mailError={
+              q.mail
+                ? "We could not email the code. Add RESEND_API_KEY on Vercel, then send a new code."
+                : null
+            }
             error={
               q.otp
                 ? "That code did not match."
@@ -64,7 +75,7 @@ export default async function AccountPage({
           />
         </section>
 
-        {pending ? null : (
+        {pending || q.verify ? null : (
         <section id="signup" className="mt-16">
           <h2 className="text-xl font-medium tracking-tight">Create account</h2>
           <p className="mt-2 text-sm text-muted">One business per account.</p>

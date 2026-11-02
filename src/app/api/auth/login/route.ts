@@ -8,6 +8,7 @@ import {
   ensureOwnerUser,
   isOwnerLogin,
   ownerAuthReady,
+  ownerUserRecord,
   verifyOwnerPassword,
 } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
@@ -18,6 +19,7 @@ import {
   verifyLeavesakePassword,
 } from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
+import { leavesakeStub, northgateStub } from "@/lib/login-user";
 import { loadSecrets } from "@/lib/secrets";
 import { readStore } from "@/lib/store";
 
@@ -41,7 +43,12 @@ export async function POST(request: Request) {
     if (!(await verifyOwnerPassword(password))) {
       return fail(401, "Those details did not match.");
     }
-    const user = await ensureOwnerUser();
+    let user;
+    try {
+      user = await ensureOwnerUser();
+    } catch {
+      user = ownerUserRecord();
+    }
     return beginLoginOtp(user, "/dashboard/businesses", html, request);
   }
 
@@ -49,13 +56,20 @@ export async function POST(request: Request) {
     if (!(await verifyOwnerPassword(password))) {
       return fail(401, "Those details did not match.");
     }
-    const northgate = (await readStore()).users.find((u) =>
-      isNorthgateLogin(u.email),
-    );
-    if (!northgate) {
-      return fail(401, "Those details did not match.");
+    let northgate;
+    try {
+      northgate = (await readStore()).users.find((u) =>
+        isNorthgateLogin(u.email),
+      );
+    } catch {
+      northgate = undefined;
     }
-    return beginLoginOtp(northgate, "/dashboard", html, request);
+    return beginLoginOtp(
+      northgate ?? northgateStub(),
+      "/dashboard",
+      html,
+      request,
+    );
   }
 
   if (isLeavesakeLogin(mail)) {
@@ -69,7 +83,7 @@ export async function POST(request: Request) {
     try {
       user = await ensureLeavesakeUser();
     } catch {
-      return fail(503, "Sign in is not configured on this server.");
+      user = leavesakeStub();
     }
     return beginLoginOtp(user, "/dashboard", html, request);
   }

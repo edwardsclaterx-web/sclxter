@@ -1,13 +1,20 @@
 import "server-only";
 
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
+import { MAIL_FAIL, sendProductMail } from "./mail";
 import { OWNER_EMAIL, isOwnerLogin, isOwnerUser } from "./owner-auth";
-import { sendProductMail } from "./mail";
-import { updateStore } from "./store";
 import type { User } from "./types";
 
 const TTL_MS = 8 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
+
+export type OtpPending = {
+  userId: string;
+  dest: string;
+  codeHash: string;
+  expiresAt: number;
+  attempts: number;
+};
 
 function hashCode(code: string) {
   return createHash("sha256").update(code).digest("hex");
@@ -39,58 +46,57 @@ export function maskDest(dest: string) {
 export async function issueOtp(user: User) {
   const dest = otpDestination(user);
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  const expiresAt = new Date(Date.now() + TTL_MS).toISOString();
-  await updateStore((data) => {
-    data.otpChallenges = (data.otpChallenges ?? []).filter(
-      (o) => o.userId !== user.id,
-    );
-    data.otpChallenges.push({
-      userId: user.id,
-      dest,
-      codeHash: hashCode(code),
-      expiresAt,
-      attempts: 0,
+  const pending: OtpPending = {
+    userId: user.id,
+    dest,
+    codeHash: hashCode(code),
+    expiresAt: Date.now() + TTL_MS,
+    attempts: 0,
+  };
+  let sent = false;
+  try {
+    const mail = await sendProductMail({
+      to: dest,
+      subject: "Your sclxter sign-in code",
+      text: `Your sclxter sign-in code is ${code}. It expires in 8 minutes and can be used once. If you did not try to sign in, ignore this email.`,
     });
-    return true;
-  });
-  const text = `Your sclxter sign-in code is ${code}. It expires in 8 minutes and can be used once. If you did not try to sign in, ignore this email.`;
-  const mail = await sendProductMail({
-    to: dest,
-    subject: "Your sclxter sign-in code",
-    text,
-  });
-  return { dest, sent: mail.sent, mocked: mail.mocked };
+    sent = mail.sent;
+  } catch {
+    sent = false;
+  }
+  return {
+    pending,
+    dest,
+    sent,
+    mailError: sent ? null : MAIL_FAIL,
+  };
 }
 
-export async function consumeOtp(userId: string, code: string) {
+export function checkOtp(pending: OtpPending, code: string) {
   const digits = code.replace(/\D/g, "").slice(0, 6);
-  if (digits.length !== 6) return { ok: false as const, error: "Enter the 6-digit code." };
-  const now = Date.now();
-  let error = "That code did not match.";
-  const ok = await updateStore((data) => {
-    const list = data.otpChallenges ?? [];
-    const row = list.find((o) => o.userId === userId);
-    if (!row) {
-      error = "Sign in again to get a new code.";
-      return false;
-    }
-    if (Date.parse(row.expiresAt) < now) {
-      data.otpChallenges = list.filter((o) => o.userId !== userId);
-      error = "That code has expired. Sign in again.";
-      return false;
-    }
-    if (row.attempts >= MAX_ATTEMPTS) {
-      data.otpChallenges = list.filter((o) => o.userId !== userId);
-      error = "Too many tries. Sign in again.";
-      return false;
-    }
-    if (!hashesEqual(row.codeHash, hashCode(digits))) {
-      row.attempts += 1;
-      error = "That code did not match.";
-      return false;
-    }
-    data.otpChallenges = list.filter((o) => o.userId !== userId);
-    return true;
-  });
-  return ok ? { ok: true as const } : { ok: false as const, error };
+  if (digits.length !== 6) {
+    return { ok: false as const, error: "Enter the 6-digit code.", pending };
+  }
+  if (pending.expiresAt < Date.now()) {
+    return {
+      ok: false as const,
+      error: "That code has expired. Sign in again.",
+      pending: null,
+    };
+  }
+  if (pending.attempts >= MAX_ATTEMPTS) {
+    return {
+      ok: false as const,
+      error: "Too many tries. Sign in again.",
+      pending: null,
+    };
+  }
+  if (!hashesEqual(pending.codeHash, hashCode(digits))) {
+    return {
+      ok: false as const,
+      error: "That code did not match.",
+      pending: { ...pending, attempts: pending.attempts + 1 },
+    };
+  }
+  return { ok: true as const };
 }

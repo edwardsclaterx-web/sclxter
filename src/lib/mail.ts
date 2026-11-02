@@ -2,6 +2,9 @@ import "server-only";
 
 import { envSecret } from "./secrets";
 
+export const MAIL_FAIL =
+  "We could not email the code. Add RESEND_API_KEY on Vercel, then send a new code.";
+
 export function mailConfigured() {
   return Boolean(
     envSecret("RESEND_API_KEY") ||
@@ -65,22 +68,21 @@ async function sendSmtp(to: string, subject: string, text: string) {
   return true;
 }
 
-/** Send mail. If no mail key, logs the body on the server only (dev). Never returns the body. */
+/** Send mail. Never logs the body, codes, or keys. */
 export async function sendProductMail(opts: {
   to: string;
   subject: string;
   text: string;
-}): Promise<{ sent: boolean; mocked: boolean }> {
-  if (envSecret("RESEND_API_KEY")) {
-    const sent = await sendResend(opts.to, opts.subject, opts.text);
-    return { sent, mocked: false };
+}): Promise<{ sent: boolean }> {
+  try {
+    if (envSecret("RESEND_API_KEY")) {
+      return { sent: await sendResend(opts.to, opts.subject, opts.text) };
+    }
+    if (envSecret("SMTP_HOST") || envSecret("SMTP_URL")) {
+      return { sent: await sendSmtp(opts.to, opts.subject, opts.text) };
+    }
+  } catch {
+    return { sent: false };
   }
-  if (envSecret("SMTP_HOST") || envSecret("SMTP_URL")) {
-    const sent = await sendSmtp(opts.to, opts.subject, opts.text);
-    return { sent, mocked: false };
-  }
-  console.info(
-    `[sclxter mail] no mail key; would send to ${opts.to}: ${opts.text}`,
-  );
-  return { sent: true, mocked: true };
+  return { sent: false };
 }

@@ -12,10 +12,12 @@ export function AuthForm({
   mode,
   error,
   otpDest,
+  mailError,
 }: {
   mode: "login" | "signup";
   error?: string | null;
   otpDest?: string | null;
+  mailError?: string | null;
 }) {
   const signup = mode === "signup";
   const [busy, setBusy] = useState(false);
@@ -23,6 +25,7 @@ export function AuthForm({
   const [localError, setLocalError] = useState<string | null>(error ?? null);
   const [otp, setOtp] = useState(Boolean(otpDest) && !signup);
   const [dest, setDest] = useState(otpDest || "");
+  const [mailNote, setMailNote] = useState<string | null>(mailError ?? null);
   const [code, setCode] = useState("");
 
   async function submitOtp(e: FormEvent<HTMLFormElement>) {
@@ -71,12 +74,18 @@ export function AuthForm({
       const body = (await res.json().catch(() => ({}))) as {
         error?: string;
         dest?: string;
+        mailError?: string | null;
       };
-      if (!res.ok) {
-        setLocalError(body.error || "Could not send the sign-in code.");
+      if (body.dest) setDest(body.dest);
+      if (body.mailError) {
+        setMailNote(body.mailError);
         return;
       }
-      if (body.dest) setDest(body.dest);
+      if (!res.ok) {
+        setMailNote(body.error || "Could not send the sign-in code.");
+        return;
+      }
+      setMailNote(null);
     } catch {
       setLocalError("Could not send the sign-in code.");
     } finally {
@@ -116,19 +125,21 @@ export function AuthForm({
         ok?: boolean;
         needOtp?: boolean;
         dest?: string;
+        mailError?: string | null;
       };
+      if (body.needOtp) {
+        setDest(body.dest || "the email on this account");
+        setMailNote(body.mailError || null);
+        setOtp(true);
+        return;
+      }
       if (!res.ok) {
         setLocalError(body.error || "Those details did not match.");
         return;
       }
-      if (body.needOtp) {
-        setDest(body.dest || "the email on this account");
-        setOtp(true);
-        return;
-      }
       window.location.assign(body.next || "/dashboard");
     } catch {
-      setLocalError("Those details did not match.");
+      setLocalError("Could not reach the server.");
     } finally {
       setBusy(false);
     }
@@ -138,9 +149,11 @@ export function AuthForm({
     return (
       <form className="mt-8 space-y-5" onSubmit={submitOtp}>
         <p className="text-sm leading-6 text-muted">
-          Enter the 6-digit code we sent to {dest || "the email on this account"}
-          .
+          Enter the 6-digit code sent to {dest || "the email on this account"}.
         </p>
+        {mailNote ? (
+          <p className="text-sm leading-6 text-fg">{mailNote}</p>
+        ) : null}
         <div>
           <Label htmlFor="otp-code">Code</Label>
           <Input

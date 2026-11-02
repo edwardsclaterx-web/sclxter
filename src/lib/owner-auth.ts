@@ -20,11 +20,20 @@ export async function ownerAuthReady() {
   return Boolean(envSecret("SCLXTER_PASSWORD"));
 }
 
+function normalizeSecret(value: string) {
+  return value
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[\r\n]+$/g, "")
+    .trim();
+}
+
 export async function verifyOwnerPassword(password: string): Promise<boolean> {
   if (!password) return false;
-  const expected = envSecret("SCLXTER_PASSWORD");
+  const expected = normalizeSecret(envSecret("SCLXTER_PASSWORD"));
   if (!expected) return false;
-  const given = password.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/[\r\n]+$/g, "");
+  const given = normalizeSecret(password);
+  if (!given) return false;
   return secretEqual(given, expected);
 }
 

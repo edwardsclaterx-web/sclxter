@@ -8,6 +8,7 @@ import { LEAVESAKE_USER_ID, isLeavesakeLogin } from "./leavesake";
 import { NORTHGATE_USER_ID, isNorthgateLogin } from "./northgate";
 import { OWNER_USER_ID, ownerUserRecord } from "./owner-auth";
 import { readStore } from "./store";
+import type { OtpPending } from "./otp";
 import type { Business, User } from "./types";
 import { getOwnedBusiness } from "./access";
 
@@ -63,8 +64,15 @@ export function clearSessionCookie(res: NextResponse, request?: Request) {
   res.cookies.set(OTP_COOKIE, "", { ...flags, maxAge: 0 });
 }
 
-export async function signOtpPending(userId: string) {
-  return new SignJWT({ sub: userId, kind: "otp" })
+export async function signOtpPending(pending: OtpPending) {
+  return new SignJWT({
+    sub: pending.userId,
+    kind: "otp",
+    dest: pending.dest,
+    codeHash: pending.codeHash,
+    expAt: pending.expiresAt,
+    attempts: pending.attempts,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
@@ -72,27 +80,54 @@ export async function signOtpPending(userId: string) {
 }
 
 export async function setOtpPendingCookie(
-  userId: string,
+  pending: OtpPending,
   res: NextResponse,
   request?: Request,
 ) {
-  const token = await signOtpPending(userId);
+  const token = await signOtpPending(pending);
   const flags = cookieFlags(request);
   res.cookies.set(OTP_COOKIE, token, { ...flags, maxAge: 60 * 10 });
 }
 
-export async function getPendingOtpUserId(): Promise<string | null> {
+export function clearOtpPendingCookie(res: NextResponse, request?: Request) {
+  const flags = cookieFlags(request);
+  res.cookies.set(OTP_COOKIE, "", { ...flags, maxAge: 0 });
+}
+
+export async function getPendingOtp(): Promise<OtpPending | null> {
   await connection();
   const jar = await cookies();
   const token = jar.get(OTP_COOKIE)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secretKey());
-    if ((payload as { kind?: unknown }).kind !== "otp") return null;
-    return typeof payload.sub === "string" ? payload.sub : null;
+    const p = payload as {
+      kind?: unknown;
+      sub?: unknown;
+      dest?: unknown;
+      codeHash?: unknown;
+      expAt?: unknown;
+      attempts?: unknown;
+    };
+    if (p.kind !== "otp" || typeof p.sub !== "string") return null;
+    if (typeof p.dest !== "string" || typeof p.codeHash !== "string") return null;
+    const expiresAt = typeof p.expAt === "number" ? p.expAt : 0;
+    const attempts = typeof p.attempts === "number" ? p.attempts : 0;
+    return {
+      userId: p.sub,
+      dest: p.dest,
+      codeHash: p.codeHash,
+      expiresAt,
+      attempts,
+    };
   } catch {
     return null;
   }
+}
+
+export async function getPendingOtpUserId(): Promise<string | null> {
+  const pending = await getPendingOtp();
+  return pending?.userId ?? null;
 }
 
 export async function getUserIdFromToken(token: string | undefined) {

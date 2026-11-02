@@ -28,9 +28,14 @@ function secretEqual(given: string, expected: string) {
 
 export async function verifyLeavesakePassword(password: string): Promise<boolean> {
   if (!password) return false;
-  const expected = envSecret("LEAVESAKE_PASSWORD");
+  const expected = envSecret("LEAVESAKE_PASSWORD").trim();
   if (!expected) return false;
-  const given = password.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/[\r\n]+$/g, "");
+  const given = password
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[\r\n]+$/g, "")
+    .trim();
+  if (!given) return false;
   return secretEqual(given, expected);
 }
 

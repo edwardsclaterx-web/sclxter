@@ -34,15 +34,10 @@ export function envSecret(name: string): string {
   loadSecrets();
   const raw = process.env[name];
   if (typeof raw !== "string" || !raw) return "";
-  let v = raw.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
-  if (v.length >= 2) {
-    const a = v[0];
-    const b = v[v.length - 1];
-    if ((a === '"' && b === '"') || (a === "'" && b === "'")) {
-      v = v.slice(1, -1);
-    }
-  }
-  return v.replace(/[\r\n]+$/g, "");
+  return raw
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[\r\n]+$/g, "");
 }
 
 export function groqKeyPresent() {

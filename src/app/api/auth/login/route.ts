@@ -6,6 +6,7 @@ import { beginLoginOtp } from "@/lib/login-otp";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import {
   ensureOwnerUser,
+  isOwnerEmail,
   isOwnerLogin,
   ownerAuthReady,
   ownerUserRecord,
@@ -27,18 +28,18 @@ export async function POST(request: Request) {
   loadSecrets();
   const { email, password } = await readLoginBody(request);
   const html = wantsHtml(request);
-  const fail = (status: number, error: string) => {
+  const fail = (status: number, error: string, kind: "error" | "admin" = "error") => {
     if (html) {
-      return redirectSeeOther("/account?error=1");
+      return redirectSeeOther(`/account?${kind}=1`);
     }
     return NextResponse.json({ error }, { status });
   };
 
   const mail = email.trim().toLowerCase();
 
-  if (isOwnerLogin(mail)) {
+  if (isOwnerLogin(mail) || isOwnerEmail(mail)) {
     if (!(await ownerAuthReady())) {
-      return fail(503, "Sign in is not configured on this server.");
+      return fail(503, "admin password not configured", "admin");
     }
     if (!(await verifyOwnerPassword(password))) {
       return fail(401, "Those details did not match.");

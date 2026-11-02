@@ -16,16 +16,16 @@ function secretEqual(given: string, expected: string) {
   return timingSafeEqual(a, b);
 }
 
-export async function ownerAuthReady() {
-  return Boolean(envSecret("SCLXTER_PASSWORD"));
-}
-
 function normalizeSecret(value: string) {
   return value
     .replace(/^\uFEFF/, "")
     .replace(/\r\n/g, "\n")
     .replace(/[\r\n]+$/g, "")
     .trim();
+}
+
+export async function ownerAuthReady() {
+  return Boolean(normalizeSecret(envSecret("SCLXTER_PASSWORD")));
 }
 
 export async function verifyOwnerPassword(password: string): Promise<boolean> {

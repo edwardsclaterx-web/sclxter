@@ -24,6 +24,7 @@ export default async function AccountPage({
     verify?: string;
     otp?: string;
     mail?: string;
+    admin?: string;
   }>;
 }) {
   const user = await getSessionUser();
@@ -68,9 +69,11 @@ export default async function AccountPage({
             error={
               q.otp
                 ? "That code did not match."
-                : q.error
-                  ? "Those details did not match."
-                  : null
+                : q.admin
+                  ? "admin password not configured"
+                  : q.error
+                    ? "Those details did not match."
+                    : null
             }
           />
         </section>

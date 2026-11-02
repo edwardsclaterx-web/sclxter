@@ -15,7 +15,7 @@ cp .env.example .env.local
 # Owner Sign in identity is scl. Password: SCLXTER_PASSWORD — server only, never in git, HTML, or the browser.
 # Leavesake test shop: LEAVESAKE_PASSWORD — server only, never in git or the browser.
 # Stripe keys: STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY — server only. Never commit them.
-# Sign-in email codes: RESEND_API_KEY (and optional RESEND_FROM). SMTP_HOST / SMTP_URL also work. Never commit them.
+# Sign-in email codes: RESEND_API_KEY. Default from is sclxter <onboarding@resend.dev>. Optional RESEND_FROM after the domain is verified. Never commit them.
 npm run dev
 ```
 

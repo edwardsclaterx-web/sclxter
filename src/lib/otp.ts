@@ -54,6 +54,7 @@ export async function issueOtp(user: User) {
     attempts: 0,
   };
   let sent = false;
+  let mailError: string | null = MAIL_FAIL;
   try {
     const mail = await sendProductMail({
       to: dest,
@@ -61,6 +62,7 @@ export async function issueOtp(user: User) {
       text: `Your sclxter sign-in code is ${code}. It expires in 8 minutes and can be used once. If you did not try to sign in, ignore this email.`,
     });
     sent = mail.sent;
+    mailError = mail.mailError;
   } catch {
     sent = false;
   }
@@ -68,7 +70,7 @@ export async function issueOtp(user: User) {
     pending,
     dest,
     sent,
-    mailError: sent ? null : MAIL_FAIL,
+    mailError: sent ? null : mailError || MAIL_FAIL,
   };
 }
 

@@ -63,7 +63,7 @@ export default async function AccountPage({
             otpDest={pending?.dest ?? (q.verify ? "the email on this account" : null)}
             mailError={
               q.mail
-                ? "We could not email the code. Add RESEND_API_KEY on Vercel, then send a new code."
+                ? "We could not email the code. Resend: send failed."
                 : null
             }
             error={

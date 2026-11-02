@@ -37,7 +37,8 @@ export function envSecret(name: string): string {
   return raw
     .replace(/^\uFEFF/, "")
     .replace(/\r\n/g, "\n")
-    .replace(/[\r\n]+$/g, "");
+    .replace(/[\r\n]+$/g, "")
+    .trim();
 }
 
 export function groqKeyPresent() {

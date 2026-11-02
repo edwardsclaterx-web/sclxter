@@ -1,11 +1,12 @@
 import "server-only";
 
+import { OTP_FROM, OTP_REPLY_TO } from "./otp-email";
 import { envSecret } from "./secrets";
 
 export const MAIL_FAIL =
   "We could not email the code. Add RESEND_API_KEY on Vercel, then send a new code.";
 
-const DEFAULT_FROM = "sclxter <onboarding@resend.dev>";
+const DEFAULT_FROM = OTP_FROM;
 
 export function mailConfigured() {
   return Boolean(
@@ -58,7 +59,12 @@ function uiError(category: string) {
   return `We could not email the code. Resend: ${category}.`;
 }
 
-async function sendResend(to: string, subject: string, text: string) {
+async function sendResend(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string,
+) {
   const key = envSecret("RESEND_API_KEY").trim();
   if (!key) {
     return {
@@ -75,8 +81,10 @@ async function sendResend(to: string, subject: string, text: string) {
     body: JSON.stringify({
       from: fromAddress(),
       to: [to],
+      reply_to: OTP_REPLY_TO,
       subject,
       text,
+      ...(html ? { html } : {}),
     }),
   });
   const raw = await res.text().catch(() => "");
@@ -87,7 +95,12 @@ async function sendResend(to: string, subject: string, text: string) {
   return { sent: false, category };
 }
 
-async function sendSmtp(to: string, subject: string, text: string) {
+async function sendSmtp(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string,
+) {
   const url = envSecret("SMTP_URL");
   const host = envSecret("SMTP_HOST");
   if (!url && !host) return false;
@@ -108,9 +121,11 @@ async function sendSmtp(to: string, subject: string, text: string) {
       });
   await transporter.sendMail({
     from: fromAddress(),
+    replyTo: OTP_REPLY_TO,
     to,
     subject,
     text,
+    html,
   });
   return true;
 }
@@ -120,17 +135,18 @@ export async function sendProductMail(opts: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }): Promise<{ sent: boolean; mailError: string | null }> {
   try {
     if (envSecret("RESEND_API_KEY").trim()) {
-      const out = await sendResend(opts.to, opts.subject, opts.text);
+      const out = await sendResend(opts.to, opts.subject, opts.text, opts.html);
       return {
         sent: out.sent,
         mailError: out.sent ? null : uiError(out.category || "send failed"),
       };
     }
     if (envSecret("SMTP_HOST") || envSecret("SMTP_URL")) {
-      const sent = await sendSmtp(opts.to, opts.subject, opts.text);
+      const sent = await sendSmtp(opts.to, opts.subject, opts.text, opts.html);
       return {
         sent,
         mailError: sent ? null : MAIL_FAIL,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const PUBLIC_ID = "northgate";
 const HOST_ID = "northgate-ask-host";
@@ -107,21 +108,12 @@ function boot() {
   root.appendChild(btn);
   document.body.appendChild(root);
   window.addEventListener("popstate", syncDemo);
-  const push = history.pushState.bind(history);
-  history.pushState = (...args) => {
-    push(...args);
-    syncDemo();
-  };
-  const replace = history.replaceState.bind(history);
-  history.replaceState = (...args) => {
-    replace(...args);
-    syncDemo();
-  };
 }
 
 export function AskAnything() {
+  const pathname = usePathname();
   useEffect(() => {
     boot();
-  }, []);
+  }, [pathname]);
   return null;
 }

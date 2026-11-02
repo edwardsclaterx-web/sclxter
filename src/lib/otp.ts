@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import { MAIL_FAIL, sendProductMail } from "./mail";
+import { OTP_SUBJECT, otpEmailHtml, otpEmailText } from "./otp-email";
 import { OWNER_EMAIL, isOwnerLogin, isOwnerUser } from "./owner-auth";
 import type { User } from "./types";
 
@@ -58,8 +59,9 @@ export async function issueOtp(user: User) {
   try {
     const mail = await sendProductMail({
       to: dest,
-      subject: "Your sclxter sign-in code",
-      text: `Your sclxter sign-in code is ${code}. It expires in 8 minutes and can be used once. If you did not try to sign in, ignore this email.`,
+      subject: OTP_SUBJECT,
+      text: otpEmailText(code),
+      html: otpEmailHtml(code),
     });
     sent = mail.sent;
     mailError = mail.mailError;

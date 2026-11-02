@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const PUBLIC_ID = "sclxter";
 const HOST_ID = "sclxter-site-ask-host";
@@ -151,21 +152,12 @@ function boot() {
     const b = document.getElementById(BTN_ID);
     if (p && b) applyOpen(p, b, b.getAttribute("aria-expanded") === "true");
   });
-  const push = history.pushState.bind(history);
-  history.pushState = (...args) => {
-    push(...args);
-    onRoute();
-  };
-  const replace = history.replaceState.bind(history);
-  history.replaceState = (...args) => {
-    replace(...args);
-    onRoute();
-  };
 }
 
 export function SiteAskAnything() {
+  const pathname = usePathname();
   useEffect(() => {
     boot();
-  }, []);
+  }, [pathname]);
   return null;
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ChunkRecovery } from "@/components/chunk-recovery";
 import { RenewWatch } from "@/components/renew-watch";
 import { SiteAskAnything } from "@/components/site-ask-anything";
 import "./globals.css";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full bg-bg font-sans text-fg">
         {children}
+        <ChunkRecovery />
         <RenewWatch />
         <SiteAskAnything />
       </body>

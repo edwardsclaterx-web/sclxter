@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-import { checkPassword, setSessionCookie } from "@/lib/auth";
+import { checkPassword } from "@/lib/auth";
+import { beginLoginOtp } from "@/lib/login-otp";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import {
   ensureOwnerUser,
@@ -41,12 +42,7 @@ export async function POST(request: Request) {
       return fail(401, "Those details did not match.");
     }
     const user = await ensureOwnerUser();
-    const next = "/dashboard/businesses";
-    const res = html
-      ? redirectSeeOther(next)
-      : NextResponse.json({ ok: true, next });
-    await setSessionCookie(user.id, res, request);
-    return res;
+    return beginLoginOtp(user, "/dashboard/businesses", html, request);
   }
 
   if (isNorthgateLogin(mail)) {
@@ -59,11 +55,7 @@ export async function POST(request: Request) {
     if (!northgate) {
       return fail(401, "Those details did not match.");
     }
-    const res = html
-      ? redirectSeeOther("/dashboard")
-      : NextResponse.json({ ok: true });
-    await setSessionCookie(northgate.id, res, request);
-    return res;
+    return beginLoginOtp(northgate, "/dashboard", html, request);
   }
 
   if (isLeavesakeLogin(mail)) {
@@ -79,21 +71,12 @@ export async function POST(request: Request) {
     } catch {
       return fail(503, "Sign in is not configured on this server.");
     }
-    const next = "/dashboard";
-    const res = html
-      ? redirectSeeOther(next)
-      : NextResponse.json({ ok: true, next });
-    await setSessionCookie(user.id, res, request);
-    return res;
+    return beginLoginOtp(user, "/dashboard", html, request);
   }
 
   const existing = (await readStore()).users.find((u) => u.email === mail);
   if (!existing || !(await checkPassword(password, existing.passwordHash))) {
     return fail(401, "Those details did not match.");
   }
-  const res = html
-    ? redirectSeeOther("/dashboard")
-    : NextResponse.json({ ok: true });
-  await setSessionCookie(existing.id, res, request);
-  return res;
+  return beginLoginOtp(existing, "/dashboard", html, request);
 }

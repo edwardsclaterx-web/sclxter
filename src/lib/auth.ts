@@ -12,6 +12,7 @@ import type { Business, User } from "./types";
 import { getOwnedBusiness } from "./access";
 
 const COOKIE = "sclxter_session";
+const OTP_COOKIE = "sclxter_otp";
 
 function secretKey() {
   return new TextEncoder().encode(envSecret("SESSION_SECRET"));
@@ -53,11 +54,45 @@ export async function setSessionCookie(
   const token = await signSession(userId);
   const flags = cookieFlags(request);
   res.cookies.set(COOKIE, token, { ...flags, maxAge: 60 * 60 * 24 * 30 });
+  res.cookies.set(OTP_COOKIE, "", { ...flags, maxAge: 0 });
 }
 
 export function clearSessionCookie(res: NextResponse, request?: Request) {
   const flags = cookieFlags(request);
   res.cookies.set(COOKIE, "", { ...flags, maxAge: 0 });
+  res.cookies.set(OTP_COOKIE, "", { ...flags, maxAge: 0 });
+}
+
+export async function signOtpPending(userId: string) {
+  return new SignJWT({ sub: userId, kind: "otp" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(secretKey());
+}
+
+export async function setOtpPendingCookie(
+  userId: string,
+  res: NextResponse,
+  request?: Request,
+) {
+  const token = await signOtpPending(userId);
+  const flags = cookieFlags(request);
+  res.cookies.set(OTP_COOKIE, token, { ...flags, maxAge: 60 * 10 });
+}
+
+export async function getPendingOtpUserId(): Promise<string | null> {
+  await connection();
+  const jar = await cookies();
+  const token = jar.get(OTP_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secretKey());
+    if ((payload as { kind?: unknown }).kind !== "otp") return null;
+    return typeof payload.sub === "string" ? payload.sub : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getUserIdFromToken(token: string | undefined) {

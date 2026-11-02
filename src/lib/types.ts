@@ -112,6 +112,14 @@ export type KnowledgeGap = {
   updatedAt: string;
 };
 
+export type OtpChallenge = {
+  userId: string;
+  dest: string;
+  codeHash: string;
+  expiresAt: string;
+  attempts: number;
+};
+
 export type StoreData = {
   users: User[];
   businesses: Business[];
@@ -120,6 +128,7 @@ export type StoreData = {
   conversations: Conversation[];
   supportThreads: SupportThread[];
   knowledgeGaps: KnowledgeGap[];
+  otpChallenges?: OtpChallenge[];
   settings: StoreSettings;
 };
 

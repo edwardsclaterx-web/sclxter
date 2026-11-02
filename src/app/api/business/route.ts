@@ -59,7 +59,9 @@ export async function PATCH(request: Request) {
     }
     nextTheme = parsed;
   }
-  let updated = await updateStore((data) => {
+  let updated;
+  try {
+    updated = await updateStore((data) => {
     const row = data.businesses.find((b) => b.id === biz.id);
     if (!row) return biz;
     if (typeof body.name === "string") row.name = body.name.trim();
@@ -81,6 +83,9 @@ export async function PATCH(request: Request) {
     }
     return row;
   });
+  } catch {
+    return NextResponse.json({ error: "Could not save." }, { status: 503 });
+  }
 
   const data = await readStore();
   const owner = data.users.find((u) => u.id === updated.ownerId);

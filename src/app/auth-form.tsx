@@ -11,14 +11,78 @@ import { Label } from "@/components/ui/label";
 export function AuthForm({
   mode,
   error,
+  otpDest,
 }: {
   mode: "login" | "signup";
   error?: string | null;
+  otpDest?: string | null;
 }) {
   const signup = mode === "signup";
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [localError, setLocalError] = useState<string | null>(error ?? null);
+  const [otp, setOtp] = useState(Boolean(otpDest) && !signup);
+  const [dest, setDest] = useState(otpDest || "");
+  const [code, setCode] = useState("");
+
+  async function submitOtp(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setLocalError(null);
+    try {
+      const res = await fetch("/api/auth/otp", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ code }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        next?: string;
+      };
+      if (!res.ok) {
+        setLocalError(body.error || "That code did not match.");
+        return;
+      }
+      window.location.assign(body.next || "/dashboard");
+    } catch {
+      setLocalError("That code did not match.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendCode() {
+    setBusy(true);
+    setLocalError(null);
+    try {
+      const res = await fetch("/api/auth/otp", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ resend: true }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        dest?: string;
+      };
+      if (!res.ok) {
+        setLocalError(body.error || "Could not send the sign-in code.");
+        return;
+      }
+      if (body.dest) setDest(body.dest);
+    } catch {
+      setLocalError("Could not send the sign-in code.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,9 +114,16 @@ export function AuthForm({
         error?: string;
         next?: string;
         ok?: boolean;
+        needOtp?: boolean;
+        dest?: string;
       };
       if (!res.ok) {
         setLocalError(body.error || "Those details did not match.");
+        return;
+      }
+      if (body.needOtp) {
+        setDest(body.dest || "the email on this account");
+        setOtp(true);
         return;
       }
       window.location.assign(body.next || "/dashboard");
@@ -61,6 +132,43 @@ export function AuthForm({
     } finally {
       setBusy(false);
     }
+  }
+
+  if (otp && !signup) {
+    return (
+      <form className="mt-8 space-y-5" onSubmit={submitOtp}>
+        <p className="text-sm leading-6 text-muted">
+          Enter the 6-digit code we sent to {dest || "the email on this account"}
+          .
+        </p>
+        <div>
+          <Label htmlFor="otp-code">Code</Label>
+          <Input
+            id="otp-code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            required
+          />
+        </div>
+        <FieldError>{localError}</FieldError>
+        <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>
+          Continue
+        </Button>
+        <button
+          type="button"
+          className="text-sm text-muted underline underline-offset-2"
+          disabled={busy}
+          onClick={() => void resendCode()}
+        >
+          Send a new code
+        </button>
+      </form>
+    );
   }
 
   return (

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { getSessionUser } from "@/lib/auth";
+import { pendingOtpHint } from "@/lib/otp-pending";
 import { AuthForm } from "../auth-form";
 import { AccountPanel } from "./account-panel";
 
@@ -17,7 +18,7 @@ const SIGNUP_ERRORS: Record<string, string> = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; signup?: string }>;
+  searchParams: Promise<{ error?: string; signup?: string; verify?: string; otp?: string }>;
 }) {
   const user = await getSessionUser();
   if (user) {
@@ -33,6 +34,7 @@ export default async function AccountPage({
   }
 
   const q = await searchParams;
+  const pending = await pendingOtpHint();
 
   return (
     <div className="flex min-h-full flex-col">
@@ -41,16 +43,28 @@ export default async function AccountPage({
         <h1 className="text-2xl font-medium tracking-tight">Account</h1>
 
         <section id="signin" className="mt-10">
-          <h2 className="text-xl font-medium tracking-tight">Sign in</h2>
+          <h2 className="text-xl font-medium tracking-tight">
+            {pending ? "Enter your code" : "Sign in"}
+          </h2>
           <p className="mt-2 text-sm text-muted">
-            Identity or email, and password.
+            {pending
+              ? "Password matched. We emailed a 6-digit code."
+              : "Identity or email, and password."}
           </p>
           <AuthForm
             mode="login"
-            error={q.error ? "Those details did not match." : null}
+            otpDest={pending?.dest ?? null}
+            error={
+              q.otp
+                ? "That code did not match."
+                : q.error
+                  ? "Those details did not match."
+                  : null
+            }
           />
         </section>
 
+        {pending ? null : (
         <section id="signup" className="mt-16">
           <h2 className="text-xl font-medium tracking-tight">Create account</h2>
           <p className="mt-2 text-sm text-muted">One business per account.</p>
@@ -61,6 +75,7 @@ export default async function AccountPage({
             }
           />
         </section>
+        )}
       </main>
       <SiteFooter />
     </div>

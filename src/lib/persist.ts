@@ -200,9 +200,13 @@ export async function writePersistedStore(data: StoreData): Promise<void> {
   json.supportThreads = json.supportThreads ?? [];
   const kv = await writeKv(json);
   await writeKvThreads(json.supportThreads);
-  if (!kv) await writeBlob(json);
+  const blob = kv ? false : await writeBlob(json);
+  let local = false;
   try {
-    if (!onVercel()) writeFile(FILE_LOCAL, json);
+    if (!onVercel()) {
+      writeFile(FILE_LOCAL, json);
+      local = true;
+    }
   } catch {
     /* read-only deploy */
   }
@@ -210,6 +214,12 @@ export async function writePersistedStore(data: StoreData): Promise<void> {
     writeFile(FILE_TMP, json);
   } catch {
     /* ignore */
+  }
+  if (onVercel() && !kv && !blob) {
+    throw new Error("Could not persist shop data.");
+  }
+  if (!onVercel() && !kv && !blob && !local) {
+    throw new Error("Could not persist shop data.");
   }
 }
 

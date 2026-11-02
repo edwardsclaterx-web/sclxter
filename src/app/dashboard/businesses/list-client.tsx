@@ -56,7 +56,7 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
   }, [rows, q, sort]);
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 md:px-8">
+    <main className="dash-screen mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-auto px-5 py-10 md:px-8">
       <h1 className="text-2xl font-medium tracking-tight">Businesses</h1>
       <p className="mt-2 text-sm text-muted">
         Search and open a business.

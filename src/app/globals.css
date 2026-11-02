@@ -25,6 +25,7 @@
 
 html {
   overflow-y: scroll;
+  overflow-x: auto;
   scrollbar-gutter: stable;
 }
 
@@ -84,6 +85,27 @@ a.nav-item.here {
 @media (max-width: 767px) {
   #sclxter-site-ask-hint {
     display: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .dash-screen {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+  }
+  .dash-screen .dash-grid,
+  .dash-screen section,
+  .dash-screen aside,
+  .dash-screen pre,
+  .dash-screen table {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .dash-screen pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
 

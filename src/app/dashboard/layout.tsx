@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   const admin = isAdmin(user);
   const purchaser = await showBillingNav(user);
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-full min-w-0 max-w-full flex-col overflow-x-auto">
       <DashHeader admin={admin} purchaser={purchaser} />
       {children}
     </div>

@@ -61,6 +61,8 @@ export function BusinessScreen({
   const [themeError, setThemeError] = useState<string | null>(null);
   const [notepad, setNotepad] = useState(business.notepad);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [scanNote, setScanNote] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -80,10 +82,11 @@ export function BusinessScreen({
     theme: normalizeTheme(business.theme),
   });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const again = useRef(false);
+  const dirty = useRef(false);
   const running = useRef<Promise<boolean> | null>(null);
 
   function queueSave() {
+    dirty.current = true;
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       timer.current = null;
@@ -108,47 +111,67 @@ export function BusinessScreen({
 
   async function writeDraft() {
     setSaveError(null);
+    setSaving(true);
     let ok = true;
     try {
-      do {
-        again.current = false;
+      while (dirty.current) {
+        dirty.current = false;
         const body = draft.current;
         const res = await fetch("/api/business", {
           method: "PATCH",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ seq, ...body }),
+          credentials: "same-origin",
+          body: JSON.stringify({
+            ...(typeof seq === "number" ? { seq } : {}),
+            ...body,
+          }),
         });
-        if (!res.ok) {
-          const data = (await res.json().catch(() => ({}))) as { error?: string };
-          if (data.error?.toLowerCase().includes("colour")) {
-            setThemeError(data.error);
-          } else {
-            setSaveError(data.error || "Could not save.");
-          }
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          business?: ClientBusiness;
+        };
+        if (!res.ok || !data.business) {
+          const err = data.error || "Could not save.";
+          if (err.toLowerCase().includes("colour")) setThemeError(err);
+          else setSaveError(err);
           ok = false;
+          break;
         }
-      } while (again.current);
+        setSaveNote("Saved.");
+      }
     } catch {
       setSaveError("Could not reach the server.");
       ok = false;
+    } finally {
+      setSaving(false);
     }
     return ok;
   }
 
-  function flushSave() {
+  function flushSave(force = false) {
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
     }
-    if (running.current) {
-      again.current = true;
-      return running.current;
-    }
+    if (force) dirty.current = true;
+    if (!dirty.current) return Promise.resolve(true);
+    if (running.current) return running.current;
     const job = writeDraft().finally(() => {
       running.current = null;
+      if (dirty.current && !timer.current) {
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          void flushSave();
+        }, 50);
+      }
     });
     running.current = job;
     return job;
+  }
+
+  async function saveAll() {
+    const ok = await flushSave(true);
+    if (ok) setSaveNote("Saved.");
   }
 
   const flushSaveRef = useRef(flushSave);
@@ -250,7 +273,7 @@ export function BusinessScreen({
     : TEST_AI_BLOCKED;
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[96rem] flex-1 overflow-x-hidden px-4 py-6 md:px-8 md:py-10">
+    <main className="dash-screen mx-auto w-full min-w-0 max-w-full flex-1 overflow-x-auto px-4 py-6 md:max-w-[96rem] md:px-8 md:py-10">
       {!admin && !live ? (
         <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
           This account is unpaid. Your shop data is kept. Scan, notepad, and
@@ -259,8 +282,8 @@ export function BusinessScreen({
         </p>
       ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />
-      <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
-      <div className="order-1 min-w-0">
+      <div className="dash-grid mt-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
+      <div className="order-1 min-w-0 w-full max-w-full">
       <aside className="flex min-h-0 flex-col border border-line p-4 lg:min-h-[48rem] lg:p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Your website&apos;s data
@@ -318,7 +341,7 @@ export function BusinessScreen({
       </section>
       </div>
 
-      <div className="order-3 space-y-12 lg:order-2">
+      <div className="order-3 min-w-0 w-full max-w-full space-y-12 lg:order-2">
         <section>
           <h1 className="text-2xl font-medium tracking-tight">
             {name || "Business"}
@@ -438,7 +461,7 @@ export function BusinessScreen({
             This snippet is this business’s assistant. Paste it before the
             closing body tag. It loads from sclxter.com.
           </p>
-          <pre className="mt-4 overflow-x-auto border border-line bg-surface p-4 text-xs leading-6">
+          <pre className="mt-4 max-w-full overflow-x-auto whitespace-pre-wrap break-all border border-line bg-surface p-4 text-xs leading-6">
             {snippet}
           </pre>
           <Button
@@ -453,7 +476,7 @@ export function BusinessScreen({
         </section>
       </div>
 
-      <aside className="order-2 flex min-h-[22rem] flex-col gap-4 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:min-h-[36rem]">
+      <aside className="order-2 flex min-h-[22rem] min-w-0 w-full max-w-full flex-col gap-4 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:min-h-[36rem]">
         {!admin ? (
           <div className="shrink-0 border border-line px-5 py-3">
             <a href="/contact#support" className="text-sm text-fg">
@@ -520,6 +543,18 @@ export function BusinessScreen({
           </div>
         </div>
       </aside>
+      </div>
+      <div className="mt-10 flex min-w-0 max-w-full flex-col gap-3 border-t border-line pt-8">
+        <Button
+          type="button"
+          className="h-12 w-full max-w-md text-base font-medium"
+          disabled={saving}
+          onClick={() => void saveAll()}
+        >
+          {saving ? "Saving…" : "Save all"}
+        </Button>
+        {saveNote ? <p className="text-sm text-muted">{saveNote}</p> : null}
+        <FieldError>{saveError}</FieldError>
       </div>
     </main>
   );

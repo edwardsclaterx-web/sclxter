@@ -34,7 +34,7 @@ export function MessagesInbox({ rows }: { rows: InboxRow[] }) {
   }, [rows, q]);
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 md:px-8">
+    <main className="dash-screen mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-auto px-5 py-10 md:px-8">
       <h1 className="text-2xl font-medium tracking-tight">Messages</h1>
       <div className="mt-6 max-w-md">
         <Input

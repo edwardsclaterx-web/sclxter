@@ -16,6 +16,7 @@ const empty = (): StoreData => ({
   conversations: [],
   supportThreads: [],
   knowledgeGaps: [],
+  otpChallenges: [],
   settings: { instructions: normalizeInstructions(null) },
 });
 
@@ -91,6 +92,14 @@ function normalize(data: StoreData): StoreData {
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
   }));
+  data.otpChallenges = (data.otpChallenges ?? []).filter(
+    (o) =>
+      o &&
+      typeof o.userId === "string" &&
+      typeof o.dest === "string" &&
+      typeof o.codeHash === "string" &&
+      typeof o.expiresAt === "string",
+  );
   data.knowledgeGaps = (data.knowledgeGaps ?? []).map((g) => ({
     id: g.id,
     businessId: g.businessId,
@@ -144,6 +153,7 @@ function hydrate(parsed: StoreData | null): StoreData {
     conversations: data.conversations ?? [],
     supportThreads: data.supportThreads ?? [],
     knowledgeGaps: data.knowledgeGaps ?? [],
+    otpChallenges: data.otpChallenges ?? [],
     settings: data.settings ?? { instructions: [] },
   });
 }
@@ -160,6 +170,7 @@ async function loadStore(): Promise<StoreData> {
   ensureDemoIndustry(data);
   data.supportThreads = data.supportThreads ?? [];
   data.knowledgeGaps = data.knowledgeGaps ?? [];
+  data.otpChallenges = data.otpChallenges ?? [];
   data = normalize(data);
   const hasLeavesake = data.users.some(
     (u) => u.id === LEAVESAKE_USER_ID || u.email.trim().toLowerCase() === "leavesake",

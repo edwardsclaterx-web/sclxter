@@ -113,7 +113,11 @@ function boot() {
 export function AskAnything() {
   const pathname = usePathname();
   useEffect(() => {
-    boot();
+    try {
+      boot();
+    } catch {
+      /* keep the demo page up if the ask layer fails */
+    }
   }, [pathname]);
   return null;
 }

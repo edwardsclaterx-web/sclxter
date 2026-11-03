@@ -13,6 +13,8 @@ import { readStore } from "@/lib/store";
 import { normalizeTheme } from "@/lib/widget-theme";
 import { WidgetForm } from "./widget-form";
 
+export const dynamic = "force-dynamic";
+
 function Unavailable({ text }: { text: string }) {
   return (
     <div className="flex h-dvh items-center justify-center bg-bg p-4 text-center text-sm text-muted">
@@ -77,6 +79,9 @@ export default async function WidgetPage({
   }
 
   const theme = normalizeTheme(business.appearance?.theme);
+  const welcome =
+    business.appearance?.welcome || "Ask about hours, prices, or how to book.";
+  const assistantName = business.appearance?.assistantName || "Assistant";
 
   return (
     <div
@@ -86,8 +91,8 @@ export default async function WidgetPage({
       <div className="min-h-0 flex-1">
         <WidgetForm
           publicId={publicId}
-          welcome={business.appearance.welcome}
-          assistantName={business.appearance.assistantName}
+          welcome={welcome}
+          assistantName={assistantName}
           theme={theme}
           from={from}
         />

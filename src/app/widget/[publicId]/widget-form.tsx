@@ -163,7 +163,11 @@ export function WidgetForm({
 })();`;
 
   useEffect(() => {
-    new Function(boot)();
+    try {
+      new Function(boot)();
+    } catch {
+      /* iframe stays usable even if the chat boot script cannot run */
+    }
   }, [boot]);
 
   const line = theme?.outline;

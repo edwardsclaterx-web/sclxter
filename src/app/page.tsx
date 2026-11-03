@@ -64,7 +64,7 @@ export default async function Home() {
               ChatGPT level performance
             </p>
             <div aria-hidden />
-            <p className="mt-3 min-h-16 pl-[5.5rem] font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
+            <p className="mt-3 min-h-16 ml-[calc(5.5rem+60px)] -translate-x-1/2 justify-self-start text-center font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
               efficient processing,
               <br />
               <span className="whitespace-nowrap">advanced conversations</span>

@@ -6,6 +6,8 @@ import { TONES } from "@/lib/tones";
 import { parseThemeInput } from "@/lib/widget-theme";
 import type { WidgetTheme } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -17,12 +19,14 @@ export async function GET(request: Request) {
   const data = await readStore();
   const owner = data.users.find((u) => u.id === biz.ownerId);
   const admin = isAdmin(user);
-  return NextResponse.json({
+  const res = NextResponse.json({
     business: toClientBusiness(biz, {
       admin,
       ownerEmail: admin ? owner?.email : undefined,
     }),
   });
+  res.headers.set("Cache-Control", "no-store");
+  return res;
 }
 
 export async function PATCH(request: Request) {
@@ -90,10 +94,12 @@ export async function PATCH(request: Request) {
   const data = await readStore();
   const owner = data.users.find((u) => u.id === updated.ownerId);
   const admin = isAdmin(user);
-  return NextResponse.json({
+  const res = NextResponse.json({
     business: toClientBusiness(updated, {
       admin,
       ownerEmail: admin ? owner?.email : undefined,
     }),
   });
+  res.headers.set("Cache-Control", "no-store");
+  return res;
 }

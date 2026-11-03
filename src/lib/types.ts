@@ -80,6 +80,7 @@ export type Conversation = {
 
 export type StoreSettings = {
   instructions: string[];
+  persistRev?: number;
 };
 
 export type SupportRole = "owner" | "admin";

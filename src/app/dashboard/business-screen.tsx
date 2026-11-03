@@ -15,6 +15,7 @@ import { normalizeTheme } from "@/lib/widget-theme";
 import { EmbedGuide } from "./embed-guide";
 import { InstructionsBanner } from "./instructions-banner";
 import { ThemePicker } from "./theme-picker";
+import { useUnsavedGuard } from "./unsaved-guard";
 
 type Props = {
   admin: boolean;
@@ -46,6 +47,7 @@ export function BusinessScreen({
   live = true,
 }: Props) {
   const router = useRouter();
+  const unsaved = useUnsavedGuard();
   const seq = admin ? business.seq : undefined;
   const [scanAck, setScanAck] = useState(false);
   const [name, setName] = useState(business.name);
@@ -87,6 +89,7 @@ export function BusinessScreen({
 
   function queueSave() {
     dirty.current = true;
+    unsaved?.setDirty(true);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       timer.current = null;
@@ -138,6 +141,7 @@ export function BusinessScreen({
           break;
         }
         setSaveNote("Saved.");
+        if (!dirty.current) unsaved?.setDirty(false);
       }
     } catch {
       setSaveError("Could not reach the server.");
@@ -176,6 +180,11 @@ export function BusinessScreen({
 
   const flushSaveRef = useRef(flushSave);
   flushSaveRef.current = flushSave;
+
+  useEffect(() => {
+    unsaved?.setSave(() => flushSaveRef.current(true));
+    return () => unsaved?.setSave(null);
+  }, [unsaved]);
 
   useEffect(() => {
     return () => {

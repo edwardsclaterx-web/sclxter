@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { corsAllow, publicEmbedGate, readEmbedFrom } from "@/lib/embed-host";
-import { readStore, updateStore } from "@/lib/store";
+import { readStore } from "@/lib/store";
 import { normalizeTheme } from "@/lib/widget-theme";
 
 function cors(res: NextResponse, origin?: string | null) {
@@ -32,23 +32,16 @@ export async function GET(
       pageOrigin,
     );
   }
-  await updateStore((store) => {
-    const row = store.businesses.find((b) => b.publicId === publicId);
-    if (row && !row.widgetConnectedAt) {
-      row.widgetConnectedAt = new Date().toISOString();
-    }
-  });
-  return cors(
-    NextResponse.json({
-      live: true,
-      publicId: business.publicId,
-      name: business.name,
-      appearance: {
-        ...business.appearance,
-        theme: normalizeTheme(business.appearance?.theme),
-      },
+  const res = NextResponse.json({
+    live: true,
+    publicId: business.publicId,
+    name: business.name,
+    appearance: {
+      ...business.appearance,
       theme: normalizeTheme(business.appearance?.theme),
-    }),
-    pageOrigin,
-  );
+    },
+    theme: normalizeTheme(business.appearance?.theme),
+  });
+  res.headers.set("Cache-Control", "no-store");
+  return cors(res, pageOrigin);
 }

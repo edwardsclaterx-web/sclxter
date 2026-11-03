@@ -185,6 +185,10 @@ export async function POST(request: Request) {
             createdAt: now,
           });
         }
+        const row = store.businesses.find((b) => b.id === shop.id);
+        if (row && !row.widgetConnectedAt) {
+          row.widgetConnectedAt = now;
+        }
         return convo.id;
       });
       conversationId = saved;

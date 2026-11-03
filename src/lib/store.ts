@@ -111,6 +111,7 @@ function normalize(data: StoreData): StoreData {
   }));
   data.settings = {
     instructions: normalizeInstructions(data.settings?.instructions),
+    persistRev: persistRev(data) || undefined,
   };
   data.businesses = (data.businesses ?? []).map((b) => patchBusiness(b));
   ensureDemoIndustry(data);
@@ -158,11 +159,13 @@ function hydrate(parsed: StoreData | null): StoreData {
   });
 }
 
+function persistRev(data: StoreData | null) {
+  const n = Number(data?.settings?.persistRev);
+  return Number.isFinite(n) ? n : 0;
+}
+
 async function loadStore(): Promise<StoreData> {
   let data = hydrate(await readPersistedStore());
-  const hadLeavesake = data.users.some(
-    (u) => u.id === LEAVESAKE_USER_ID || u.email.trim().toLowerCase() === "leavesake",
-  );
   seedIfEmpty(data);
   migrateOwnerIdentity(data);
   ensureNorthgateShop(data);
@@ -172,12 +175,6 @@ async function loadStore(): Promise<StoreData> {
   data.knowledgeGaps = data.knowledgeGaps ?? [];
   data.otpChallenges = data.otpChallenges ?? [];
   data = normalize(data);
-  const hasLeavesake = data.users.some(
-    (u) => u.id === LEAVESAKE_USER_ID || u.email.trim().toLowerCase() === "leavesake",
-  );
-  if (hasLeavesake && !hadLeavesake) {
-    await writePersistedStore(data);
-  }
   cache = data;
   return data;
 }
@@ -190,10 +187,24 @@ export async function updateStore<T>(
   fn: (data: StoreData) => T,
 ): Promise<T> {
   return withLock(async () => {
-    const data = await loadStore();
-    const result = fn(data);
-    cache = data;
-    await writePersistedStore(normalize(data));
-    return result;
+    let lastErr: unknown = new Error("Could not persist shop data.");
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const data = await loadStore();
+      const rev = persistRev(data);
+      const result = fn(data);
+      data.settings = data.settings ?? { instructions: [] };
+      data.settings.persistRev = rev + 1;
+      const latest = await readPersistedStore();
+      if (latest && persistRev(latest) !== rev) continue;
+      cache = data;
+      try {
+        await writePersistedStore(normalize(data));
+        return result;
+      } catch (err) {
+        lastErr = err;
+        cache = null;
+      }
+    }
+    throw lastErr;
   });
 }

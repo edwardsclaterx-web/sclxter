@@ -7,6 +7,7 @@ import { isOwnerEmail, isOwnerLogin } from "@/lib/owner-auth";
 import { readLoginBody, wantsHtml } from "@/lib/read-login-body";
 import { isLeavesakeLogin } from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
+import { persistLastError } from "@/lib/persist";
 import { readStore, updateStore } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -72,8 +73,11 @@ export async function POST(request: Request) {
       data.users.push(created);
       return created;
     });
-  } catch {
-    return fail(503, "Could not save.", "save");
+  } catch (err) {
+    const detail =
+      persistLastError() ||
+      (err instanceof Error ? err.message : "Could not persist shop data.");
+    return NextResponse.json({ error: "Could not save.", detail }, { status: 503 });
   }
 
   if (!user) {
@@ -86,8 +90,11 @@ export async function POST(request: Request) {
   await setSessionCookie(user.id, createdRes, request);
   try {
     await createBusinessForSignup(user);
-  } catch {
-    return fail(503, "Could not save.", "save");
+  } catch (err) {
+    const detail =
+      persistLastError() ||
+      (err instanceof Error ? err.message : "Could not persist shop data.");
+    return NextResponse.json({ error: "Could not save.", detail }, { status: 503 });
   }
   return createdRes;
 }

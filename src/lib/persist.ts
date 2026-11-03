@@ -4,29 +4,120 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { gunzipSync, gzipSync } from "node:zlib";
-import type { StoreData, SupportThread } from "./types";
+import { envSecret, loadSecrets } from "./secrets";
+import type { Business, KnowledgeItem, StoreData, SupportThread } from "./types";
 
 const KEY = "sclxter-store";
-const CHAT_KEY = "sclxter-chat";
+const META_KEY = "sclxter:meta";
 const SUPPORT_KEY = "sclxter-support-threads";
 const FILE_LOCAL = join(process.cwd(), "data", "store.json");
 const FILE_TMP = join(tmpdir(), "sclxter-store.json");
 
-function kvCreds() {
-  const url =
-    process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
-  const token =
-    process.env.KV_REST_API_TOKEN ||
-    process.env.UPSTASH_REDIS_REST_TOKEN ||
-    "";
-  if (!url || !token) return null;
-  return { url, token };
+let lastError = "";
+let lastUrlKey = "";
+let lastTokenKey = "";
+let lastBlobKey = "";
+
+export function persistLastError() {
+  return lastError;
 }
 
-async function kvRun(command: unknown[]) {
+export function persistEnvNames() {
+  kvCreds();
+  blobToken();
+  return {
+    urlKey: lastUrlKey || null,
+    tokenKey: lastTokenKey || null,
+    blobKey: lastBlobKey || null,
+  };
+}
+
+export function sanitizePersistError(raw: string) {
+  return raw
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+/g, "[redacted]")
+    .replace(/https?:\/\/[^\s"'\\]+/gi, "[url]")
+    .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "[redacted]")
+    .slice(0, 280);
+}
+
+function noteError(raw: string) {
+  lastError = sanitizePersistError(raw);
+  return lastError;
+}
+
+function isReadOnlyName(name: string) {
+  return /READ_ONLY/i.test(name);
+}
+
+function pickEnv(exact: string[], kind: "url" | "token" | "blob") {
+  loadSecrets();
+  for (const name of exact) {
+    if (kind === "token" && isReadOnlyName(name)) continue;
+    const value = envSecret(name);
+    if (value) return { name, value };
+  }
+  const keys = Object.keys(process.env).sort();
+  for (const name of keys) {
+    if (kind === "token" && isReadOnlyName(name)) continue;
+    const hit = exact.some(
+      (n) => name === n || name.endsWith(`_${n}`) || name.endsWith(n),
+    );
+    if (!hit) continue;
+    const value = envSecret(name);
+    if (value) return { name, value };
+  }
+  return null;
+}
+
+function kvCreds() {
+  const url = pickEnv(
+    [
+      "KV_REST_API_URL",
+      "UPSTASH_REDIS_REST_URL",
+      "KV_REST_API_KV_REST_API_URL",
+      "KV_KV_REST_API_URL",
+      "UPSTASH_REDIS_KV_REST_API_URL",
+    ],
+    "url",
+  );
+  const token = pickEnv(
+    [
+      "KV_REST_API_TOKEN",
+      "UPSTASH_REDIS_REST_TOKEN",
+      "KV_REST_API_KV_REST_API_TOKEN",
+      "KV_KV_REST_API_TOKEN",
+      "KV_REST_API_READ_WRITE_TOKEN",
+      "UPSTASH_REDIS_REST_TOKEN_READ_WRITE",
+    ],
+    "token",
+  );
+  lastUrlKey = url?.name || "";
+  lastTokenKey = token?.name || "";
+  if (!url || !token) return null;
+  return { url: url.value, token: token.value };
+}
+
+function blobToken() {
+  const found = pickEnv(
+    ["BLOB_READ_WRITE_TOKEN", "VERCEL_BLOB_READ_WRITE_TOKEN"],
+    "blob",
+  );
+  lastBlobKey = found?.name || "";
+  return found?.value || "";
+}
+
+function onVercel() {
+  return envSecret("VERCEL") === "1";
+}
+
+type KvOut = { ok: boolean; result?: unknown; error?: string; status?: number };
+
+async function kvRun(command: unknown[]): Promise<KvOut> {
   const creds = kvCreds();
-  if (!creds) return null;
+  if (!creds) {
+    return { ok: false, error: noteError("kv credentials missing") };
+  }
   try {
     const res = await fetch(creds.url, {
       method: "POST",
@@ -37,17 +128,37 @@ async function kvRun(command: unknown[]) {
       body: JSON.stringify(command),
       cache: "no-store",
     });
-    if (!res.ok) return null;
     const text = await res.text();
-    if (!text) return { result: "OK" };
+    let parsed: { result?: unknown; error?: string } = {};
     try {
-      return JSON.parse(text) as { result?: unknown };
+      parsed = text ? (JSON.parse(text) as { result?: unknown; error?: string }) : {};
     } catch {
-      return { result: "OK" };
+      parsed = { error: text.slice(0, 200) };
     }
-  } catch {
-    return null;
+    if (!res.ok) {
+      const err =
+        parsed.error ||
+        (typeof parsed.result === "string" ? parsed.result : "") ||
+        text.slice(0, 200) ||
+        `HTTP ${res.status}`;
+      return { ok: false, error: noteError(err), status: res.status };
+    }
+    return { ok: true, result: parsed.result, status: res.status };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "kv fetch failed";
+    return { ok: false, error: noteError(message) };
   }
+}
+
+function kvWriteOk(out: KvOut) {
+  if (!out.ok) return false;
+  const result = out.result;
+  if (result === false) return false;
+  if (typeof result === "string" && /^ERR/i.test(result)) {
+    noteError(result);
+    return false;
+  }
+  return true;
 }
 
 function parseStore(raw: string): StoreData | null {
@@ -63,6 +174,50 @@ function parseStore(raw: string): StoreData | null {
   }
 }
 
+function asStore(raw: unknown): StoreData | null {
+  if (typeof raw === "string") return parseStore(raw);
+  if (!raw || typeof raw !== "object") return null;
+  const parsed = raw as StoreData;
+  if (!Array.isArray(parsed.users) || !Array.isArray(parsed.businesses)) {
+    return null;
+  }
+  return parsed;
+}
+
+function parseKvValue(result: unknown) {
+  if (typeof result === "string") {
+    try {
+      return JSON.parse(result) as unknown;
+    } catch {
+      return result;
+    }
+  }
+  return result ?? null;
+}
+
+async function kvGet(key: string) {
+  const out = await kvRun(["GET", key]);
+  if (!out.ok) return null;
+  return parseKvValue(out.result);
+}
+
+async function kvSet(key: string, value: unknown) {
+  const out = await kvRun(["SET", key, JSON.stringify(value)]);
+  return kvWriteOk(out);
+}
+
+function bizKey(id: string) {
+  return `sclxter:biz:${id}`;
+}
+function knowKey(id: string) {
+  return `sclxter:know:${id}`;
+}
+
+function persistRev(data: StoreData | null) {
+  const n = Number(data?.settings?.persistRev);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function readFile(path: string): StoreData | null {
   if (!existsSync(path)) return null;
   try {
@@ -75,96 +230,6 @@ function readFile(path: string): StoreData | null {
 function writeFile(path: string, data: StoreData) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(data), { mode: 0o600 });
-}
-
-function kvResult(out: { result?: unknown } | null) {
-  if (!out) return false;
-  const result = out.result;
-  if (result === false) return false;
-  if (typeof result === "string" && /^ERR/i.test(result)) return false;
-  return true;
-}
-
-function packValue(value: unknown) {
-  const json = JSON.stringify(value);
-  const gz = gzipSync(Buffer.from(json, "utf8"));
-  if (gz.length + 16 < Buffer.byteLength(json, "utf8")) {
-    return `gz:${gz.toString("base64")}`;
-  }
-  return json;
-}
-
-function parseKvValue(result: unknown) {
-  if (typeof result === "string") {
-    if (result.startsWith("gz:")) {
-      try {
-        const json = gunzipSync(Buffer.from(result.slice(3), "base64")).toString(
-          "utf8",
-        );
-        return JSON.parse(json) as unknown;
-      } catch {
-        return null;
-      }
-    }
-    try {
-      return JSON.parse(result) as unknown;
-    } catch {
-      return null;
-    }
-  }
-  if (result && typeof result === "object") return result;
-  return null;
-}
-
-async function kvGet(key: string) {
-  const out = await kvRun(["GET", key]);
-  return parseKvValue(out?.result);
-}
-
-async function kvSet(key: string, value: unknown) {
-  const packed = packValue(value);
-  if (await kvResult(await kvRun(["SET", key, packed]))) return true;
-  if (packed !== JSON.stringify(value)) {
-    return kvResult(await kvRun(["SET", key, JSON.stringify(value)]));
-  }
-  return false;
-}
-
-function asStore(raw: unknown): StoreData | null {
-  if (typeof raw === "string") return parseStore(raw);
-  if (!raw || typeof raw !== "object") return null;
-  const parsed = raw as StoreData;
-  if (!Array.isArray(parsed.users) || !Array.isArray(parsed.businesses)) {
-    return null;
-  }
-  return parsed;
-}
-
-async function readKv(): Promise<StoreData | null> {
-  const core = asStore(await kvGet(KEY));
-  if (!core) return null;
-  const chat = await kvGet(CHAT_KEY);
-  if (chat && typeof chat === "object") {
-    const c = chat as { conversations?: unknown; leads?: unknown };
-    if (Array.isArray(c.conversations)) core.conversations = c.conversations as StoreData["conversations"];
-    if (Array.isArray(c.leads)) core.leads = c.leads as StoreData["leads"];
-  }
-  return core;
-}
-
-async function writeKv(data: StoreData) {
-  const core: StoreData = {
-    ...data,
-    conversations: [],
-    leads: [],
-    supportThreads: [],
-  };
-  const ok = await kvSet(KEY, core);
-  await kvSet(CHAT_KEY, {
-    conversations: data.conversations ?? [],
-    leads: data.leads ?? [],
-  });
-  return ok;
 }
 
 function asThreads(raw: unknown): SupportThread[] | null {
@@ -190,25 +255,92 @@ function mergeThreads(a: SupportThread[] = [], b: SupportThread[] = []) {
 }
 
 async function readKvThreads(): Promise<SupportThread[] | null> {
-  const out = await kvRun(["GET", SUPPORT_KEY]);
-  const result = out?.result;
-  if (typeof result === "string") {
-    try {
-      return asThreads(JSON.parse(result));
-    } catch {
-      return null;
-    }
-  }
-  return asThreads(result);
+  const raw = await kvGet(SUPPORT_KEY);
+  return asThreads(raw);
 }
 
 async function writeKvThreads(threads: SupportThread[]) {
-  const out = await kvRun(["SET", SUPPORT_KEY, JSON.stringify(threads)]);
-  return Boolean(out);
+  return kvSet(SUPPORT_KEY, threads);
+}
+
+async function readKvSplit(): Promise<StoreData | null> {
+  const metaRaw = await kvGet(META_KEY);
+  if (!metaRaw || typeof metaRaw !== "object") return null;
+  const meta = metaRaw as {
+    users?: StoreData["users"];
+    settings?: StoreData["settings"];
+    businessIds?: string[];
+    knowledgeGaps?: StoreData["knowledgeGaps"];
+    otpChallenges?: StoreData["otpChallenges"];
+    conversations?: StoreData["conversations"];
+    leads?: StoreData["leads"];
+  };
+  if (!Array.isArray(meta.users) || !Array.isArray(meta.businessIds)) return null;
+  const businesses: Business[] = [];
+  const knowledge: KnowledgeItem[] = [];
+  for (const id of meta.businessIds) {
+    const row = await kvGet(bizKey(id));
+    if (row && typeof row === "object") businesses.push(row as Business);
+    const notes = await kvGet(knowKey(id));
+    if (Array.isArray(notes)) {
+      knowledge.push(...(notes as KnowledgeItem[]));
+    }
+  }
+  return {
+    users: meta.users,
+    businesses,
+    knowledge,
+    leads: Array.isArray(meta.leads) ? meta.leads : [],
+    conversations: Array.isArray(meta.conversations) ? meta.conversations : [],
+    supportThreads: [],
+    knowledgeGaps: Array.isArray(meta.knowledgeGaps) ? meta.knowledgeGaps : [],
+    otpChallenges: Array.isArray(meta.otpChallenges) ? meta.otpChallenges : [],
+    settings: meta.settings ?? { instructions: [] },
+  };
+}
+
+async function readKvMonolith(): Promise<StoreData | null> {
+  return asStore(await kvGet(KEY));
+}
+
+async function readKv(): Promise<StoreData | null> {
+  const split = await readKvSplit();
+  if (split) return split;
+  return readKvMonolith();
+}
+
+async function writeKvSplit(data: StoreData) {
+  const ids = data.businesses.map((b) => b.id);
+  const meta = {
+    users: data.users,
+    settings: data.settings,
+    businessIds: ids,
+    knowledgeGaps: data.knowledgeGaps ?? [],
+    otpChallenges: data.otpChallenges ?? [],
+    conversations: data.conversations ?? [],
+    leads: data.leads ?? [],
+  };
+  if (!(await kvSet(META_KEY, meta))) return false;
+  const byBiz = new Map<string, KnowledgeItem[]>();
+  for (const item of data.knowledge ?? []) {
+    const list = byBiz.get(item.businessId) ?? [];
+    list.push(item);
+    byBiz.set(item.businessId, list);
+  }
+  for (const b of data.businesses) {
+    if (!(await kvSet(bizKey(b.id), b))) return false;
+    if (!(await kvSet(knowKey(b.id), byBiz.get(b.id) ?? []))) return false;
+  }
+  return true;
+}
+
+async function writeKv(data: StoreData) {
+  if (await writeKvSplit(data)) return true;
+  return kvSet(KEY, data);
 }
 
 async function readBlob(): Promise<StoreData | null> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const token = blobToken();
   if (!token) return null;
   try {
     const { list } = await import("@vercel/blob");
@@ -221,13 +353,14 @@ async function readBlob(): Promise<StoreData | null> {
     });
     if (!res.ok) return null;
     return parseStore(await res.text());
-  } catch {
+  } catch (err) {
+    noteError(err instanceof Error ? `blob read: ${err.message}` : "blob read failed");
     return null;
   }
 }
 
 async function writeBlob(data: StoreData) {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const token = blobToken();
   if (!token) return false;
   try {
     const { put } = await import("@vercel/blob");
@@ -239,13 +372,10 @@ async function writeBlob(data: StoreData) {
       contentType: "application/json",
     });
     return true;
-  } catch {
+  } catch (err) {
+    noteError(err instanceof Error ? `blob write: ${err.message}` : "blob write failed");
     return false;
   }
-}
-
-function onVercel() {
-  return process.env.VERCEL === "1";
 }
 
 function withThreads(data: StoreData | null, extra: SupportThread[] | null) {
@@ -257,12 +387,17 @@ function withThreads(data: StoreData | null, extra: SupportThread[] | null) {
   return data;
 }
 
+function pickNewer(a: StoreData | null, b: StoreData | null) {
+  if (a && b) return persistRev(b) > persistRev(a) ? b : a;
+  return a || b;
+}
+
 export async function readPersistedStore(): Promise<StoreData | null> {
   const extra = await readKvThreads();
   const fromKv = await readKv();
-  if (fromKv) return withThreads(fromKv, extra);
   const fromBlob = await readBlob();
-  if (fromBlob) return withThreads(fromBlob, extra);
+  const chosen = pickNewer(fromKv, fromBlob);
+  if (chosen) return withThreads(chosen, extra);
   if (!onVercel()) {
     const local = readFile(FILE_LOCAL);
     if (local) return withThreads(local, extra);
@@ -285,11 +420,12 @@ export async function readPersistedStore(): Promise<StoreData | null> {
 }
 
 export async function writePersistedStore(data: StoreData): Promise<void> {
+  lastError = "";
   const json = JSON.parse(JSON.stringify(data)) as StoreData;
   json.supportThreads = json.supportThreads ?? [];
   const kv = await writeKv(json);
   await writeKvThreads(json.supportThreads);
-  const blob = kv ? false : await writeBlob(json);
+  const blob = await writeBlob(json);
   let local = false;
   try {
     if (!onVercel()) {
@@ -304,14 +440,54 @@ export async function writePersistedStore(data: StoreData): Promise<void> {
   } catch {
     /* ignore */
   }
-  if (onVercel() && !kv && !blob) {
-    throw new Error("Could not persist shop data.");
+  if (kv || blob || local) return;
+  throw new Error(lastError || "Could not persist shop data.");
+}
+
+export async function persistPing() {
+  lastError = "";
+  const creds = kvCreds();
+  const blob = Boolean(blobToken());
+  if (!creds && !blob) {
+    return {
+      ok: false,
+      error: noteError("kv credentials missing"),
+      env: persistEnvNames(),
+    };
   }
-  if (!onVercel() && !kv && !blob && !local) {
-    throw new Error("Could not persist shop data.");
+  const mark = { t: Date.now() };
+  const kvSetOk = creds ? await kvSet("sclxter:ping", mark) : false;
+  const kvGot = creds ? await kvGet("sclxter:ping") : null;
+  const kvOk =
+    kvSetOk &&
+    Boolean(kvGot) &&
+    typeof kvGot === "object" &&
+    (kvGot as { t?: number }).t === mark.t;
+  let blobOk = false;
+  if (blob) {
+    try {
+      const { put } = await import("@vercel/blob");
+      await put("sclxter-ping.txt", String(mark.t), {
+        access: "private",
+        token: blobToken(),
+        addRandomSuffix: false,
+        allowOverwrite: true,
+        contentType: "text/plain",
+      });
+      blobOk = true;
+    } catch (err) {
+      noteError(err instanceof Error ? `blob write: ${err.message}` : "blob write failed");
+    }
   }
+  return {
+    ok: kvOk || blobOk,
+    kvOk,
+    blobOk,
+    error: lastError || null,
+    env: persistEnvNames(),
+  };
 }
 
 export function persistConfigured() {
-  return Boolean(kvCreds() || process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(kvCreds() || blobToken());
 }

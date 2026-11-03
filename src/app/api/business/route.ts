@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
+import { persistLastError } from "@/lib/persist";
 import { readStore, updateStore } from "@/lib/store";
 import { TONES } from "@/lib/tones";
 import { parseThemeInput } from "@/lib/widget-theme";
@@ -87,8 +88,11 @@ export async function PATCH(request: Request) {
     }
     return row;
   });
-  } catch {
-    return NextResponse.json({ error: "Could not save." }, { status: 503 });
+  } catch (err) {
+    const detail =
+      persistLastError() ||
+      (err instanceof Error ? err.message : "Could not persist shop data.");
+    return NextResponse.json({ error: "Could not save.", detail }, { status: 503 });
   }
 
   const data = await readStore();

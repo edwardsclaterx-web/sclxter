@@ -9,6 +9,8 @@ import { isLeavesakeLogin } from "@/lib/leavesake";
 import { isNorthgateLogin } from "@/lib/northgate";
 import { readStore, updateStore } from "@/lib/store";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const { email, password, terms } = await readLoginBody(request);
   const html = wantsHtml(request);
@@ -57,17 +59,22 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await updateStore((data) => {
-    if (data.users.some((u) => u.email === mail)) return null;
-    const created = {
-      id: id("usr"),
-      email: mail,
-      passwordHash,
-      createdAt: new Date().toISOString(),
-    };
-    data.users.push(created);
-    return created;
-  });
+  let user;
+  try {
+    user = await updateStore((data) => {
+      if (data.users.some((u) => u.email === mail)) return null;
+      const created = {
+        id: id("usr"),
+        email: mail,
+        passwordHash,
+        createdAt: new Date().toISOString(),
+      };
+      data.users.push(created);
+      return created;
+    });
+  } catch {
+    return fail(503, "Could not save.", "save");
+  }
 
   if (!user) {
     return fail(409, "That email already has an account.", "exists");
@@ -77,6 +84,10 @@ export async function POST(request: Request) {
     ? redirectSeeOther("/dashboard")
     : NextResponse.json({ ok: true });
   await setSessionCookie(user.id, createdRes, request);
-  await createBusinessForSignup(user);
+  try {
+    await createBusinessForSignup(user);
+  } catch {
+    return fail(503, "Could not save.", "save");
+  }
   return createdRes;
 }

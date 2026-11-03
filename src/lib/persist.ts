@@ -25,17 +25,27 @@ function kvCreds() {
 async function kvRun(command: unknown[]) {
   const creds = kvCreds();
   if (!creds) return null;
-  const res = await fetch(creds.url, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${creds.token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(command),
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  return (await res.json()) as { result?: unknown };
+  try {
+    const res = await fetch(creds.url, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${creds.token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(command),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text) return { result: "OK" };
+    try {
+      return JSON.parse(text) as { result?: unknown };
+    } catch {
+      return { result: "OK" };
+    }
+  } catch {
+    return null;
+  }
 }
 
 function parseStore(raw: string): StoreData | null {

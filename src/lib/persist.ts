@@ -72,6 +72,7 @@ function bundledEnv() {
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     KV_REST_API_KV_REST_API_URL: process.env.KV_REST_API_KV_REST_API_URL,
     KV_KV_REST_API_URL: process.env.KV_KV_REST_API_URL,
+    KV_REST_API_REST_URL: process.env.KV_REST_API_REST_URL,
     KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     KV_REST_API_KV_REST_API_TOKEN: process.env.KV_REST_API_KV_REST_API_TOKEN,
@@ -79,6 +80,8 @@ function bundledEnv() {
     KV_REST_API_READ_WRITE_TOKEN: process.env.KV_REST_API_READ_WRITE_TOKEN,
     KV_URL: process.env.KV_URL,
     REDIS_URL: process.env.REDIS_URL,
+    KV_REST_API_REDIS_URL: process.env.KV_REST_API_REDIS_URL,
+    UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL,
     STORAGE_URL: process.env.STORAGE_URL,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     VERCEL_BLOB_READ_WRITE_TOKEN: process.env.VERCEL_BLOB_READ_WRITE_TOKEN,
@@ -99,6 +102,19 @@ function pickFromBag(
   return null;
 }
 
+function credsFromRedisUrl(raw: string) {
+  try {
+    const u = new URL(raw);
+    const token = decodeURIComponent(u.password || "");
+    const host = u.hostname;
+    if (!token || !host) return null;
+    if (u.protocol !== "redis:" && u.protocol !== "rediss:") return null;
+    return { url: `https://${host}`, token };
+  } catch {
+    return null;
+  }
+}
+
 function kvCreds() {
   const bag = bundledEnv();
   const url = pickFromBag(bag, [
@@ -106,6 +122,7 @@ function kvCreds() {
     "UPSTASH_REDIS_REST_URL",
     "KV_REST_API_KV_REST_API_URL",
     "KV_KV_REST_API_URL",
+    "KV_REST_API_REST_URL",
   ]);
   const token = pickFromBag(
     bag,
@@ -118,10 +135,28 @@ function kvCreds() {
     ],
     true,
   );
+  if (url && token) {
+    lastUrlKey = url.name;
+    lastTokenKey = token.name;
+    return { url: url.value, token: token.value };
+  }
+  const redis = pickFromBag(bag, [
+    "KV_REST_API_REDIS_URL",
+    "KV_URL",
+    "REDIS_URL",
+    "UPSTASH_REDIS_URL",
+  ]);
+  if (redis) {
+    const derived = credsFromRedisUrl(redis.value);
+    if (derived) {
+      lastUrlKey = `${redis.name} (derived REST)`;
+      lastTokenKey = `${redis.name} (password)`;
+      return derived;
+    }
+  }
   lastUrlKey = url?.name || "";
   lastTokenKey = token?.name || "";
-  if (!url || !token) return null;
-  return { url: url.value, token: token.value };
+  return null;
 }
 
 function blobToken() {

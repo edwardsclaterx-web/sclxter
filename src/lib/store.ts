@@ -194,8 +194,6 @@ export async function updateStore<T>(
       const result = fn(data);
       data.settings = data.settings ?? { instructions: [] };
       data.settings.persistRev = rev + 1;
-      const latest = await readPersistedStore();
-      if (latest && persistRev(latest) !== rev) continue;
       cache = data;
       try {
         await writePersistedStore(normalize(data));

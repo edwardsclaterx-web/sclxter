@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { gunzipSync, gzipSync } from "node:zlib";
 import type { StoreData, SupportThread } from "./types";
 
 const KEY = "sclxter-store";
@@ -84,8 +85,27 @@ function kvResult(out: { result?: unknown } | null) {
   return true;
 }
 
+function packValue(value: unknown) {
+  const json = JSON.stringify(value);
+  const gz = gzipSync(Buffer.from(json, "utf8"));
+  if (gz.length + 16 < Buffer.byteLength(json, "utf8")) {
+    return `gz:${gz.toString("base64")}`;
+  }
+  return json;
+}
+
 function parseKvValue(result: unknown) {
   if (typeof result === "string") {
+    if (result.startsWith("gz:")) {
+      try {
+        const json = gunzipSync(Buffer.from(result.slice(3), "base64")).toString(
+          "utf8",
+        );
+        return JSON.parse(json) as unknown;
+      } catch {
+        return null;
+      }
+    }
     try {
       return JSON.parse(result) as unknown;
     } catch {
@@ -102,7 +122,12 @@ async function kvGet(key: string) {
 }
 
 async function kvSet(key: string, value: unknown) {
-  return kvResult(await kvRun(["SET", key, JSON.stringify(value)]));
+  const packed = packValue(value);
+  if (await kvResult(await kvRun(["SET", key, packed]))) return true;
+  if (packed !== JSON.stringify(value)) {
+    return kvResult(await kvRun(["SET", key, JSON.stringify(value)]));
+  }
+  return false;
 }
 
 function asStore(raw: unknown): StoreData | null {

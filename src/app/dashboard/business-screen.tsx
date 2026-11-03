@@ -291,7 +291,7 @@ export function BusinessScreen({
         </p>
       ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />
-      <div className="dash-grid mt-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
+      <div className="dash-grid mt-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <div className="order-1 min-w-0 w-full max-w-full">
       <aside className="flex min-h-0 flex-col border border-line p-4 lg:min-h-[48rem] lg:p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
@@ -350,7 +350,7 @@ export function BusinessScreen({
       </section>
       </div>
 
-      <div className="order-3 min-w-0 w-full max-w-full space-y-12 lg:order-2">
+      <div className="order-3 min-w-0 w-full max-w-full space-y-12 xl:order-2">
         <section>
           <h1 className="text-2xl font-medium tracking-tight">
             {name || "Business"}
@@ -485,7 +485,7 @@ export function BusinessScreen({
         </section>
       </div>
 
-      <aside className="order-2 flex min-h-[22rem] min-w-0 w-full max-w-full flex-col gap-4 lg:sticky lg:top-8 lg:order-3 lg:h-[calc(100vh-6rem)] lg:min-h-[36rem]">
+      <aside className="order-2 flex min-h-[22rem] min-w-0 w-full max-w-full flex-col gap-4 xl:sticky xl:top-8 xl:order-3 xl:h-[calc(100vh-6rem)] xl:min-h-[36rem]">
         {!admin ? (
           <div className="shrink-0 border border-line px-5 py-3">
             <a href="/contact#support" className="text-sm text-fg">

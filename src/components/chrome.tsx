@@ -180,12 +180,12 @@ export function ProductNav({
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden min-w-0 lg:block">
         <ProductNavLinks {...links} />
       </div>
       <button
         type="button"
-        className="relative z-20 flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] md:hidden"
+        className="relative z-20 flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] lg:hidden"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         aria-controls="site-menu-panel"
@@ -199,7 +199,7 @@ export function ProductNav({
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-black/55 md:hidden"
+            className="fixed inset-0 z-40 bg-black/55 lg:hidden"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
@@ -208,7 +208,7 @@ export function ProductNav({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="fixed inset-y-0 right-0 z-50 flex w-[60vw] flex-col bg-bg px-6 py-5 shadow-[-28px_0_48px_rgba(0,0,0,0.55)] md:hidden"
+            className="fixed inset-y-0 right-0 z-50 flex w-[min(16rem,60vw)] flex-col bg-bg px-6 py-5 shadow-[-28px_0_48px_rgba(0,0,0,0.55)] lg:hidden"
           >
             <div className="flex items-center justify-between">
               <p id={titleId} className="text-xs tracking-[0.22em] text-muted">
@@ -252,7 +252,7 @@ export function SiteHeader({
   showBuy?: boolean;
 }) {
   return (
-    <header className="flex items-center justify-between border-b border-line px-5 py-4 md:px-10">
+    <header className="flex min-w-0 max-w-full items-center justify-between gap-3 border-b border-line px-5 py-4 md:px-10">
       <Wordmark href="/" />
       {right ?? (
         <ProductNav

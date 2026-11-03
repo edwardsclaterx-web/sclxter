@@ -40,14 +40,14 @@ export default async function Home() {
               </Link>
             </div>
           </div>
-          <div className="pointer-events-none absolute inset-x-0 top-1/2 hidden -translate-y-1/2 grid-cols-[minmax(0,calc(50%-24rem))_48rem_minmax(0,1fr)] grid-rows-[auto_auto] lg:grid">
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 hidden -translate-y-1/2 grid-cols-[minmax(0,calc(50%-24rem))_48rem_minmax(0,1fr)] grid-rows-[auto_auto] wide:grid">
             <aside className="flex items-end justify-center px-3">
               <img
                 src="/hero-figure.png"
                 alt=""
                 width={80}
                 height={100}
-                className="h-24 w-auto max-w-full lg:h-[7.5rem]"
+                className="h-24 w-auto max-w-full wide:h-[7.5rem]"
               />
             </aside>
             <div aria-hidden />
@@ -57,7 +57,7 @@ export default async function Home() {
                 alt=""
                 width={120}
                 height={80}
-                className="h-[4.16rem] w-auto lg:h-[4.94rem]"
+                className="h-[4.16rem] w-auto wide:h-[4.94rem]"
               />
             </aside>
             <p className="mt-3 min-h-16 max-w-[8.5rem] justify-self-center text-center font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
@@ -70,7 +70,7 @@ export default async function Home() {
               <span className="whitespace-nowrap">advanced conversations</span>
             </p>
           </div>
-          <div className="grid grid-cols-2 items-end gap-x-6 gap-y-3 px-5 pb-12 lg:hidden">
+          <div className="grid grid-cols-2 items-end gap-x-6 gap-y-3 px-5 pb-12 wide:hidden">
             <div className="flex items-end justify-center">
               <img
                 src="/hero-figure.png"
@@ -95,7 +95,7 @@ export default async function Home() {
             <p className="justify-self-center text-center font-sans text-[13.2px] font-bold leading-[1.2rem] text-fg">
               efficient processing,
               <br />
-              <span className="whitespace-nowrap">advanced conversations</span>
+              advanced conversations
             </p>
           </div>
         </section>

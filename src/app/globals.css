@@ -21,6 +21,7 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --font-sans: var(--font-inter);
+  --breakpoint-wide: 87.5rem;
 }
 
 html {
@@ -88,7 +89,7 @@ a.nav-item.here {
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1279px) {
   .dash-screen {
     max-width: 100%;
     min-width: 0;

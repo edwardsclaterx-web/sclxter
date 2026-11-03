@@ -15,11 +15,43 @@ import { WidgetForm } from "./widget-form";
 
 export const dynamic = "force-dynamic";
 
+function WidgetShell({
+  children,
+  background,
+  outline,
+  color,
+}: {
+  children: React.ReactNode;
+  background: string;
+  outline: string;
+  color?: string;
+}) {
+  return (
+    <div className="box-border h-dvh bg-transparent p-[6px]">
+      <div
+        className="flex h-full min-h-0 flex-col overflow-visible"
+        style={{
+          background,
+          color,
+          border: `3px solid ${outline}`,
+          borderRadius: 24,
+        }}
+      >
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Unavailable({ text }: { text: string }) {
   return (
-    <div className="flex h-dvh items-center justify-center bg-bg p-4 text-center text-sm text-muted">
-      {text}
-    </div>
+    <WidgetShell background="#050505" outline="#222222">
+      <div className="flex h-full items-center justify-center text-center text-sm text-muted">
+        {text}
+      </div>
+    </WidgetShell>
   );
 }
 
@@ -47,7 +79,7 @@ export default async function WidgetPage({
       return <Unavailable text={EMBED_OFF_SITE} />;
     }
     return (
-      <div className="flex h-dvh flex-col bg-bg p-4">
+      <WidgetShell background="#050505" outline="#222222">
         <div className="min-h-0 flex-1">
           <WidgetForm
             publicId={SCLXTER_SITE_ID}
@@ -56,7 +88,7 @@ export default async function WidgetPage({
             from={from || origin}
           />
         </div>
-      </div>
+      </WidgetShell>
     );
   }
 
@@ -84,9 +116,10 @@ export default async function WidgetPage({
   const assistantName = business.appearance?.assistantName || "Assistant";
 
   return (
-    <div
-      className="flex h-dvh flex-col p-4"
-      style={{ background: theme.primary, color: theme.text }}
+    <WidgetShell
+      background={theme.primary}
+      outline={theme.outline}
+      color={theme.text}
     >
       <div className="min-h-0 flex-1">
         <WidgetForm
@@ -97,6 +130,6 @@ export default async function WidgetPage({
           from={from}
         />
       </div>
-    </div>
+    </WidgetShell>
   );
 }

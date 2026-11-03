@@ -3,5 +3,9 @@ export default function WidgetLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="widget-frame h-dvh overflow-hidden">{children}</div>;
+  return (
+    <div className="widget-frame h-dvh overflow-visible bg-transparent">
+      {children}
+    </div>
+  );
 }

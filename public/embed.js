@@ -49,13 +49,10 @@
         ";font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:visible;";
       btn.style.setProperty("border-radius", "20px", "important");
       frameWrap.style.cssText =
-        "position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));max-width:calc(100vw - 24px);border:1px solid " +
-        theme.outline +
-        ";border-radius:24px;background:" +
-        theme.primary +
-        ";overflow:hidden;";
+        "position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));max-width:calc(100vw - 24px);border:0;background:transparent;overflow:visible;";
       iframe.style.cssText =
-        "width:100%;height:100%;border:0;background:" + theme.primary + ";";
+        "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;";
+      iframe.setAttribute("allowtransparency", "true");
     }
 
     paintTheme();

@@ -133,6 +133,7 @@ input[name="message"] {
 
 html:has(.widget-frame),
 html:has(.widget-frame) body {
+  background: transparent !important;
   overflow: hidden;
   scrollbar-gutter: auto;
 }

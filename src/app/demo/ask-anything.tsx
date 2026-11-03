@@ -25,6 +25,10 @@ function readOpen() {
 }
 
 function applyOpen(panel: HTMLElement, btn: HTMLElement, open: boolean) {
+  panel.style.border = "0";
+  panel.style.background = "transparent";
+  panel.style.overflow = "visible";
+  panel.style.borderRadius = "0";
   panel.style.visibility = open ? "visible" : "hidden";
   panel.style.opacity = open ? "1" : "0";
   panel.style.pointerEvents = open ? "auto" : "none";
@@ -73,13 +77,14 @@ function boot() {
   root.style.cssText = `position:fixed;right:20px;bottom:20px;z-index:${LAYER};pointer-events:auto;`;
   const panel = document.createElement("div");
   panel.id = PANEL_ID;
-  panel.style.cssText = `position:absolute;right:0;bottom:60px;width:min(380px, calc(100vw - 32px));height:min(520px, calc(100vh - 96px));border:1px solid #222;border-radius:24px;background:#050505;overflow:hidden;z-index:${LAYER};`;
+  panel.style.cssText = `position:absolute;right:0;bottom:60px;width:min(380px, calc(100vw - 32px));height:min(520px, calc(100vh - 96px));border:0;background:transparent;overflow:visible;z-index:${LAYER};`;
   const iframe = document.createElement("iframe");
   iframe.title = "Ask anything";
   iframe.name = "northgate-ask-frame";
   iframe.src = `/widget/${PUBLIC_ID}?from=${encodeURIComponent(location.origin)}`;
+  iframe.setAttribute("allowtransparency", "true");
   iframe.style.cssText =
-    "width:100%;height:100%;border:0;background:#050505;pointer-events:auto;";
+    "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;pointer-events:auto;";
   panel.appendChild(iframe);
   const btn = document.createElement("button");
   btn.id = BTN_ID;

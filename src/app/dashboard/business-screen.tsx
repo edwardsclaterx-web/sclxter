@@ -504,7 +504,7 @@ export function BusinessScreen({
             <div
               className="flex min-h-0 flex-1 flex-col overflow-hidden p-4"
               style={{
-                border: `1px solid ${theme.outline}`,
+                border: `3px solid ${theme.outline}`,
                 borderRadius: 24,
                 background: theme.primary,
                 color: theme.text,

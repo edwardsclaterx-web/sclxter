@@ -75,8 +75,11 @@ async function readKv(): Promise<StoreData | null> {
 
 async function writeKv(data: StoreData) {
   const out = await kvRun(["SET", KEY, JSON.stringify(data)]);
-  const result = out?.result;
-  return result === "OK" || result === "ok" || result === true;
+  if (!out) return false;
+  const result = out.result;
+  if (result === false) return false;
+  if (typeof result === "string" && /^ERR/i.test(result)) return false;
+  return true;
 }
 
 function asThreads(raw: unknown): SupportThread[] | null {

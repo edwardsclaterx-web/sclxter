@@ -25,10 +25,15 @@ export function persistLastError() {
 export function persistEnvNames() {
   kvCreds();
   blobToken();
+  loadSecrets();
+  const kvLike = Object.keys(process.env)
+    .filter((k) => /KV|UPSTASH|BLOB|REDIS|STORAGE/i.test(k))
+    .sort();
   return {
     urlKey: lastUrlKey || null,
     tokenKey: lastTokenKey || null,
     blobKey: lastBlobKey || null,
+    kvLikeKeys: kvLike,
   };
 }
 
@@ -72,6 +77,9 @@ function bundledEnv() {
     KV_REST_API_KV_REST_API_TOKEN: process.env.KV_REST_API_KV_REST_API_TOKEN,
     KV_KV_REST_API_TOKEN: process.env.KV_KV_REST_API_TOKEN,
     KV_REST_API_READ_WRITE_TOKEN: process.env.KV_REST_API_READ_WRITE_TOKEN,
+    KV_URL: process.env.KV_URL,
+    REDIS_URL: process.env.REDIS_URL,
+    STORAGE_URL: process.env.STORAGE_URL,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     VERCEL_BLOB_READ_WRITE_TOKEN: process.env.VERCEL_BLOB_READ_WRITE_TOKEN,
     VERCEL: process.env.VERCEL,

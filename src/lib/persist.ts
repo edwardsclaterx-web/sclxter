@@ -50,47 +50,65 @@ function isReadOnlyName(name: string) {
   return /READ_ONLY/i.test(name);
 }
 
-function pickEnv(exact: string[], kind: "url" | "token" | "blob") {
+function trimEnv(value: string | undefined) {
+  if (typeof value !== "string") return "";
+  return value.replace(/^\uFEFF/, "").replace(/[\r\n]+$/g, "").trim();
+}
+
+/**
+ * Static process.env.NAME reads so Next.js keeps these in the server
+ * runtime. Dynamic process.env[name] is stripped and looks like
+ * "credentials missing" even when Vercel has the vars.
+ */
+function bundledEnv() {
   loadSecrets();
-  for (const name of exact) {
-    if (kind === "token" && isReadOnlyName(name)) continue;
-    const value = envSecret(name);
-    if (value) return { name, value };
-  }
-  const keys = Object.keys(process.env).sort();
-  for (const name of keys) {
-    if (kind === "token" && isReadOnlyName(name)) continue;
-    const hit = exact.some(
-      (n) => name === n || name.endsWith(`_${n}`) || name.endsWith(n),
-    );
-    if (!hit) continue;
-    const value = envSecret(name);
+  return {
+    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    KV_REST_API_KV_REST_API_URL: process.env.KV_REST_API_KV_REST_API_URL,
+    KV_KV_REST_API_URL: process.env.KV_KV_REST_API_URL,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    KV_REST_API_KV_REST_API_TOKEN: process.env.KV_REST_API_KV_REST_API_TOKEN,
+    KV_KV_REST_API_TOKEN: process.env.KV_KV_REST_API_TOKEN,
+    KV_REST_API_READ_WRITE_TOKEN: process.env.KV_REST_API_READ_WRITE_TOKEN,
+    BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+    VERCEL_BLOB_READ_WRITE_TOKEN: process.env.VERCEL_BLOB_READ_WRITE_TOKEN,
+    VERCEL: process.env.VERCEL,
+  };
+}
+
+function pickFromBag(
+  bag: Record<string, string | undefined>,
+  names: string[],
+  skipReadOnly = false,
+) {
+  for (const name of names) {
+    if (skipReadOnly && isReadOnlyName(name)) continue;
+    const value = trimEnv(bag[name]);
     if (value) return { name, value };
   }
   return null;
 }
 
 function kvCreds() {
-  const url = pickEnv(
-    [
-      "KV_REST_API_URL",
-      "UPSTASH_REDIS_REST_URL",
-      "KV_REST_API_KV_REST_API_URL",
-      "KV_KV_REST_API_URL",
-      "UPSTASH_REDIS_KV_REST_API_URL",
-    ],
-    "url",
-  );
-  const token = pickEnv(
+  const bag = bundledEnv();
+  const url = pickFromBag(bag, [
+    "KV_REST_API_URL",
+    "UPSTASH_REDIS_REST_URL",
+    "KV_REST_API_KV_REST_API_URL",
+    "KV_KV_REST_API_URL",
+  ]);
+  const token = pickFromBag(
+    bag,
     [
       "KV_REST_API_TOKEN",
       "UPSTASH_REDIS_REST_TOKEN",
       "KV_REST_API_KV_REST_API_TOKEN",
       "KV_KV_REST_API_TOKEN",
       "KV_REST_API_READ_WRITE_TOKEN",
-      "UPSTASH_REDIS_REST_TOKEN_READ_WRITE",
     ],
-    "token",
+    true,
   );
   lastUrlKey = url?.name || "";
   lastTokenKey = token?.name || "";
@@ -99,16 +117,16 @@ function kvCreds() {
 }
 
 function blobToken() {
-  const found = pickEnv(
-    ["BLOB_READ_WRITE_TOKEN", "VERCEL_BLOB_READ_WRITE_TOKEN"],
-    "blob",
-  );
+  const found = pickFromBag(bundledEnv(), [
+    "BLOB_READ_WRITE_TOKEN",
+    "VERCEL_BLOB_READ_WRITE_TOKEN",
+  ]);
   lastBlobKey = found?.name || "";
   return found?.value || "";
 }
 
 function onVercel() {
-  return envSecret("VERCEL") === "1";
+  return trimEnv(bundledEnv().VERCEL) === "1";
 }
 
 type KvOut = { ok: boolean; result?: unknown; error?: string; status?: number };

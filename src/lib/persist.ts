@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { redisCommand } from "./redis-kv";
 import { envSecret, loadSecrets } from "./secrets";
 import type { Business, KnowledgeItem, StoreData, SupportThread } from "./types";
 
@@ -41,6 +42,7 @@ export function sanitizePersistError(raw: string) {
   return raw
     .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
     .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+/g, "[redacted]")
+    .replace(/rediss?:\/\/[^\s"'\\]+/gi, "[redis-url]")
     .replace(/https?:\/\/[^\s"'\\]+/gi, "[url]")
     .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "[redacted]")
     .slice(0, 280);
@@ -115,7 +117,11 @@ function credsFromRedisUrl(raw: string) {
   }
 }
 
-function kvCreds() {
+type KvCreds =
+  | { mode: "rest"; url: string; token: string }
+  | { mode: "redis"; redisUrl: string; rest?: { url: string; token: string } };
+
+function kvCreds(): KvCreds | null {
   const bag = bundledEnv();
   const url = pickFromBag(bag, [
     "KV_REST_API_URL",
@@ -138,7 +144,7 @@ function kvCreds() {
   if (url && token) {
     lastUrlKey = url.name;
     lastTokenKey = token.name;
-    return { url: url.value, token: token.value };
+    return { mode: "rest", url: url.value, token: token.value };
   }
   const redis = pickFromBag(bag, [
     "KV_REST_API_REDIS_URL",
@@ -147,12 +153,13 @@ function kvCreds() {
     "UPSTASH_REDIS_URL",
   ]);
   if (redis) {
-    const derived = credsFromRedisUrl(redis.value);
-    if (derived) {
-      lastUrlKey = `${redis.name} (derived REST)`;
-      lastTokenKey = `${redis.name} (password)`;
-      return derived;
-    }
+    lastUrlKey = `${redis.name} (redis protocol)`;
+    lastTokenKey = `${redis.name} (password)`;
+    return {
+      mode: "redis",
+      redisUrl: redis.value,
+      rest: credsFromRedisUrl(redis.value) ?? undefined,
+    };
   }
   lastUrlKey = url?.name || "";
   lastTokenKey = token?.name || "";
@@ -174,20 +181,17 @@ function onVercel() {
 
 type KvOut = { ok: boolean; result?: unknown; error?: string; status?: number };
 
-async function kvRun(command: unknown[]): Promise<KvOut> {
-  const creds = kvCreds();
-  if (!creds) {
-    return { ok: false, error: noteError("kv credentials missing") };
-  }
+async function kvRest(url: string, token: string, command: unknown[]): Promise<KvOut> {
   try {
-    const res = await fetch(creds.url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${creds.token}`,
+        authorization: `Bearer ${token}`,
         "content-type": "application/json",
       },
       body: JSON.stringify(command),
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     const text = await res.text();
     let parsed: { result?: unknown; error?: string } = {};
@@ -204,11 +208,43 @@ async function kvRun(command: unknown[]): Promise<KvOut> {
         `HTTP ${res.status}`;
       return { ok: false, error: noteError(err), status: res.status };
     }
+    lastError = "";
     return { ok: true, result: parsed.result, status: res.status };
   } catch (err) {
     const message = err instanceof Error ? err.message : "kv fetch failed";
-    return { ok: false, error: noteError(message) };
+    const cause =
+      err instanceof Error && err.cause instanceof Error ? err.cause.message : "";
+    return { ok: false, error: noteError(cause ? `${message}: ${cause}` : message) };
   }
+}
+
+async function kvRun(command: unknown[]): Promise<KvOut> {
+  const creds = kvCreds();
+  if (!creds) {
+    return { ok: false, error: noteError("kv credentials missing") };
+  }
+  if (creds.mode === "rest") {
+    return kvRest(creds.url, creds.token, command);
+  }
+  const redisOut = await redisCommand(creds.redisUrl, command);
+  if (redisOut.ok) {
+    lastError = "";
+    return { ok: true, result: redisOut.result };
+  }
+  const redisErr = noteError(redisOut.error);
+  if (creds.rest) {
+    const restOut = await kvRest(creds.rest.url, creds.rest.token, command);
+    if (restOut.ok) {
+      lastUrlKey = "KV_REST_API_REDIS_URL (derived REST)";
+      return restOut;
+    }
+    return {
+      ok: false,
+      error: noteError(`${redisErr}; rest ${restOut.error || "failed"}`),
+      status: restOut.status,
+    };
+  }
+  return { ok: false, error: redisErr };
 }
 
 function kvWriteOk(out: KvOut) {

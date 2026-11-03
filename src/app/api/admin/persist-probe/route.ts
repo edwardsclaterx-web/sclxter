@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { isAdmin } from "@/lib/access";
+import { getSessionUser } from "@/lib/auth";
 import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "@/lib/leavesake";
 import {
   persistEnvNames,
@@ -29,6 +31,10 @@ export async function GET(request: Request) {
   };
 
   if (cycle) {
+    const user = await getSessionUser();
+    if (!user || !isAdmin(user)) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
     try {
     const beforeStore = await readStore();
     const shop =

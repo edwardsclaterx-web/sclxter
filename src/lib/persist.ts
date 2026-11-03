@@ -7,6 +7,7 @@ import { join } from "node:path";
 import type { StoreData, SupportThread } from "./types";
 
 const KEY = "sclxter-store";
+const CHAT_KEY = "sclxter-chat";
 const SUPPORT_KEY = "sclxter-support-threads";
 const FILE_LOCAL = join(process.cwd(), "data", "store.json");
 const FILE_TMP = join(tmpdir(), "sclxter-store.json");
@@ -75,21 +76,70 @@ function writeFile(path: string, data: StoreData) {
   writeFileSync(path, JSON.stringify(data), { mode: 0o600 });
 }
 
-async function readKv(): Promise<StoreData | null> {
-  const out = await kvRun(["GET", KEY]);
-  const result = out?.result;
-  if (typeof result === "string") return parseStore(result);
-  if (result && typeof result === "object") return result as StoreData;
-  return null;
-}
-
-async function writeKv(data: StoreData) {
-  const out = await kvRun(["SET", KEY, JSON.stringify(data)]);
+function kvResult(out: { result?: unknown } | null) {
   if (!out) return false;
   const result = out.result;
   if (result === false) return false;
   if (typeof result === "string" && /^ERR/i.test(result)) return false;
   return true;
+}
+
+function parseKvValue(result: unknown) {
+  if (typeof result === "string") {
+    try {
+      return JSON.parse(result) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (result && typeof result === "object") return result;
+  return null;
+}
+
+async function kvGet(key: string) {
+  const out = await kvRun(["GET", key]);
+  return parseKvValue(out?.result);
+}
+
+async function kvSet(key: string, value: unknown) {
+  return kvResult(await kvRun(["SET", key, JSON.stringify(value)]));
+}
+
+function asStore(raw: unknown): StoreData | null {
+  if (typeof raw === "string") return parseStore(raw);
+  if (!raw || typeof raw !== "object") return null;
+  const parsed = raw as StoreData;
+  if (!Array.isArray(parsed.users) || !Array.isArray(parsed.businesses)) {
+    return null;
+  }
+  return parsed;
+}
+
+async function readKv(): Promise<StoreData | null> {
+  const core = asStore(await kvGet(KEY));
+  if (!core) return null;
+  const chat = await kvGet(CHAT_KEY);
+  if (chat && typeof chat === "object") {
+    const c = chat as { conversations?: unknown; leads?: unknown };
+    if (Array.isArray(c.conversations)) core.conversations = c.conversations as StoreData["conversations"];
+    if (Array.isArray(c.leads)) core.leads = c.leads as StoreData["leads"];
+  }
+  return core;
+}
+
+async function writeKv(data: StoreData) {
+  const core: StoreData = {
+    ...data,
+    conversations: [],
+    leads: [],
+    supportThreads: [],
+  };
+  const ok = await kvSet(KEY, core);
+  await kvSet(CHAT_KEY, {
+    conversations: data.conversations ?? [],
+    leads: data.leads ?? [],
+  });
+  return ok;
 }
 
 function asThreads(raw: unknown): SupportThread[] | null {

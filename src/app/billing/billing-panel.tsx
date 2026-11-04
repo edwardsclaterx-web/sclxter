@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { formatRemaining, remainingMs } from "@/lib/cover";
+import { RedeemForm } from "@/app/buy/redeem-form";
 
 const SETUP = 299.99;
 const MONTH = 74.99;
@@ -109,6 +110,15 @@ export function BillingPanel({
             live assistant stays off until cover is current.
           </p>
         )}
+      </section>
+
+      <section>
+        <h2 className="text-xl font-medium tracking-tight">Have a code?</h2>
+        <p className="mt-3 text-sm leading-7 text-muted">
+          A valid unused code skips card payment and adds cover on this
+          account.
+        </p>
+        <RedeemForm />
       </section>
 
       <section>

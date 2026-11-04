@@ -303,6 +303,28 @@ async function kvSet(key: string, value: unknown) {
   return kvWriteOk(out);
 }
 
+async function kvDel(key: string) {
+  const out = await kvRun(["DEL", key]);
+  return kvWriteOk(out);
+}
+
+export async function persistKvGet(key: string) {
+  return kvGet(key);
+}
+
+export async function persistKvSet(key: string, value: unknown) {
+  return kvSet(key, value);
+}
+
+export async function persistKvDel(key: string) {
+  return kvDel(key);
+}
+
+export async function persistKvSetNx(key: string, value: unknown) {
+  const out = await kvRun(["SET", key, JSON.stringify(value), "NX"]);
+  return out.ok && out.result === "OK";
+}
+
 function bizKey(id: string) {
   return `sclxter:biz:${id}`;
 }

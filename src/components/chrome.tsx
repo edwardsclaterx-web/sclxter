@@ -46,6 +46,7 @@ function ProductNavLinks({
     pathname === "/login" ||
     pathname === "/signup";
   const onBilling = pathname === "/billing" || pathname.startsWith("/billing/");
+  const onBuy = pathname === "/buy";
   const onMessages = pathname === "/dashboard/messages" || pathname.startsWith("/dashboard/messages/");
   const onBusinesses =
     pathname === "/dashboard/businesses" ||
@@ -108,9 +109,14 @@ function ProductNavLinks({
         </>
       ) : null}
       {billing ? (
-        <Link href="/billing" className={navClass(undefined, onBilling)}>
-          Billing
-        </Link>
+        <>
+          <Link href="/buy" className="nav-item">
+            Buy
+          </Link>
+          <Link href="/billing" className={navClass(undefined, onBilling)}>
+            Billing
+          </Link>
+        </>
       ) : null}
       {signedIn || admin ? (
         <Link href="/account" className={navClass(undefined, onAccount)}>

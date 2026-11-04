@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { formatHadSclxter } from "@/lib/cover";
+import { FreeCodesPanel } from "./free-codes-panel";
 
 type Row = {
   seq: number;
@@ -113,6 +114,7 @@ export function BusinessesList({ rows }: { rows: Row[] }) {
           </table>
         </div>
       )}
+      <FreeCodesPanel />
     </main>
   );
 }

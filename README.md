@@ -27,6 +27,7 @@ App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 - Demo `/demo` — fictional Northgate Barbers (not the homepage)
 - FAQ `/faq` and Contact `/contact` (`sclxter@outlook.com`)
 - Privacy `/privacy`, Terms `/terms`, DPA `/dpa` (plain English, UK GDPR-flavoured; not legal advice)
+- Admin free codes: Businesses → Free codes. Buyers: sign in, then Buy (or Billing) → Have a code?
 
 In this environment the server also reads `GROQ_API_KEY` from the private secrets file if `.env.local` is empty.
 

@@ -110,7 +110,7 @@ function ProductNavLinks({
       ) : null}
       {billing ? (
         <>
-          <Link href="/buy" className="nav-item">
+          <Link href="/buy" className={navClass(undefined, onBuy)}>
             Buy
           </Link>
           <Link href="/billing" className={navClass(undefined, onBilling)}>
@@ -127,7 +127,7 @@ function ProductNavLinks({
           <Link href="/account" className={navClass(undefined, onAccount)}>
             Account
           </Link>
-          <Link href="/buy" className="nav-item">
+          <Link href="/buy" className={navClass(undefined, onBuy)}>
             Buy
           </Link>
         </>

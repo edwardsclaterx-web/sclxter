@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import { corsAllow, publicEmbedGate, readEmbedFrom } from "@/lib/embed-host";
 import { readStore } from "@/lib/store";
 import { normalizeTheme } from "@/lib/widget-theme";
@@ -42,6 +45,7 @@ export async function GET(
     },
     theme: normalizeTheme(business.appearance?.theme),
   });
-  res.headers.set("Cache-Control", "no-store");
+  res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+  res.headers.set("Pragma", "no-cache");
   return cors(res, pageOrigin);
 }

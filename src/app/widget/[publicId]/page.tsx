@@ -67,7 +67,12 @@ export default async function WidgetPage({
   searchParams,
 }: {
   params: Promise<{ publicId: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    outline?: string;
+    primary?: string;
+    text?: string;
+  }>;
 }) {
   const { publicId } = await params;
   const q = await searchParams;

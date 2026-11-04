@@ -8,7 +8,6 @@ import type { Business, ChatMessage, KnowledgeItem } from "./types";
 const MODEL = "openai/gpt-oss-20b";
 const HISTORY = 16;
 const RETRIEVE_CHARS = 3200;
-const REPLY_LIMIT = 500;
 export { CLARIFY } from "./chat-copy";
 
 function client() {
@@ -67,7 +66,7 @@ Answer only about this website or this business. Do not use general knowledge at
 If they ask about something unrelated, do not answer it. Use the required unrelated reply. Do not add extra facts.
 If the meaning of an on-topic question is unclear, ask one short clarifying question instead of guessing. Do not invent facts.
 Sound like a normal helpful assistant. Natural sentences.
-Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points, still useful.
+Be concise. Aim for a short answer. Go longer when the question genuinely needs it. Never pad, ramble, or cut the answer short.
 The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real on-topic questions get a real answer, not a greeting.
 Never say you are busy, to try again, or that something went wrong.`;
 
@@ -460,25 +459,6 @@ function stripUnknownLinks(text: string, notes: string) {
   return out.replace(/[ \t]{2,}/g, " ").replace(/ \./g, ".").trim();
 }
 
-function capReply(text: string) {
-  const trimmed = text.trim();
-  if (!trimmed) return trimmed;
-  if (isRequiredVerbatim(trimmed) || trimmed.length <= REPLY_LIMIT) return trimmed;
-  const prefix = trimmed.match(/^((?:\[\[(?:LEAD|GAP)\]\]\s*)*)/)?.[1] ?? "";
-  const body = trimmed.slice(prefix.length);
-  const room = REPLY_LIMIT - prefix.length;
-  if (body.length <= room) return trimmed;
-  const cut = body.slice(0, Math.max(0, room));
-  const breakAt = Math.max(
-    cut.lastIndexOf(". "),
-    cut.lastIndexOf(".\n"),
-    cut.lastIndexOf("\n"),
-    cut.lastIndexOf(" "),
-  );
-  const clipped = (breakAt > 40 ? cut.slice(0, breakAt + 1) : cut).trim();
-  return `${prefix}${clipped}`;
-}
-
 export async function answerChat(opts: {
   business?: Business;
   knowledge?: KnowledgeItem[];
@@ -554,7 +534,7 @@ export async function answerChat(opts: {
     const completion = await groq.chat.completions.create({
       model: MODEL,
       temperature: opts.site ? 0.4 : 0.2,
-      max_tokens: 220,
+      max_tokens: 2048,
       reasoning_effort: "low",
       reasoning_format: "hidden",
       messages: [{ role: "system", content: system }, ...history],
@@ -581,7 +561,7 @@ export async function answerChat(opts: {
   if (!opts.site) {
     content = stripUnknownLinks(content, retrievedNotes);
   }
-  return capReply(content || CLARIFY);
+  return (content || CLARIFY).trim();
 }
 
 export function parseLeadFromReply(reply: string) {

@@ -19,26 +19,39 @@
     var hostId = "sclxter-ask-host-" + id;
     if (document.getElementById(hostId)) return;
 
-    var theme = { outline: "#222222", primary: "#ffffff", text: "#000000" };
+    function hex(v, fallback) {
+      return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
+    }
 
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.setAttribute("aria-label", "Ask anything");
-    btn.textContent = "Ask anything";
-
-    var frameWrap = document.createElement("div");
-    frameWrap.id = hostId + "-panel";
-    var iframe = document.createElement("iframe");
-    iframe.title = "Ask anything";
-    iframe.name = "sclxter-ask-frame-" + id;
-    iframe.src =
+    fetch(
       origin +
-      "/widget/" +
-      encodeURIComponent(id) +
-      "?from=" +
-      encodeURIComponent(pageOrigin);
+        "/api/widget/" +
+        encodeURIComponent(id) +
+        "?from=" +
+        encodeURIComponent(pageOrigin),
+      { cache: "no-store" },
+    )
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (d) {
+        if (!d || d.live === false) return;
+        if (document.getElementById(hostId)) return;
+        var t = d.theme || (d.appearance && d.appearance.theme) || {};
+        var theme = {
+          outline: hex(t.outline, "#222222"),
+          primary: hex(t.primary, "#ffffff"),
+          text: hex(t.text, "#000000"),
+        };
+        mount(theme);
+      })
+      .catch(function () {});
 
-    function paintTheme() {
+    function mount(theme) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("aria-label", "Ask anything");
+      btn.textContent = "Ask anything";
       btn.style.cssText =
         "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;box-sizing:border-box;border:2px solid " +
         theme.outline +
@@ -48,87 +61,78 @@
         theme.text +
         ";font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;appearance:none;-webkit-appearance:none;overflow:visible;";
       btn.style.setProperty("border-radius", "20px", "important");
+
+      var frameWrap = document.createElement("div");
+      frameWrap.id = hostId + "-panel";
       frameWrap.style.cssText =
         "position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));max-width:calc(100vw - 24px);border:0;background:transparent;overflow:visible;";
+
+      var iframe = document.createElement("iframe");
+      iframe.title = "Ask anything";
+      iframe.name = "sclxter-ask-frame-" + id;
+      iframe.setAttribute("allowtransparency", "true");
       iframe.style.cssText =
         "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;";
-      iframe.setAttribute("allowtransparency", "true");
-    }
-
-    paintTheme();
-
-    fetch(
-      origin +
-        "/api/widget/" +
+      iframe.src =
+        origin +
+        "/widget/" +
         encodeURIComponent(id) +
         "?from=" +
-        encodeURIComponent(pageOrigin),
-    )
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (d) {
-        if (!d || d.live === false) {
-          btn.style.display = "none";
-          frameWrap.style.display = "none";
-          return;
+        encodeURIComponent(pageOrigin) +
+        "&outline=" +
+        encodeURIComponent(theme.outline) +
+        "&primary=" +
+        encodeURIComponent(theme.primary) +
+        "&text=" +
+        encodeURIComponent(theme.text);
+
+      var openKey = "sclxter:ask:" + id + ":open";
+      function readOpen() {
+        try {
+          return sessionStorage.getItem(openKey) === "1";
+        } catch (e) {
+          return false;
         }
-        var t = d.theme || (d.appearance && d.appearance.theme);
-        if (!t) return;
-        if (t.outline) theme.outline = t.outline;
-        if (t.primary) theme.primary = t.primary;
-        if (t.text) theme.text = t.text;
-        paintTheme();
-      })
-      .catch(function () {});
-
-    var openKey = "sclxter:ask:" + id + ":open";
-    function readOpen() {
-      try {
-        return sessionStorage.getItem(openKey) === "1";
-      } catch (e) {
-        return false;
       }
+
+      function applyOpen(open) {
+        frameWrap.style.visibility = open ? "visible" : "hidden";
+        frameWrap.style.opacity = open ? "1" : "0";
+        frameWrap.style.pointerEvents = open ? "auto" : "none";
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.textContent = open ? "Minimise" : "Ask anything";
+        btn.setAttribute("aria-label", open ? "Minimise" : "Ask anything");
+        btn.style.setProperty("border-radius", "20px", "important");
+        try {
+          sessionStorage.setItem(openKey, open ? "1" : "0");
+        } catch (e) {}
+      }
+
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyOpen(btn.getAttribute("aria-expanded") !== "true");
+      });
+
+      var host = document.createElement("div");
+      host.id = hostId;
+      host.addEventListener("mousedown", function (e) {
+        e.stopPropagation();
+      });
+      host.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+
+      var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
+      var reset = document.createElement("style");
+      reset.textContent =
+        ":host{all:initial}*,*::before,*::after{box-sizing:border-box}";
+      root.appendChild(reset);
+      frameWrap.appendChild(iframe);
+      root.appendChild(frameWrap);
+      root.appendChild(btn);
+      document.body.appendChild(host);
+      applyOpen(readOpen());
     }
-
-    function applyOpen(open) {
-      frameWrap.style.visibility = open ? "visible" : "hidden";
-      frameWrap.style.opacity = open ? "1" : "0";
-      frameWrap.style.pointerEvents = open ? "auto" : "none";
-      btn.setAttribute("aria-expanded", open ? "true" : "false");
-      btn.textContent = open ? "Minimise" : "Ask anything";
-      btn.setAttribute("aria-label", open ? "Minimise" : "Ask anything");
-      btn.style.setProperty("border-radius", "20px", "important");
-      try {
-        sessionStorage.setItem(openKey, open ? "1" : "0");
-      } catch (e) {}
-    }
-
-    applyOpen(readOpen());
-
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      applyOpen(btn.getAttribute("aria-expanded") !== "true");
-    });
-
-    var host = document.createElement("div");
-    host.id = hostId;
-    host.addEventListener("mousedown", function (e) {
-      e.stopPropagation();
-    });
-    host.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-
-    var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
-    var reset = document.createElement("style");
-    reset.textContent =
-      ":host{all:initial}*,*::before,*::after{box-sizing:border-box}";
-    root.appendChild(reset);
-    frameWrap.appendChild(iframe);
-    root.appendChild(frameWrap);
-    root.appendChild(btn);
-    document.body.appendChild(host);
   } catch (e) {}
 })();

@@ -94,6 +94,13 @@ function isGreeting(content: string) {
   return /^(hi|hello|hey)[\s!]*$/.test(norm(content));
 }
 
+function isClearlyOffTopic(content: string) {
+  const t = norm(content);
+  return /\b(world cup|football|soccer|premier league|nba|nfl|mlb|weather|politics|election|homework|recipe|stock market|bitcoin|who won|news)\b/.test(
+    t,
+  );
+}
+
 function isGreetingOnlyReply(text: string) {
   return /^(hi|hello|hey)[\s!.,]*(what can i help( you)? with[?]?)?$/.test(
     norm(text),
@@ -448,6 +455,9 @@ export async function answerChat(opts: {
     ? SCLXTER_CONTACT
     : contactLine(opts.business!);
   if (countTrailingUnrelated(opts.messages, related) >= 5) {
+    return offTopicLine(contact);
+  }
+  if (isClearlyOffTopic(asked) && !related(asked) && !looksLikeContinuation(asked)) {
     return offTopicLine(contact);
   }
 

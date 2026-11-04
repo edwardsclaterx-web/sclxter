@@ -78,6 +78,7 @@ function readLocal(): LocalBag {
 }
 
 function writeLocal(bag: LocalBag) {
+  if (persistConfigured()) return;
   mkdirSync(dirname(FILE_LOCAL), { recursive: true });
   writeFileSync(FILE_LOCAL, JSON.stringify(bag), { mode: 0o600 });
 }

@@ -28,10 +28,19 @@ export function ThemePicker({
   error?: string | null;
 }) {
   const [open, setOpen] = useState<keyof WidgetTheme | null>(null);
+  const [blockedNote, setBlockedNote] = useState<string | null>(null);
 
   function pick(key: keyof WidgetTheme, colour: string) {
-    if (key === "primary" && colour === theme.text) return;
-    if (key === "text" && colour === theme.primary) return;
+    if (
+      (key === "primary" && colour === theme.text) ||
+      (key === "text" && colour === theme.primary)
+    ) {
+      setBlockedNote(
+        "You cannot select the same primary colour and text colour.",
+      );
+      return;
+    }
+    setBlockedNote(null);
     onChange({ ...theme, [key]: colour });
   }
 
@@ -74,7 +83,6 @@ export function ThemePicker({
                   <button
                     key={`${open}-${c}`}
                     type="button"
-                    disabled={blocked}
                     aria-label={`${row?.label ?? open} ${c}`}
                     aria-pressed={selected}
                     title={
@@ -113,7 +121,9 @@ export function ThemePicker({
           </div>
         )}
       </div>
-      {error && <p className="mt-3 text-sm text-muted">{error}</p>}
+      {(error || blockedNote) && (
+        <p className="mt-3 text-sm text-muted">{error || blockedNote}</p>
+      )}
     </section>
   );
 }

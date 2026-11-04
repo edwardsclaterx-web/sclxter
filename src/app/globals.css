@@ -28,6 +28,7 @@ html {
   overflow-y: scroll;
   overflow-x: auto;
   scrollbar-gutter: stable;
+  scroll-padding-top: 4.75rem;
 }
 
 html,

@@ -344,7 +344,7 @@ export function BusinessScreen({
       </aside>
       {notepadOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-bg/40 p-3 md:p-0"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-bg/40 p-3 md:p-0"
           onClick={() => setNotepadOpen(false)}
         >
           <div
@@ -556,7 +556,7 @@ export function BusinessScreen({
         </section>
       </div>
 
-      <aside className="order-2 flex min-h-[22rem] min-w-0 w-full max-w-full flex-col gap-4 xl:sticky xl:top-8 xl:order-3 xl:h-[calc(100vh-6rem)] xl:min-h-[36rem]">
+      <aside className="order-2 flex min-h-[22rem] min-w-0 w-full max-w-full flex-col gap-4 xl:sticky xl:top-[4.75rem] xl:order-3 xl:h-[calc(100vh-6.5rem)] xl:min-h-[36rem]">
         {!admin ? (
           <div className="shrink-0 border border-line px-5 py-3">
             <a href="/contact#support" className="text-sm text-fg">

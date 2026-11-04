@@ -8,7 +8,7 @@ export function DashHeader({
   purchaser?: boolean;
 }) {
   return (
-    <header className="flex min-w-0 max-w-full items-center justify-between gap-3 overflow-x-auto border-b border-line px-5 py-4 md:px-10">
+    <header className="sticky top-0 z-50 flex min-w-0 max-w-full items-center justify-between gap-3 border-b border-line bg-bg px-5 py-4 md:px-10">
       <Wordmark href="/" />
       <ProductNav
         signedIn

@@ -42,7 +42,7 @@ export function InstructionsBanner({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-bg/40"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-bg/40"
           onClick={() => setOpen(false)}
         >
           <div

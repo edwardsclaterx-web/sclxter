@@ -68,6 +68,7 @@ export function BusinessScreen({
   const [scanNote, setScanNote] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [notepadOpen, setNotepadOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pwNote, setPwNote] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
@@ -227,6 +228,8 @@ export function BusinessScreen({
       const data = (await res.json()) as {
         error?: string;
         pages?: number;
+        found?: number;
+        full?: number;
         business?: ClientBusiness;
       };
       if (!res.ok) {
@@ -237,7 +240,13 @@ export function BusinessScreen({
         draft.current = { ...draft.current, notepad: data.business.notepad };
         setNotepad(data.business.notepad);
       }
-      setScanNote("Scan complete.");
+      const found = typeof data.found === "number" ? data.found : data.pages;
+      const full = typeof data.full === "number" ? data.full : data.pages;
+      setScanNote(
+        found != null && full != null
+          ? `Scan complete. ${found} pages found, ${full} read in full.`
+          : "Scan complete.",
+      );
       router.refresh();
     } catch {
       setScanError(SCAN_FAIL);
@@ -268,6 +277,20 @@ export function BusinessScreen({
     }
   }
 
+  useEffect(() => {
+    if (!notepadOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setNotepadOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [notepadOpen]);
+
   const snippet = `<script src="https://sclxter.com/embed.js" data-id="${business.publicId}" async></script>`;
 
   const testBlocked = businessReadyForTest({
@@ -294,9 +317,18 @@ export function BusinessScreen({
       <div className="dash-grid mt-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <div className="order-1 min-w-0 w-full max-w-full">
       <aside className="flex min-h-0 flex-col border border-line p-4 lg:min-h-[48rem] lg:p-5">
-        <h2 className="text-xl font-bold tracking-tight text-fg">
-          Your website&apos;s data
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-xl font-bold tracking-tight text-fg">
+            Your website&apos;s data
+          </h2>
+          <button
+            type="button"
+            className="shrink-0 border border-line px-3 py-1.5 text-sm text-fg"
+            onClick={() => setNotepadOpen(true)}
+          >
+            Expand
+          </button>
+        </div>
         <p className="mt-2 text-sm text-muted">{NOTEPAD_NOTICE}</p>
         <Textarea
           className="mt-3 min-h-[16rem] flex-1 text-[0.9375rem] leading-6 lg:min-h-[32rem]"
@@ -310,6 +342,45 @@ export function BusinessScreen({
         </p>
         <FieldError>{saveError}</FieldError>
       </aside>
+      {notepadOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-bg/40 p-3 md:p-0"
+          onClick={() => setNotepadOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-labelledby="notepad-title"
+            className="relative flex h-[90dvh] w-[94vw] max-w-none flex-col overflow-hidden border border-line bg-bg p-5 md:h-[82vh] md:w-[82vw] md:p-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center text-lg text-fg"
+              onClick={() => setNotepadOpen(false)}
+            >
+              X
+            </button>
+            <h2
+              id="notepad-title"
+              className="pr-12 text-2xl font-bold tracking-wide text-fg"
+            >
+              Your website&apos;s data
+            </h2>
+            <Textarea
+              className="mt-4 min-h-0 flex-1 resize-none text-[0.9375rem] leading-6"
+              value={notepad}
+              onChange={(e) => bump({ notepad: e.target.value })}
+              placeholder="Scan website to fill"
+              aria-label="Your website's data"
+            />
+            <p className="mt-3 text-sm text-muted">
+              You can edit all of the information. Changes still autosave.
+            </p>
+            <FieldError>{saveError}</FieldError>
+          </div>
+        </div>
+      ) : null}
       <section className="mt-8 border border-line p-4 lg:p-5">
         <h2 className="text-xl font-bold tracking-tight text-fg">
           Scan website

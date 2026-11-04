@@ -8,13 +8,23 @@ import { resolveWebsiteUrl, scanSite } from "@/lib/scan";
 import { readStore, updateStore } from "@/lib/store";
 
 function compilePages(
-  pages: { url: string; title: string; body: string }[],
+  pages: { url: string; title: string; body: string; mode?: "full" | "index" }[],
   scannedAt: string,
+  stats: { found: number; full: number },
 ) {
-  const parts = pages.map(
+  const full = pages.filter((p) => p.mode !== "index");
+  const indexed = pages.filter((p) => p.mode === "index");
+  const parts = full.map(
     (p) => `### ${p.title}\nSource: ${p.url}\n${p.body}`.trim(),
   );
-  return `## Scan ${scannedAt}\n\n${parts.join("\n\n")}`;
+  if (indexed.length) {
+    parts.push("### Other pages on this site");
+    for (const p of indexed) {
+      const summary = p.body ? `\n${p.body}` : "";
+      parts.push(`${p.title}\nSource: ${p.url}${summary}`.trim());
+    }
+  }
+  return `## Scan ${scannedAt}\n${stats.found} pages found, ${stats.full} read in full.\n\n${parts.join("\n\n")}`;
 }
 
 export async function POST(request: Request) {
@@ -49,7 +59,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { pages, error, skipped } = await scanSite(start);
+  const { pages, error, skipped, found, full, indexed } = await scanSite(start);
   if (error) {
     return NextResponse.json(
       {
@@ -60,7 +70,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const block = compilePages(pages, new Date().toISOString());
+  const block = compilePages(pages, new Date().toISOString(), {
+    found,
+    full,
+  });
   const updated = await updateStore((data) => {
     const row = data.businesses.find((b) => b.id === biz.id);
     if (!row) return biz;
@@ -75,6 +88,9 @@ export async function POST(request: Request) {
   const admin = isAdmin(user);
   return NextResponse.json({
     pages: pages.length,
+    found,
+    full,
+    indexed,
     skipped: skipped ?? 0,
     business: toClientBusiness(updated, {
       admin,

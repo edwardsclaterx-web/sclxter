@@ -1,16 +1,20 @@
 import { spawn } from "node:child_process";
 import { load } from "cheerio";
 
-const MAX_PAGES = 28;
 const MAX_BYTES = 250_000;
 const MAX_DOWNLOAD = 1_500_000;
 const MAX_BLOCKS = 140;
 const MAX_BODY = 12_000;
 const FETCH_MS = 5_000;
-const SCAN_MS = 28_000;
+const SCAN_MS = 26_000;
 const BATCH = 4;
 const ARCHIVE_BATCH = 2;
 const MAX_ARCHIVE = 8;
+const FULL_IF_AT_MOST = 40;
+const MAX_DISCOVER = 400;
+const DISCOVER_FETCH = 24;
+const MAX_SITEMAPS = 8;
+const INDEX_SUMMARY = 280;
 
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
@@ -88,7 +92,8 @@ function cleanText(text: string) {
 const JUNK_PATH =
   /(^|\/)(reviews?|testimonials?|ratings?|comments?|feedback|trustpilot)(\/|$)/i;
 
-const SKIP_FILE = /\.(pdf|jpe?g|png|gif|webp|svg|mp4|mp3|zip|docx?|xlsx?)$/i;
+const SKIP_FILE =
+  /\.(pdf|jpe?g|png|gif|webp|svg|ico|css|js|mjs|map|json|xml|txt|mp4|mp3|zip|docx?|xlsx?|woff2?|ttf|otf|webmanifest)$/i;
 
 const INFRA_PATH = /^\/(\.well-known|cdn-cgi)(\/|$)/i;
 
@@ -302,15 +307,30 @@ function canonicalizePageUrl(href: string) {
   try {
     const u = new URL(unwrapArchiveUrl(href));
     u.hash = "";
-    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"].forEach(
-      (k) => u.searchParams.delete(k),
-    );
+    u.search = "";
     u.hostname = u.hostname.toLowerCase();
     u.pathname = u.pathname.replace(/\/{2,}/g, "/");
+    if (u.pathname.length > 1) u.pathname = u.pathname.replace(/\/+$/, "");
     return u.href;
   } catch {
     return href;
   }
+}
+
+function pathDepth(pathname: string) {
+  return pathname.replace(/\/+$/, "").split("/").filter(Boolean).length;
+}
+
+const PRIORITY_PATH =
+  /^(about|about-us|aboutus|our-story|who-we-are|services?|treatments?|cuts?|prices?|pricing|price-list|menu|hours|opening-times|opening-hours|contact|contact-us|find-us|location|visit|faq|help|book|booking|bookings|reservations?)$/i;
+
+export function isPriorityPath(pathname: string, navTop: Set<string>) {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  if (path === "/") return true;
+  const segs = path.split("/").filter(Boolean);
+  const first = (segs[0] || "").toLowerCase();
+  if (navTop.has(path) || navTop.has(`/${first}`)) return true;
+  return PRIORITY_PATH.test(first);
 }
 
 function extract(html: string, pageUrl: string) {
@@ -366,10 +386,64 @@ function extract(html: string, pageUrl: string) {
   return { title, body, links };
 }
 
+function extractIndex(html: string, pageUrl: string) {
+  const $ = load(html);
+  const title =
+    cleanText($("h1").first().text()) ||
+    cleanText($("title").first().text()) ||
+    pageUrl;
+  const desc =
+    cleanText($("meta[name='description']").attr("content") || "") ||
+    cleanText($("meta[property='og:description']").attr("content") || "") ||
+    cleanText($("p").first().text());
+  return { title, body: desc.slice(0, INDEX_SUMMARY) };
+}
+
+function collectNavTop(html: string, pageUrl: string, start: URL) {
+  const $ = load(html);
+  const top = new Set<string>(["/"]);
+  $("header a[href], nav a[href], [role='navigation'] a[href]").each((_, el) => {
+    const href = $(el).attr("href");
+    if (!href || /^(mailto:|tel:|javascript:|#)/i.test(href)) return;
+    try {
+      const abs = new URL(canonicalizePageUrl(new URL(href, pageUrl).href));
+      if (!sameSite(start, abs)) return;
+      if (isJunkPath(abs.pathname) || SKIP_FILE.test(abs.pathname)) return;
+      if (pathDepth(abs.pathname) <= 1) {
+        top.add(abs.pathname.replace(/\/+$/, "") || "/");
+      }
+    } catch {
+      /* skip */
+    }
+  });
+  return top;
+}
+
+function parseSitemapLocs(xml: string) {
+  const locs: string[] = [];
+  const re = /<loc>\s*([^<]+)\s*<\/loc>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(xml))) {
+    const href = cleanText(match[1]).replace(/&amp;/g, "&");
+    if (href) locs.push(href);
+  }
+  return locs;
+}
+
 export type ScanPage = {
   url: string;
   title: string;
   body: string;
+  mode: "full" | "index";
+};
+
+export type ScanResult = {
+  pages: ScanPage[];
+  found: number;
+  full: number;
+  indexed: number;
+  skipped?: number;
+  error?: string;
 };
 
 function looksHtml(type: string, head: string) {
@@ -527,24 +601,33 @@ async function loadPage(
 }
 
 function urlKey(value: string) {
-  return value.replace(/\/$/, "") || value;
+  return canonicalizePageUrl(value);
 }
 
-export async function scanSite(
-  startUrl: string,
-): Promise<{ pages: ScanPage[]; error?: string; skipped?: number }> {
+function remainingMs(started: number) {
+  return SCAN_MS - (Date.now() - started);
+}
+
+export async function scanSite(startUrl: string): Promise<ScanResult> {
   if (!isHttpUrl(startUrl)) {
-    return { pages: [], error: "That does not look like a web address." };
+    return {
+      pages: [],
+      found: 0,
+      full: 0,
+      indexed: 0,
+      error: "That does not look like a web address.",
+    };
   }
 
   const started = Date.now();
   const start = new URL(canonicalizePageUrl(startUrl));
-  const seen = new Set<string>();
-  const wanted = new Set<string>([start.href]);
-  const pages: ScanPage[] = [];
+  const discovered = new Set<string>([start.href]);
+  const htmlCache = new Map<string, string>();
+  const fetched = new Set<string>();
   let skipped = 0;
   let liveBlocked = false;
   let archiveTries = 0;
+  let navTop = new Set<string>(["/"]);
 
   function allow(href: string): string | null {
     try {
@@ -552,113 +635,236 @@ export async function scanSite(
       if (!sameSite(start, next)) return null;
       if (isJunkPath(next.pathname) || SKIP_FILE.test(next.pathname)) return null;
       if (/cdn-cgi/i.test(next.pathname)) return null;
-      const key = urlKey(next.href);
-      if (seen.has(key) || seen.has(next.href)) return null;
+      if (discovered.size >= MAX_DISCOVER && !discovered.has(next.href)) return null;
       return next.href;
     } catch {
       return null;
     }
   }
 
-  const discovered = new Set<string>([start.href]);
-  const guessed = new Set<string>();
-  for (const path of PATH_GUESSES) {
-    guessed.add(new URL(path, start.origin).href);
+  function remember(href: string) {
+    const next = allow(href);
+    if (next) discovered.add(next);
   }
 
-  function rememberLinks(links: string[]) {
-    for (const href of links) {
-      const next = allow(href);
-      if (!next) continue;
-      discovered.add(next);
-      wanted.add(next);
+  async function grab(url: string): Promise<string | null> {
+    const key = urlKey(url);
+    if (htmlCache.has(key)) return htmlCache.get(key) || null;
+    if (fetched.has(key)) return null;
+    fetched.add(key);
+    const got = await loadPage(url, liveBlocked);
+    if (got === "missing") {
+      skipped += 1;
+      return null;
     }
+    if (got === "blocked" || !got) {
+      skipped += 1;
+      return null;
+    }
+    let pageUrl = canonicalizePageUrl(got.url || url);
+    try {
+      if (!sameSite(start, new URL(pageUrl))) pageUrl = canonicalizePageUrl(url);
+    } catch {
+      pageUrl = canonicalizePageUrl(url);
+    }
+    htmlCache.set(urlKey(pageUrl), got.html);
+    htmlCache.set(key, got.html);
+    return got.html;
   }
 
-  function takeBatch() {
-    const unused = (pool: Set<string>) =>
-      [...pool].filter((u) => {
-        const key = urlKey(u);
-        return !seen.has(key) && !seen.has(u);
-      });
-    const fromSite = unused(discovered);
-    fromSite.sort((a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname));
-    if (fromSite.length) {
-      return fromSite.slice(0, liveBlocked ? ARCHIVE_BATCH : BATCH);
-    }
-    const fromGuess = unused(guessed);
-    fromGuess.sort((a, b) => pageRank(a, start.pathname) - pageRank(b, start.pathname));
-    return fromGuess.slice(0, liveBlocked ? ARCHIVE_BATCH : BATCH);
-  }
-
-  while (pages.length < MAX_PAGES) {
-    if (Date.now() - started > SCAN_MS) break;
-    const batch = takeBatch();
-    if (!batch.length) break;
-    for (const url of batch) {
-      seen.add(url);
-      seen.add(urlKey(url));
-    }
-    const fetched = await Promise.all(
-      batch.map(async (url) => ({ url, got: await loadPage(url, liveBlocked) })),
-    );
-    const retry: string[] = [];
-    for (const { url, got } of fetched) {
-      if (got === "missing") {
-        skipped += 1;
-        continue;
+  async function readSitemaps() {
+    const roots = [
+      new URL("/sitemap.xml", start.origin).href,
+      new URL("/sitemap_index.xml", start.origin).href,
+    ];
+    const robots = await nodeGet(new URL("/robots.txt", start.origin).href);
+    if (robots?.body) {
+      for (const line of robots.body.split(/\r?\n/)) {
+        const m = line.match(/^\s*sitemap:\s*(\S+)/i);
+        if (m?.[1]) roots.push(m[1].trim());
       }
-      if (got === "blocked" || !got) {
-        skipped += 1;
-        if (!liveBlocked) retry.push(url);
-        continue;
-      }
-      try {
-        let pageUrl = canonicalizePageUrl(got.url || url);
-        try {
-          if (!sameSite(start, new URL(pageUrl))) pageUrl = canonicalizePageUrl(url);
-        } catch {
-          pageUrl = canonicalizePageUrl(url);
+    }
+    const queue = [...new Set(roots)];
+    const seenMaps = new Set<string>();
+    while (queue.length && seenMaps.size < MAX_SITEMAPS && remainingMs(started) > 4_000) {
+      const mapUrl = queue.shift() as string;
+      if (seenMaps.has(mapUrl)) continue;
+      seenMaps.add(mapUrl);
+      const doc = await nodeGet(mapUrl);
+      if (!doc?.body || doc.status >= 400) continue;
+      const locs = parseSitemapLocs(doc.body);
+      if (/<sitemapindex/i.test(doc.body)) {
+        for (const loc of locs) {
+          if (queue.length + seenMaps.size >= MAX_SITEMAPS) break;
+          queue.push(loc);
         }
-        const { title, body, links } = extract(got.html, pageUrl);
-        rememberLinks(links);
-        if (
-          body.length >= 12 &&
-          !/^(403|404|429)\b/.test(title) &&
-          !/forbidden|access denied|page not found|couldn't find that page/i.test(title)
-        ) {
-          pages.push({ url: pageUrl, title, body: body.slice(0, MAX_BODY) });
-        } else {
+        continue;
+      }
+      for (const loc of locs) remember(loc);
+    }
+  }
+
+  const home = await grab(start.href);
+  if (home && isUnusableHtml(home) && !liveBlocked) {
+    liveBlocked = true;
+    fetched.delete(urlKey(start.href));
+    htmlCache.delete(urlKey(start.href));
+    const archived = await grab(start.href);
+    if (archived) {
+      navTop = collectNavTop(archived, start.href, start);
+      rememberLinksFrom(archived, start.href);
+    }
+  } else if (home) {
+    navTop = collectNavTop(home, start.href, start);
+    rememberLinksFrom(home, start.href);
+  }
+
+  function rememberLinksFrom(html: string, pageUrl: string) {
+    try {
+      const { links } = extract(html, pageUrl);
+      for (const href of links) remember(href);
+    } catch {
+      /* skip */
+    }
+  }
+
+  await readSitemaps();
+
+  const bfsQueue = [...discovered];
+  let discoverFetches = 1;
+  while (
+    bfsQueue.length &&
+    discoverFetches < DISCOVER_FETCH &&
+    remainingMs(started) > 8_000
+  ) {
+    const url = bfsQueue.shift() as string;
+    if (urlKey(url) === urlKey(start.href) && htmlCache.has(urlKey(url))) continue;
+    const html = await grab(url);
+    discoverFetches += 1;
+    if (!html) continue;
+    const before = discovered.size;
+    rememberLinksFrom(html, url);
+    if (discovered.size > before) {
+      for (const href of discovered) {
+        if (!fetched.has(urlKey(href))) bfsQueue.push(href);
+      }
+    }
+  }
+
+  function canonicalIsHome(html: string, url: string) {
+    if (urlKey(url) === urlKey(start.href)) return true;
+    const $ = load(html);
+    const canon = $("link[rel='canonical']").attr("href");
+    if (!canon) return false;
+    try {
+      return urlKey(new URL(canon, url).href) === urlKey(start.href);
+    } catch {
+      return false;
+    }
+  }
+
+  for (const path of PATH_GUESSES) {
+    if (remainingMs(started) < 8_000) break;
+    const href = canonicalizePageUrl(new URL(path, start.origin).href);
+    if (discovered.has(href)) continue;
+    const html = await grab(href);
+    if (!html || canonicalIsHome(html, href)) continue;
+    remember(href);
+  }
+
+  const foundList = [...discovered];
+  const found = foundList.length;
+  const fullAll = found <= FULL_IF_AT_MOST;
+
+  function wantsFull(url: string) {
+    if (fullAll) return true;
+    try {
+      return isPriorityPath(new URL(url).pathname, navTop);
+    } catch {
+      return false;
+    }
+  }
+
+  const ordered = [...foundList].sort((a, b) => {
+    const af = wantsFull(a) ? 0 : 1;
+    const bf = wantsFull(b) ? 0 : 1;
+    if (af !== bf) return af - bf;
+    return pageRank(a, start.pathname) - pageRank(b, start.pathname);
+  });
+
+  const pages: ScanPage[] = [];
+  const seenPage = new Set<string>();
+
+  async function take(urls: string[]) {
+    const size = liveBlocked ? ARCHIVE_BATCH : BATCH;
+    for (let i = 0; i < urls.length; i += size) {
+      if (remainingMs(started) < 1_200) break;
+      if (liveBlocked && archiveTries >= MAX_ARCHIVE) break;
+      const batch = urls.slice(i, i + size);
+      const rows = await Promise.all(
+        batch.map(async (url) => ({ url, html: await grab(url) })),
+      );
+      if (liveBlocked) archiveTries += batch.length;
+      for (const { url, html } of rows) {
+        const key = urlKey(url);
+        if (seenPage.has(key)) continue;
+        if (!html) continue;
+        try {
+          const pageUrl = key;
+          const full = wantsFull(pageUrl);
+          const parsed = full ? extract(html, pageUrl) : extractIndex(html, pageUrl);
+          if (
+            /^(403|404|429)\b/.test(parsed.title) ||
+            /forbidden|access denied|page not found|couldn't find that page/i.test(
+              parsed.title,
+            )
+          ) {
+            skipped += 1;
+            continue;
+          }
+          const body = full ? parsed.body.slice(0, MAX_BODY) : parsed.body;
+          if (full && body.length < 12) {
+            skipped += 1;
+            continue;
+          }
+          seenPage.add(key);
+          pages.push({
+            url: pageUrl,
+            title: parsed.title,
+            body,
+            mode: full ? "full" : "index",
+          });
+          if (full) rememberLinksFrom(html, pageUrl);
+        } catch {
           skipped += 1;
         }
-      } catch {
-        skipped += 1;
       }
-    }
-    if (retry.length && pages.length === 0) {
-      liveBlocked = true;
-      for (const url of retry) {
-        seen.delete(url);
-        seen.delete(urlKey(url));
-        wanted.add(url);
-      }
-    }
-    if (liveBlocked && !retry.length) {
-      archiveTries += batch.length;
-      if (archiveTries >= MAX_ARCHIVE) break;
     }
   }
+
+  await take(ordered.filter(wantsFull));
+  if (remainingMs(started) > 1_500) {
+    await take(ordered.filter((u) => !wantsFull(u)));
+  }
+
+  const full = pages.filter((p) => p.mode === "full").length;
+  const indexed = pages.filter((p) => p.mode === "index").length;
 
   if (!pages.length) {
     return {
       pages: [],
+      found,
+      full: 0,
+      indexed: 0,
       skipped,
       error: "No readable pages found. Check the address is public HTML.",
     };
   }
 
-  pages.sort(
-    (a, b) => pageRank(a.url, start.pathname) - pageRank(b.url, start.pathname),
-  );
-  return { pages: pages.slice(0, MAX_PAGES), skipped };
+  pages.sort((a, b) => {
+    if (a.mode !== b.mode) return a.mode === "full" ? -1 : 1;
+    return pageRank(a.url, start.pathname) - pageRank(b.url, start.pathname);
+  });
+
+  return { pages, found, full, indexed, skipped };
 }

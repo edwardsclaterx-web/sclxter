@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
+import { isAdmin, showBillingNav } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
-import { RedeemForm } from "./redeem-form";
+import { monthsPurchasable, userHasLiveAccess } from "@/lib/billing";
+import { checkoutReady } from "@/lib/stripe-checkout";
+import { BillingPanel } from "@/app/billing/billing-panel";
 
 export const metadata = { title: "Buy — sclxter" };
 
@@ -26,10 +28,10 @@ export default async function BuyPage() {
             website, and the Ask anything widget.
           </p>
           <p className="mt-4 text-sm leading-7 text-muted">
-            After you create an account, pay on Billing. If you have a free
-            code, sign in and enter it here. If you stop paying, your shop data
-            stays. The live assistant on your website switches off until cover
-            is current.
+            After you create an account, pay here or on Billing. If you have a
+            free code, sign in and enter it next to pay. If you stop paying,
+            your shop data stays. The live assistant on your website switches
+            off until cover is current.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -51,27 +53,20 @@ export default async function BuyPage() {
     );
   }
 
+  if (!(await showBillingNav(user))) redirect("/");
+
   return (
     <div className="flex min-h-full flex-col">
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-16">
+      <main className="mx-auto w-full max-w-md flex-1 px-5 py-16">
         <h1 className="text-2xl font-medium tracking-tight">Buy</h1>
-        <p className="mt-6 text-sm leading-7 text-muted">
-          Pay with card on Billing, or apply a one-time code from sclxter.
-        </p>
-        <p className="mt-4">
-          <Link href="/billing" className="text-sm text-fg underline underline-offset-2">
-            Pay on Billing
-          </Link>
-        </p>
-        <section className="mt-12">
-          <h2 className="text-xl font-medium tracking-tight">Have a code?</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            A valid unused code skips card payment, marks setup as paid, and
-            adds the free months of cover.
-          </p>
-          <RedeemForm />
-        </section>
+        <BillingPanel
+          paidUntil={user.paidUntil ?? null}
+          live={userHasLiveAccess(user)}
+          setupPaid={user.setupPaid === true}
+          maxMonths={monthsPurchasable(user.paidUntil)}
+          checkoutReady={checkoutReady()}
+        />
       </main>
       <SiteFooter />
     </div>

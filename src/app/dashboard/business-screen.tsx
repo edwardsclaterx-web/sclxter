@@ -573,7 +573,7 @@ export function BusinessScreen({
           </p>
           <div className="mt-4 flex min-h-0 flex-1 flex-col">
             <div
-              className="flex min-h-0 flex-1 flex-col overflow-hidden p-4"
+              className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-4"
               style={{
                 border: `3px solid ${theme.outline}`,
                 borderRadius: 24,
@@ -581,19 +581,32 @@ export function BusinessScreen({
                 color: theme.text,
               }}
             >
-              <WidgetForm
-                publicId={business.publicId}
-                welcome={
-                  testBlocked ||
-                  "Ask using the notepad and tone saved for this business."
-                }
-                assistantName="Assistant"
-                theme={theme}
-                endpoint="/api/chat/test"
-                extraBody={admin && typeof seq === "number" ? { seq } : {}}
-                namespace={`test:${business.publicId}`}
-                blocked={testBlocked}
-              />
+              <div
+                className={`flex min-h-0 flex-1 flex-col ${
+                  testBlocked ? "pointer-events-none opacity-40" : ""
+                }`}
+              >
+                <WidgetForm
+                  publicId={business.publicId}
+                  welcome="Ask using the notepad and tone saved for this business."
+                  assistantName="Assistant"
+                  theme={theme}
+                  endpoint="/api/chat/test"
+                  extraBody={admin && typeof seq === "number" ? { seq } : {}}
+                  namespace={`test:${business.publicId}`}
+                  blocked={testBlocked}
+                />
+              </div>
+              {testBlocked ? (
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
+                  <p
+                    className="max-w-xs text-center text-sm leading-6"
+                    style={{ color: theme.text }}
+                  >
+                    Fill in business information first to use the test assistant
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
           <div className="mt-4 shrink-0 border-t border-line pt-4">
@@ -614,6 +627,7 @@ export function BusinessScreen({
                   overflow: "visible",
                 }}
                 onClick={() => {
+                  if (testBlocked) return;
                   document.getElementById("wa-input")?.focus();
                 }}
               >

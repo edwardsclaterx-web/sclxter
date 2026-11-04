@@ -35,24 +35,30 @@ export function RedeemForm() {
   }
 
   return (
-    <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-      <div>
-        <Label htmlFor="free-code">Code</Label>
-        <Input
-          id="free-code"
-          name="code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="SCLX-7KQ2-M9PD"
-          aria-label="Free access code"
-        />
+    <form className="space-y-3" onSubmit={onSubmit}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1">
+          <Label htmlFor="free-code">Code</Label>
+          <Input
+            id="free-code"
+            name="code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="SCLX-7KQ2-M9PD"
+            aria-label="Free access code"
+          />
+        </div>
+        <Button
+          type="submit"
+          className="w-full sm:w-auto"
+          disabled={busy || !code.trim()}
+        >
+          {busy ? "Applying…" : "Apply"}
+        </Button>
       </div>
       {error ? <p className="text-sm text-fg">{error}</p> : null}
-      <Button type="submit" className="w-full" disabled={busy || !code.trim()}>
-        {busy ? "Applying…" : "Apply code"}
-      </Button>
     </form>
   );
 }

@@ -41,7 +41,7 @@ export function WidgetForm({
   if(!form||!input||!send||!log) return;
   var publicId=${JSON.stringify(namespace || publicId)};
   var extra=${JSON.stringify(extraBody || {})};
-  var blocked=${JSON.stringify(blocked || "")};
+  var blocked=form.getAttribute('data-blocked')||'';
   var msgKey='sclxter:ask:'+publicId+':messages';
   var draftKey='sclxter:ask:'+publicId+':draft';
   var cidKey='sclxter:ask:'+publicId+':cid';
@@ -102,7 +102,7 @@ export function WidgetForm({
   history.forEach(function(m){ bubble(m.role,m.content); });
   try{ input.value=sessionStorage.getItem(draftKey)||''; }catch(e){}
   function go(){
-    if(blocked) return;
+    if(form.getAttribute('data-blocked')) return;
     var v=(input.value||'').trim();
     if(!v||busy) return;
     input.value='';
@@ -198,6 +198,7 @@ export function WidgetForm({
       </div>
       <form
         id="wa-form"
+        data-blocked={blocked || ""}
         className={`mt-4 flex items-start gap-2 border-t pt-4 pb-1 ${theme ? "" : "border-line"}`}
         style={line ? { borderColor: line } : undefined}
       >

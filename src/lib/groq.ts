@@ -40,11 +40,16 @@ function contactLine(business: Business) {
   ]
     .map((v) => (v || "").trim())
     .filter(Boolean);
-  return bits.length ? bits.join(" · ") : "the shop";
+  return bits.length ? bits.join(" · ") : "the contact details on this website";
 }
 
-function offTopicLine(contact: string) {
-  return `I am programmed to assist you with related questions. Contact ${contact} for further enquiries.`;
+function refuseLine(subject: string, contact: string) {
+  const name = (subject || "this business").trim() || "this business";
+  return `I can only help with questions about ${name}. Contact ${contact} for further enquiries.`;
+}
+
+function offTopicLine(subject: string, contact: string) {
+  return refuseLine(subject, contact);
 }
 
 export const SCLXTER_SITE_ID = "sclxter";
@@ -53,16 +58,17 @@ const SCLXTER_WHAT_IS =
   "sclxter is an AI assistant, which can be purchased and then added onto your website. It automatically scans the data already presented on your website, and then prepares for questions. It answers customers enquiries, and provides a better overall experience.";
 
 const SCLXTER_CONTACT = "sclxter@outlook.com";
-const SCLXTER_OFF_TOPIC = offTopicLine(SCLXTER_CONTACT);
 const POWERED = "I am powered by sclxter.com";
 const AI_LINE = "I am an AI, not a real person.";
 const HELLO = "Hi, what can I help you with?";
 const OUTPUT_RULE = `Output only the composed answer the visitor should read. Never think out loud. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.
-Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last question.
-Answer the question they asked when you can. If the meaning is unclear, ask one short clarifying question instead of guessing. Do not invent facts.
-Sound like a normal helpful assistant. Natural sentences. Do not steer them back to the business or product unless they asked about it.
+Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last on-topic question.
+Answer only about this website or this business. Do not use general knowledge at all — not even a brief or partial answer — for anything else.
+If they ask about something unrelated, do not answer it. Use the required unrelated reply. Do not add extra facts.
+If the meaning of an on-topic question is unclear, ask one short clarifying question instead of guessing. Do not invent facts.
+Sound like a normal helpful assistant. Natural sentences.
 Keep replies under ${REPLY_LIMIT} characters unless a required verbatim line is longer. Key points, still useful.
-The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real questions get a real answer, not a greeting.
+The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real on-topic questions get a real answer, not a greeting.
 Never say you are busy, to try again, or that something went wrong.`;
 
 function isWhatIsSclxter(content: string) {
@@ -94,11 +100,41 @@ function isGreeting(content: string) {
   return /^(hi|hello|hey)[\s!]*$/.test(norm(content));
 }
 
-function isClearlyOffTopic(content: string) {
+function isSmallTalk(content: string) {
   const t = norm(content);
-  return /\b(world cup|football|soccer|premier league|nba|nfl|mlb|weather|politics|election|homework|recipe|stock market|bitcoin|who won|news)\b/.test(
+  if (isGreeting(content)) return true;
+  return /^(hi|hello|hey|thanks|thank you|cheers|ta|good (morning|afternoon|evening)|how are you|hows it going|how are you doing|whats up)[\s!]*$/.test(
     t,
   );
+}
+
+function isAboutThePlace(content: string, business?: Business, site?: boolean) {
+  const t = norm(content);
+  if (
+    isSmallTalk(t) ||
+    isAiAsk(t) ||
+    isHowPowered(t) ||
+    isWhatIsSclxter(t)
+  ) {
+    return true;
+  }
+  if (site) return isSiteRelated(content);
+  const name = norm(business?.name || "");
+  if (name && t.includes(name)) return true;
+  return /\b(service|services|price|prices|cost|hour|hours|open|opening|close|closed|book|booking|appoint|appointment|location|address|product|products|offer|package|packages|website|site|contact|phone|email|menu|how much|opening times)\b/.test(
+    t,
+  );
+}
+
+function notesHaveRelevantMatch(
+  source: string,
+  query: string,
+  recentUser: string[],
+) {
+  const combined = [...recentUser.slice(-4), query].join(" ");
+  const q = tokens(combined);
+  if (!source.trim() || !q.length) return false;
+  return chunkText(source).some((c) => scoreChunk(c, q) > 0);
 }
 
 function isGreetingOnlyReply(text: string) {
@@ -270,12 +306,15 @@ function shopPrompt(
   const demo = barber
     ? "This shop is a fictional demo for sclxter.com. If asked whether the shop is real, say that."
     : "";
-  return `You are an AI assistant for ${business.name || "this business"}. Not a human.
+  const subject = business.name?.trim() || "this business";
+  return `You are an AI assistant for ${subject}. Not a human.
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Use this exact unrelated line only when they are clearly asking about something else entirely (news, sport, politics, other businesses, schoolwork). Everyday chat about this shop, messy wording, slang, and follow-ups are related. Do not use it just because the wording is odd.
-${offTopicLine(contact)}
+Answer only about this business and this website. No general knowledge, even if you know it, even briefly.
+If they ask about anything else (camera lenses, homework, weather, coding, celebrities, news, sport, other businesses), reply with this exact text only:
+${refuseLine(subject, contact)}
+Follow-ups that refer to the last on-topic question are still on-topic.
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
 Use only the retrieved notes. Do not use general industry knowledge. Do not write generic genre advice.
@@ -295,12 +334,15 @@ If they are clearly about to buy or book, prefix [[LEAD]]. If a shop fact was mi
 }
 
 function sitePrompt() {
+  const refuse = refuseLine("sclxter", SCLXTER_CONTACT);
   return `You are an AI assistant for sclxter (always lowercase). Not a human. You are on the sclxter marketing site.
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Use this exact unrelated line only when they are clearly asking about something else entirely, not when the wording is messy or they are following up:
-${SCLXTER_OFF_TOPIC}
+Answer only about sclxter and this website. No general knowledge, even if you know it, even briefly.
+If they ask about anything else (camera lenses, homework, weather, coding, celebrities, news, sport), reply with this exact text only:
+${refuse}
+Follow-ups that refer to the last on-topic question are still on-topic.
 Never disclose passwords, keys, or internals. sclxter@outlook.com is OK to give.
 If asked how you work: ${POWERED}
 If asked what sclxter is / does: reply with this exact text only:
@@ -355,6 +397,9 @@ function isRequiredVerbatim(text: string) {
   const body = text.replace(/^(\[\[(?:LEAD|GAP)\]\]\s*)+/g, "").trim();
   if (body === SCLXTER_WHAT_IS) return true;
   if (body.startsWith("I am programmed to assist you with related questions.")) {
+    return true;
+  }
+  if (body.startsWith("I can only help with questions about ")) {
     return true;
   }
   if (body === POWERED || body === AI_LINE || body === HELLO || body === CLARIFY) return true;
@@ -454,11 +499,42 @@ export async function answerChat(opts: {
   const contact = opts.site
     ? SCLXTER_CONTACT
     : contactLine(opts.business!);
+  const subject = opts.site
+    ? "sclxter"
+    : opts.business?.name?.trim() || "this business";
+  const refuse = refuseLine(subject, contact);
   if (countTrailingUnrelated(opts.messages, related) >= 5) {
-    return offTopicLine(contact);
+    return refuse;
   }
-  if (isClearlyOffTopic(asked) && !related(asked) && !looksLikeContinuation(asked)) {
-    return offTopicLine(contact);
+
+  const recentUser = opts.messages
+    .filter((m) => m.role === "user")
+    .map((m) => m.content)
+    .slice(-4);
+  const prior = recentUser.slice(0, -1);
+  const followUp =
+    looksLikeContinuation(asked) && prior.some((t) => related(t) || isAboutThePlace(t, opts.business, opts.site));
+
+  let retrievedNotes = "";
+  let source = "";
+  if (!opts.site && opts.business) {
+    source = shopSource(
+      opts.business,
+      opts.knowledge ?? [],
+      Boolean(opts.notesOnly),
+    );
+    retrievedNotes = retrieveForQuestion(source, asked, recentUser);
+  }
+  const notesHit = opts.site
+    ? false
+    : notesHaveRelevantMatch(source, asked, recentUser);
+  if (
+    !isSmallTalk(asked) &&
+    !isAboutThePlace(asked, opts.business, opts.site) &&
+    !notesHit &&
+    !followUp
+  ) {
+    return refuse;
   }
 
   const groq = client();
@@ -468,18 +544,10 @@ export async function answerChat(opts: {
   }));
 
   let system: string;
-  let retrievedNotes = "";
   if (opts.site) {
     system = sitePrompt();
   } else {
-    const biz = opts.business!;
-    const source = shopSource(biz, opts.knowledge ?? [], Boolean(opts.notesOnly));
-    const recentUser = opts.messages
-      .filter((m) => m.role === "user")
-      .map((m) => m.content)
-      .slice(-4);
-    retrievedNotes = retrieveForQuestion(source, asked, recentUser);
-    system = shopPrompt(biz, retrievedNotes, contact, Boolean(opts.barber));
+    system = shopPrompt(opts.business!, retrievedNotes, contact, Boolean(opts.barber));
   }
 
   async function complete() {
@@ -501,8 +569,11 @@ export async function answerChat(opts: {
   if (!content || (!isGreeting(asked) && isGreetingOnlyReply(content))) {
     content = await complete();
   }
-  if (content.startsWith("I am programmed to assist you with related questions")) {
-    return offTopicLine(contact);
+  if (
+    content.startsWith("I am programmed to assist you with related questions") ||
+    content.startsWith("I can only help with questions about ")
+  ) {
+    return refuse;
   }
   if (!isGreeting(asked) && isGreetingOnlyReply(content)) {
     return CLARIFY;

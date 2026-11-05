@@ -202,19 +202,22 @@ export function ProductNav({
       >
         <span className="relative block h-4 w-6">
           <span
-            className={`absolute left-0 block h-[2px] w-6 bg-white transition-transform duration-200 ${
-              open ? "top-[7px] rotate-45" : "top-0"
-            }`}
+            className="absolute left-0 block h-[2px] w-6 origin-center bg-white transition-transform duration-200"
+            style={{
+              top: 7,
+              transform: open ? "rotate(45deg)" : "translateY(-7px)",
+            }}
           />
           <span
-            className={`absolute left-0 top-[7px] block h-[2px] w-6 bg-white transition-opacity duration-200 ${
-              open ? "opacity-0" : "opacity-100"
-            }`}
+            className="absolute left-0 top-[7px] block h-[2px] w-6 bg-white transition-opacity duration-200"
+            style={{ opacity: open ? 0 : 1 }}
           />
           <span
-            className={`absolute left-0 block h-[2px] w-6 bg-white transition-transform duration-200 ${
-              open ? "top-[7px] -rotate-45" : "top-[14px]"
-            }`}
+            className="absolute left-0 block h-[2px] w-6 origin-center bg-white transition-transform duration-200"
+            style={{
+              top: 7,
+              transform: open ? "rotate(-45deg)" : "translateY(7px)",
+            }}
           />
         </span>
       </button>

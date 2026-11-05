@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { isAdmin, showBillingNav } from "@/lib/access";
+import { isAdmin, showBillingNav, userIsActive } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { DashHeader } from "./dash-header";
 import { UnsavedGuard } from "./unsaved-guard";
@@ -13,6 +13,7 @@ export default async function DashboardLayout({
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/account");
+  if (!userIsActive(user)) redirect("/account");
   const admin = isAdmin(user);
   const purchaser = await showBillingNav(user);
   return (

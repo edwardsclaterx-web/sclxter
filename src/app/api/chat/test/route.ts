@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { resolveBusiness } from "@/lib/access";
 import { answerChat, parseLeadFromReply } from "@/lib/groq";
 import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
@@ -9,10 +10,8 @@ import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import type { ChatMessage } from "@/lib/types";
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: "Sign in first." }, { status: 401 });
-  }
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
   const body = (await request.json()) as {
     messages?: ChatMessage[];
     seq?: number;

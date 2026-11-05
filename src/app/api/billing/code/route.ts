@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isAdmin, showBillingNav } from "@/lib/access";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { redeemFreeCode } from "@/lib/free-codes";
 
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   }
-  if (isAdmin(user) || !(await showBillingNav(user))) {
+  if (isAdmin(user)) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
   const body = (await request.json().catch(() => ({}))) as { code?: string };

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { nextConversationSeq } from "@/lib/access";
 import {
   appOriginFromRequest,
@@ -93,6 +94,10 @@ export async function POST(request: Request) {
 
   const user = !business ? await getSessionUser() : null;
   const ownerTest = Boolean(user) && !publicId;
+  if (ownerTest) {
+    const denied = requireActiveUser(user);
+    if (denied instanceof NextResponse) return cors(denied);
+  }
 
   if (!business) {
     if (!user) {

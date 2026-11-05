@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 30;
 import { getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { isAdmin, resolveBusiness, toClientBusiness } from "@/lib/access";
 import { applyScanToNotepad } from "@/lib/notepad-scan";
 import { resolveWebsiteUrl, scanSite } from "@/lib/scan";
@@ -28,8 +29,8 @@ function compilePages(
 }
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
   const body = (await request.json().catch(() => ({}))) as {
     seq?: number;
     confirm?: boolean;

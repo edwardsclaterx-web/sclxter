@@ -36,6 +36,7 @@ export default async function AccountPage({
           <h1 className="text-2xl font-medium tracking-tight">Account</h1>
           <AccountPanel email={user.email} />
         </main>
+        <SiteFooter />
       </div>
     );
   }

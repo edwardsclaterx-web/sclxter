@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { id } from "@/lib/ids";
 import { updateStore } from "@/lib/store";
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
   const biz = await getOrCreateBusiness(user);
   if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const body = (await request.json()) as { title?: string; body?: string };

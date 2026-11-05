@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
+import { isAdmin, userIsActive } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function Home() {
   const user = await getSessionUser();
-  const owned = Boolean(user && !isAdmin(user));
+  const owned = Boolean(user && userIsActive(user) && !isAdmin(user));
   return (
     <div className="flex min-h-full flex-col">
       <AppHeader />
@@ -126,7 +126,7 @@ export default async function Home() {
                 <p className="mt-8 font-sans text-sm font-medium text-[#22c55e]">
                   Owned
                 </p>
-              ) : user ? null : (
+              ) : (
                 <Link
                   href="/buy"
                   className="mt-8 inline-flex h-10 items-center bg-accent px-4 text-sm text-accent-fg"

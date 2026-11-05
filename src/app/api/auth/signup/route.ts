@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkPassword, hashPassword, setSessionCookie } from "@/lib/auth";
-import { createBusinessForSignup } from "@/lib/access";
+import { afterAuthPath, createBusinessForSignup } from "@/lib/access";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import { id } from "@/lib/ids";
 import { isOwnerEmail, isOwnerLogin } from "@/lib/owner-auth";
@@ -51,9 +51,10 @@ export async function POST(request: Request) {
     if (!(await checkPassword(password, existing.passwordHash))) {
       return fail(409, "That email already has an account.", "exists");
     }
+    const next = afterAuthPath(existing);
     const signedIn = html
-      ? redirectSeeOther("/dashboard")
-      : NextResponse.json({ ok: true, signedIn: true });
+      ? redirectSeeOther(next)
+      : NextResponse.json({ ok: true, signedIn: true, next });
     await setSessionCookie(existing.id, signedIn, request);
     await createBusinessForSignup(existing);
     return signedIn;
@@ -85,8 +86,8 @@ export async function POST(request: Request) {
   }
 
   const createdRes = html
-    ? redirectSeeOther("/dashboard")
-    : NextResponse.json({ ok: true });
+    ? redirectSeeOther("/account")
+    : NextResponse.json({ ok: true, next: "/account" });
   await setSessionCookie(user.id, createdRes, request);
   try {
     await createBusinessForSignup(user);

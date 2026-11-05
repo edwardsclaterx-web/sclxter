@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { showBillingNav } from "@/lib/access";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { applyPaidCheckoutSession } from "@/lib/stripe-checkout";
 
@@ -12,13 +12,13 @@ export default async function BillingReturnPage({
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/account");
-  if (!(await showBillingNav(user))) redirect("/");
+  if (isAdmin(user)) redirect("/");
   const q = await searchParams;
   const sessionId = typeof q.session_id === "string" ? q.session_id : "";
-  if (!sessionId) redirect("/billing");
+  if (!sessionId) redirect("/buy");
   const result = await applyPaidCheckoutSession(sessionId, user.id);
   if (result.ok && ((result.applied && result.applied > 0) || result.already)) {
-    redirect("/billing?paid=1");
+    redirect("/dashboard");
   }
-  redirect("/billing?error=1");
+  redirect("/buy?error=1");
 }

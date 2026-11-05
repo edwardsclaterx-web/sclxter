@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { publicEmbedGate, readEmbedFrom } from "@/lib/embed-host";
 import { id } from "@/lib/ids";
 import { readStore, updateStore } from "@/lib/store";
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
     : null;
   if (!business) {
     const user = await getSessionUser();
+    const denied = requireActiveUser(user);
+    if (denied instanceof NextResponse) return cors(denied);
     if (!user) {
       return cors(
         NextResponse.json({ error: "Unknown shop." }, { status: 404 }),

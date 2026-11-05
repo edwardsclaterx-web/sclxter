@@ -7,22 +7,12 @@ import {
   setOtpPendingCookie,
   setSessionCookie,
 } from "@/lib/auth";
-import { isOwnerUser } from "@/lib/owner-auth";
+import { afterAuthPath } from "@/lib/access";
 import { checkOtp, issueOtp, maskDest } from "@/lib/otp";
 import { redirectSeeOther } from "@/lib/http-redirect";
 import { wantsHtml } from "@/lib/read-login-body";
-import { isLeavesakeLogin } from "@/lib/leavesake";
-import { isNorthgateLogin } from "@/lib/northgate";
 import { userById } from "@/lib/login-user";
 import { MAIL_FAIL } from "@/lib/mail";
-
-function nextFor(user: { id: string; email: string }) {
-  if (isOwnerUser(user)) return "/dashboard/businesses";
-  if (isNorthgateLogin(user.email) || isLeavesakeLogin(user.email)) {
-    return "/dashboard";
-  }
-  return "/dashboard";
-}
 
 export async function POST(request: Request) {
   const html = wantsHtml(request);
@@ -98,7 +88,7 @@ export async function POST(request: Request) {
     return res;
   }
 
-  const next = nextFor(user);
+  const next = afterAuthPath(user);
   const res = html
     ? redirectSeeOther(next)
     : NextResponse.json({ ok: true, next });

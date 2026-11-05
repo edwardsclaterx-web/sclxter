@@ -1,6 +1,6 @@
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
+import { isAdmin, userIsActive } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { findOwnerBusiness } from "@/lib/support";
 import { readStore } from "@/lib/store";
@@ -14,7 +14,11 @@ export default async function ContactPage() {
   const user = await getSessionUser();
   const data = user ? await readStore() : null;
   const owned = Boolean(
-    user && !isAdmin(user) && data && findOwnerBusiness(user, data),
+    user &&
+      userIsActive(user) &&
+      !isAdmin(user) &&
+      data &&
+      findOwnerBusiness(user, data),
   );
   return (
     <div className="flex min-h-full flex-col">

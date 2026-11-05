@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
-import { isAdmin, showBillingNav } from "@/lib/access";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { monthsPurchasable, userHasLiveAccess } from "@/lib/billing";
 import { checkoutReady } from "@/lib/stripe-checkout";
@@ -52,8 +52,6 @@ export default async function BuyPage() {
       </div>
     );
   }
-
-  if (!(await showBillingNav(user))) redirect("/");
 
   return (
     <div className="flex min-h-full flex-col">

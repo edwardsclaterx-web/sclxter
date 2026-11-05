@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, publicUser } from "@/lib/auth";
-import { isAdmin, showBillingNav } from "@/lib/access";
+import { isAdmin, showBillingNav, userIsActive } from "@/lib/access";
 import { userHasLiveAccess } from "@/lib/billing";
 
 export async function GET() {
@@ -10,6 +10,7 @@ export async function GET() {
     user: publicUser(user),
     admin: isAdmin(user),
     purchaser: await showBillingNav(user),
+    active: userIsActive(user),
     paidUntil: user.paidUntil ?? null,
     live: userHasLiveAccess(user),
   });

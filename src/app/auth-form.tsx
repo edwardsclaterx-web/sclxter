@@ -50,7 +50,7 @@ export function AuthForm({
         setLocalError(body.error || "That code did not match.");
         return;
       }
-      window.location.assign(body.next || "/dashboard");
+      window.location.assign(body.next || "/account");
     } catch {
       setLocalError("That code did not match.");
     } finally {
@@ -137,7 +137,7 @@ export function AuthForm({
         setLocalError(body.error || "Those details did not match.");
         return;
       }
-      window.location.assign(body.next || "/dashboard");
+      window.location.assign(body.next || "/account");
     } catch {
       setLocalError("Could not reach the server.");
     } finally {

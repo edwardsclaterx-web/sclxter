@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { showBillingNav } from "@/lib/access";
+import { isAdmin } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { createCoverCheckout, checkoutReady } from "@/lib/stripe-checkout";
 
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   }
-  if (!(await showBillingNav(user))) {
+  if (isAdmin(user)) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
   if (!checkoutReady()) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { getBusinessBySeq, isAdmin } from "@/lib/access";
 import {
   appendSupportMessage,
@@ -11,8 +12,8 @@ import {
 import { readStore } from "@/lib/store";
 
 export async function GET(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
 
   const url = new URL(request.url);
   const seqRaw = url.searchParams.get("seq");
@@ -40,8 +41,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
   const body = (await request.json().catch(() => ({}))) as {
     content?: string;
     seq?: number;

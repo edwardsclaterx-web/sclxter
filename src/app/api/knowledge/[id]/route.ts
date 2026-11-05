@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getOrCreateBusiness, getSessionUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/require-active";
 import { updateStore } from "@/lib/store";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, ctx: Ctx) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
   const biz = await getOrCreateBusiness(user);
   if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const { id } = await ctx.params;
@@ -26,8 +27,8 @@ export async function PATCH(request: Request, ctx: Ctx) {
 }
 
 export async function DELETE(_request: Request, ctx: Ctx) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = requireActiveUser(await getSessionUser());
+  if (user instanceof NextResponse) return user;
   const biz = await getOrCreateBusiness(user);
   if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const { id } = await ctx.params;

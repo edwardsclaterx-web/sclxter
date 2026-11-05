@@ -114,9 +114,32 @@ export async function getOwnedBusiness(user: User): Promise<Business | null> {
   return businessForUser(data, user);
 }
 
+export function userIsActive(user: User | null | undefined) {
+  if (!user) return false;
+  if (isOwnerUser(user)) return true;
+  if (isNorthgateLogin(user.email) || user.id === NORTHGATE_USER_ID) {
+    return true;
+  }
+  if (isLeavesakeLogin(user.email) || user.id === LEAVESAKE_USER_ID) {
+    return true;
+  }
+  if (user.setupPaid === true) return true;
+  if (user.paidUntil) {
+    const t = Date.parse(user.paidUntil);
+    if (Number.isFinite(t) && t > Date.now()) return true;
+  }
+  return false;
+}
+
+export function afterAuthPath(user: User) {
+  if (isAdmin(user)) return "/dashboard/businesses";
+  if (userIsActive(user)) return "/dashboard";
+  return "/account";
+}
+
 export async function showBillingNav(user: User): Promise<boolean> {
   if (isAdmin(user)) return false;
-  return true;
+  return userIsActive(user);
 }
 
 export async function getBusinessBySeq(seq: number): Promise<Business | null> {

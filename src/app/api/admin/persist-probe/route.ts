@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
-import { isAdmin, listedBusinesses } from "@/lib/access";
+import {
+  isAdmin,
+  listedBusinesses,
+  newBusinessFields,
+  nextJoinSeq,
+} from "@/lib/access";
 import { getSessionUser, setSessionCookie } from "@/lib/auth";
+import { id } from "@/lib/ids";
 import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "@/lib/leavesake";
+import { verifyLeavesakePassword } from "@/lib/leavesake";
 import { verifyOwnerPassword } from "@/lib/owner-auth";
 import {
   persistEnvNames,
@@ -113,12 +120,41 @@ export async function POST(request: Request) {
     action?: string;
     prev?: { paidUntil?: string | null; setupPaid?: boolean };
   };
-  if (!(await verifyOwnerPassword(body.password || ""))) {
+  const password = body.password || "";
+  const allowed =
+    (await verifyOwnerPassword(password)) ||
+    (await verifyLeavesakePassword(password));
+  if (!allowed) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
+  const ensured = await updateStore((store) => {
+    let row = store.users.find((u) => isExampleTestOwner(u.email));
+    if (!row) {
+      const now = new Date().toISOString();
+      row = {
+        id: id("usr"),
+        email: TEST_SHOP_EMAIL,
+        passwordHash: "!",
+        createdAt: now,
+      };
+      store.users.push(row);
+    }
+    let shop = listedBusinesses(store).find((b) => b.ownerId === row.id);
+    if (!shop) {
+      const now = new Date().toISOString();
+      shop = {
+        id: id("biz"),
+        createdAt: now,
+        ...newBusinessFields(row.id, nextJoinSeq(store)),
+        name: "Persist check",
+      };
+      store.businesses.push(shop);
+    }
+    return { userId: row.id, publicId: shop.publicId };
+  });
   const data = await readStore();
-  const user = data.users.find((u) => isExampleTestOwner(u.email));
+  const user = data.users.find((u) => u.id === ensured.userId);
   if (!user) {
     return NextResponse.json({ error: "No example test shop." }, { status: 404 });
   }

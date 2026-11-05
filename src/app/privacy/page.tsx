@@ -12,6 +12,13 @@ export default function PrivacyPage() {
         <a href="mailto:sclxter@outlook.com">sclxter@outlook.com</a>.
       </p>
 
+      <h2>Who we are</h2>
+      <p>
+        sclxter is run by David Sclater, a sole trader in the UK. Contact{" "}
+        <a href="mailto:sclxter@outlook.com">sclxter@outlook.com</a> for
+        anything about your data.
+      </p>
+
       <h2>Who is responsible</h2>
       <p>
         For your account, billing, emails to us, and chats on sclxter.com,
@@ -28,6 +35,11 @@ export default function PrivacyPage() {
           hashed password, when the account was created, and whether cover is
           current. Admin accounts also see shop names, join ids, and signup
           emails so support can work.
+        </li>
+        <li>
+          <strong className="font-medium text-fg">Sign-in codes.</strong>{" "}
+          6-digit sign-in codes are emailed through Resend and expire after a
+          few minutes.
         </li>
         <li>
           <strong className="font-medium text-fg">Shop settings.</strong>{" "}
@@ -69,32 +81,79 @@ export default function PrivacyPage() {
       </p>
 
       <h2>Who we share with</h2>
+      <p>
+        We use these processors, and only share what each needs for its job:
+      </p>
       <ul>
         <li>
           <strong className="font-medium text-fg">Stripe.</strong> Payments
-          for setup and monthly cover. Stripe is a payment processor. Card
-          details go to Stripe, not to our dashboard.
+          for setup and monthly cover. Card details go to Stripe, not to our
+          dashboard.
+        </li>
+        <li>
+          <strong className="font-medium text-fg">Vercel.</strong> Hosting
+          for sclxter.com.
+        </li>
+        <li>
+          <strong className="font-medium text-fg">Upstash.</strong> The Redis
+          database (provided through Vercel) that stores accounts, shop
+          settings, notes, and chats.
         </li>
         <li>
           <strong className="font-medium text-fg">Groq.</strong> The current
-          model host. Visitor questions and the notes needed to answer them
-          are sent so a reply can be generated. We do not put passwords,
-          keys, or server secrets in those requests.
+          model host for AI replies. Visitor questions and the notes needed to
+          answer them are sent so a reply can be generated. We do not put
+          passwords, keys, or server secrets in those requests.
+        </li>
+        <li>
+          <strong className="font-medium text-fg">Resend.</strong> Sends the
+          sign-in code emails.
+        </li>
+      </ul>
+
+      <h2>International transfers</h2>
+      <p>
+        Groq, Vercel, Upstash, and Resend may process data in the United
+        States. Those transfers rely on the UK International Data Transfer
+        Addendum, the UK Extension to the EU–US Data Privacy Framework, or
+        equivalent safeguards.
+      </p>
+
+      <h2>Cookies and browser storage</h2>
+      <ul>
+        <li>
+          <strong className="font-medium text-fg">sclxter_session.</strong> A
+          strictly necessary cookie that keeps you signed in, for up to 30
+          days or until you sign out.
+        </li>
+        <li>
+          <strong className="font-medium text-fg">sclxter_otp.</strong> A
+          strictly necessary cookie that links a sign-in code to your browser
+          while you enter it. It lasts 10 minutes and is cleared once you are
+          signed in.
+        </li>
+        <li>
+          <strong className="font-medium text-fg">Session storage.</strong>{" "}
+          The Ask anything widget keeps the current conversation, an unsent
+          draft, and whether it is open in your browser&apos;s session
+          storage, so a chat survives moving between pages. The site also
+          remembers if you dismissed the renewal reminder and avoids reload
+          loops after an update. Session storage is cleared when you close
+          the tab.
         </li>
       </ul>
       <p>
-        Hosting for sclxter.com may also process data as a processor so the
-        site can run. We only share what is needed for that job.
+        We do not use analytics or advertising cookies, so there is no cookie
+        banner.
       </p>
 
       <h2>How long we keep it</h2>
       <p>
-        Account, notepad, and scan text stay while the account exists,
-        including if cover lapses — lapsed shops keep data, and the live
-        assistant on your website switches off until cover is current. If you
-        want an account deleted, email{" "}
-        <a href="mailto:sclxter@outlook.com">sclxter@outlook.com</a>. Chat
-        logs are kept so you and support can see what was asked.
+        Account, notepad, scan text, and chat logs stay while the account
+        exists, including if cover lapses, so you can pick up where you left
+        off. If you ask us to delete an account, we delete its data within 30
+        days of the request. Stripe keeps its own payment records for as long
+        as the law requires (around 6 years for tax).
       </p>
 
       <h2>Your rights</h2>
@@ -103,7 +162,8 @@ export default function PrivacyPage() {
         correction, deletion, restriction, or to object, and you can complain
         to the ICO (ico.org.uk). Email{" "}
         <a href="mailto:sclxter@outlook.com">sclxter@outlook.com</a>. We will
-        need enough detail to find the right account.
+        need enough detail to find the right account, and we reply within one
+        month.
       </p>
 
       <h2>Children</h2>

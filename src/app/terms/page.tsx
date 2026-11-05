@@ -7,8 +7,18 @@ export default function TermsPage() {
     <LegalShell title="Terms of Service">
       <p>
         These terms are the agreement between you and sclxter for sclxter.com.
-        By creating an account you accept them. Contact{" "}
+        sclxter is run by David Sclater, a sole trader in the UK. By creating
+        an account or paying you accept them. Contact{" "}
         <a href="mailto:sclxter@outlook.com">sclxter@outlook.com</a>.
+      </p>
+
+      <h2>For businesses only</h2>
+      <p>
+        sclxter is sold to businesses, not consumers. By buying you confirm
+        you are acting for your business. Because of that, the 14-day
+        cancellation right in the Consumer Contracts Regulations does not
+        apply. Our <a href="/refunds">Refund &amp; Cancellation Policy</a>{" "}
+        still gives you a fair way out.
       </p>
 
       <h2>What you get</h2>
@@ -16,9 +26,8 @@ export default function TermsPage() {
         One site, one assistant. After setup and while cover is current you
         get a dashboard, Scan website, notepad notes, Change colour, Test AI,
         and the Ask anything widget to put on your website. Pricing is
-        £299.99 setup, then £74.99 a month. You can pay for up to 12 months
-        ahead on Billing. The barber page on this site is a demo, not a live
-        shop.
+        £299.99 setup, then £74.99 a month. The barber page on this site is a
+        demo, not a live shop.
       </p>
 
       <h2>Your duties</h2>
@@ -40,11 +49,22 @@ export default function TermsPage() {
 
       <h2>Pay, cancel, lapse</h2>
       <p>
-        Pay on Billing through Stripe Checkout. If you stop paying, your
-        account and shop data stay. Scan, notepad, and Test AI still work on
-        the dashboard. The live assistant on your website switches off until
-        cover is current. Missing paid time does not keep the widget live.
-        Email us if you want the account removed.
+        You pay on Billing through Stripe Checkout. Each payment is a one-off
+        card payment for 1 to 12 months of cover in advance (a month is 30
+        days), and never takes you more than 12 months ahead. It is not a
+        rolling subscription: we do not store your card for repeat charges
+        and nothing renews or is charged automatically. To keep cover going,
+        buy more months on Billing before it runs out.
+      </p>
+      <p>
+        To cancel, simply do not buy more months. Cover runs to the end of
+        the time you paid for. When it lapses, the dashboard and the
+        assistant lock: the Ask anything widget is hidden from your website
+        and the dashboard tools are locked until you pay again. Your account,
+        notes, and shop data are kept, and Billing stays open so you can pay
+        and pick up where you left off. Email us if you want the account
+        removed. Refunds are covered in the{" "}
+        <a href="/refunds">Refund &amp; Cancellation Policy</a>.
       </p>
 
       <h2>The assistant</h2>
@@ -61,6 +81,32 @@ export default function TermsPage() {
         fail. We may change the model host later; we will not put your
         visitors&apos; questions through a tool that needs a secret on their
         browser.
+      </p>
+
+      <h2>Liability</h2>
+      <p>
+        Our total liability to you for anything to do with sclxter is limited
+        to what you paid us in the 12 months before the claim. We are not
+        liable for indirect or consequential loss, or for lost profits,
+        revenue, business, or goodwill. Nothing in these terms limits
+        liability for death or personal injury caused by negligence, for
+        fraud, or for anything else the law does not allow us to limit.
+      </p>
+
+      <h2>Ending an account</h2>
+      <p>
+        You can stop at any time, as set out above. We may suspend or close
+        an account that breaks these terms or misuses sclxter. If we do, we
+        refund any whole prepaid months that have not started yet, unless the
+        misuse was serious (for example unlawful use or an attack on the
+        service).
+      </p>
+
+      <h2>Changes to these terms</h2>
+      <p>
+        We may update these terms. We will email you before any material
+        change takes effect. Continuing to use sclxter after that means you
+        accept the new terms.
       </p>
 
       <h2>English law</h2>

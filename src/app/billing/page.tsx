@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { SiteFooter } from "@/components/chrome";
 import { isAdmin, userCanOpenOwnerApp } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { monthsPurchasable, userHasLiveAccess } from "@/lib/billing";
@@ -42,6 +43,7 @@ export default async function BillingPage({
           }
         />
       </main>
+      <SiteFooter />
     </div>
   );
 }

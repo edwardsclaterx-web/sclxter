@@ -291,6 +291,7 @@ export function SiteFooter() {
       <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>
+        <Link href="/refunds">Refunds</Link>
         <Link href="/dpa">DPA</Link>
       </nav>
     </footer>

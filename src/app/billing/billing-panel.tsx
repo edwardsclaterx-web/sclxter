@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { formatRemaining, remainingMs } from "@/lib/cover";
@@ -161,6 +162,19 @@ export function BillingPanel({
             >
               {busy ? "Starting checkout…" : "Pay with card"}
             </Button>
+          ) : null}
+          {checkoutReady && maxMonths >= 1 ? (
+            <p className="text-xs leading-6 text-muted">
+              By buying you agree to the{" "}
+              <Link href="/terms" className="text-fg underline underline-offset-2">
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/refunds" className="text-fg underline underline-offset-2">
+                Refund policy
+              </Link>
+              . One-off payment; nothing renews automatically.
+            </p>
           ) : null}
         </div>
       </section>

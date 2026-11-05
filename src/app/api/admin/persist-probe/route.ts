@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
-import {
-  isAdmin,
-  listedBusinesses,
-  newBusinessFields,
-  nextJoinSeq,
-} from "@/lib/access";
-import { getSessionUser, setSessionCookie } from "@/lib/auth";
-import { id } from "@/lib/ids";
+import { isAdmin } from "@/lib/access";
+import { getSessionUser } from "@/lib/auth";
 import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "@/lib/leavesake";
-import { verifyLeavesakePassword } from "@/lib/leavesake";
-import { verifyOwnerPassword } from "@/lib/owner-auth";
 import {
   persistEnvNames,
   persistLastError,
@@ -103,104 +95,6 @@ export async function GET(request: Request) {
   }
 
   const res = NextResponse.json(body);
-  res.headers.set("Cache-Control", "no-store");
-  return res;
-}
-
-const TEST_SHOP_EMAIL = "persistcheck1793726816@example.com";
-
-function isExampleTestOwner(email: string) {
-  const v = email.trim().toLowerCase();
-  return v === TEST_SHOP_EMAIL || v.endsWith("@example.com");
-}
-
-export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as {
-    password?: string;
-    action?: string;
-    prev?: { paidUntil?: string | null; setupPaid?: boolean };
-  };
-  const password = body.password || "";
-  const allowed =
-    (await verifyOwnerPassword(password)) ||
-    (await verifyLeavesakePassword(password));
-  if (!allowed) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-
-  const ensured = await updateStore((store) => {
-    let row = store.users.find((u) => isExampleTestOwner(u.email));
-    if (!row) {
-      const now = new Date().toISOString();
-      row = {
-        id: id("usr"),
-        email: TEST_SHOP_EMAIL,
-        passwordHash: "!",
-        createdAt: now,
-      };
-      store.users.push(row);
-    }
-    let shop = listedBusinesses(store).find((b) => b.ownerId === row.id);
-    if (!shop) {
-      const now = new Date().toISOString();
-      shop = {
-        id: id("biz"),
-        createdAt: now,
-        ...newBusinessFields(row.id, nextJoinSeq(store)),
-        name: "Persist check",
-      };
-      store.businesses.push(shop);
-    }
-    return { userId: row.id, publicId: shop.publicId };
-  });
-  const data = await readStore();
-  const user = data.users.find((u) => u.id === ensured.userId);
-  if (!user) {
-    return NextResponse.json({ error: "No example test shop." }, { status: 404 });
-  }
-  const shop = listedBusinesses(data).find((b) => b.ownerId === user.id);
-
-  if (body.action === "restore") {
-    await updateStore((store) => {
-      const row = store.users.find((u) => u.id === user.id);
-      if (!row) return false;
-      const paidUntil = body.prev?.paidUntil;
-      if (typeof paidUntil === "string" && paidUntil) row.paidUntil = paidUntil;
-      else delete row.paidUntil;
-      row.setupPaid = body.prev?.setupPaid === true;
-      return true;
-    });
-    const res = NextResponse.json({
-      ok: true,
-      restored: true,
-      publicId: shop?.publicId ?? null,
-    });
-    res.headers.set("Cache-Control", "no-store");
-    return res;
-  }
-
-  if (body.action !== "lapse") {
-    return NextResponse.json({ error: "Unknown action." }, { status: 400 });
-  }
-
-  const prev = {
-    paidUntil: user.paidUntil ?? null,
-    setupPaid: user.setupPaid === true,
-  };
-  await updateStore((store) => {
-    const row = store.users.find((u) => u.id === user.id);
-    if (!row) return false;
-    row.paidUntil = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    row.setupPaid = true;
-    return true;
-  });
-  const res = NextResponse.json({
-    ok: true,
-    lapsed: true,
-    prev,
-    publicId: shop?.publicId ?? null,
-  });
-  await setSessionCookie(user.id, res, request);
   res.headers.set("Cache-Control", "no-store");
   return res;
 }

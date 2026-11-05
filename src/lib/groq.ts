@@ -58,7 +58,8 @@ const SCLXTER_WHAT_IS =
 
 const SCLXTER_CONTACT = "sclxter@outlook.com";
 const POWERED = "I am powered by sclxter.com";
-const AI_LINE = "I am an AI, not a real person.";
+const AI_LINE = "Yes. I am an AI, not a real person.";
+const DEMO_REAL_LINE = "Yes. This is a demo page for sclxter.com.";
 const HELLO = "Hi, what can I help you with?";
 const OUTPUT_RULE = `Output only the composed answer the visitor should read. Never think out loud. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.
 Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last on-topic question.
@@ -71,19 +72,58 @@ The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real on-
 Never say you are busy, to try again, or that something went wrong.`;
 
 function isWhatIsSclxter(content: string) {
-  return /^(please |can you |could you )?(tell me )?(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter|what is this( site| website)?)$/.test(
-    norm(content),
+  const t = norm(content);
+  return /\b(what is sclxter|whats sclxter|what sclxter is|what does sclxter do|whats sclxter do|tell me about sclxter|explain sclxter|describe sclxter)\b/.test(
+    t,
   );
+}
+
+function isSclxterAsk(content: string) {
+  return /\bsclxter\b/.test(norm(content));
+}
+
+function isDemoOrRealShopAsk(content: string) {
+  const t = norm(content);
+  if (/\bsclxter\b/.test(t) && /\bdemo\b/.test(t)) return true;
+  if (/\b(demo page|a demo|this (page|site|website) (a )?demo)\b/.test(t)) {
+    return true;
+  }
+  if (
+    /\bnorthgate\b/.test(t) &&
+    /\b(real|fake|fictional|demo|actual|genuine|made up)\b/.test(t)
+  ) {
+    return true;
+  }
+  if (
+    /\b(is|are) (this|the) (shop|business|barber|page|site|website)\b/.test(t) &&
+    /\b(real|fake|fictional|demo|actual|genuine|made up)\b/.test(t)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isMakerAsk(content: string) {
+  const t = norm(content);
+  if (isHowPowered(content)) return true;
+  if (
+    /\bwho (made|built|created|runs|owns|powers|developed|provides)\b/.test(t) &&
+    /\b(this|the|you|it|assistant|ai|widget|chat|bot)\b/.test(t)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function isAiAsk(content: string) {
   const t = norm(content);
-  return (
-    /\b(are you|r u|ru)\b/.test(t) &&
-    /\b(ai|an ai|a i|artificial|bot|robot|human|real person|a person|real|staff|a human)\b/.test(
-      t,
-    )
-  );
+  const machine =
+    /\b(ai|an ai|a i|artificial|bot|robot|human|real person|a person|person|staff|a human)\b/;
+  if (/\b(are you|r u|ru)\b/.test(t) && (machine.test(t) || /\breal\b/.test(t))) {
+    return true;
+  }
+  if (/\b(is this|is that|is it)\b/.test(t) && machine.test(t)) return true;
+  return false;
 }
 
 function isHowPowered(content: string) {
@@ -107,19 +147,35 @@ function isSmallTalk(content: string) {
   );
 }
 
+function isMetaAsk(content: string) {
+  return (
+    isAiAsk(content) ||
+    isHowPowered(content) ||
+    isWhatIsSclxter(content) ||
+    isMakerAsk(content) ||
+    isSclxterAsk(content) ||
+    isDemoOrRealShopAsk(content)
+  );
+}
+
+function shopSclxterLine(business?: Business) {
+  const name = (business?.name || "").trim();
+  const help = name
+    ? `How can I help with ${name}?`
+    : "How can I help with this business?";
+  return `Yes, I'm an AI assistant powered by sclxter.com. ${help}`;
+}
+
 function isAboutThePlace(content: string, business?: Business, site?: boolean) {
   const t = norm(content);
-  if (
-    isSmallTalk(t) ||
-    isAiAsk(t) ||
-    isHowPowered(t) ||
-    isWhatIsSclxter(t)
-  ) {
+  if (isSmallTalk(t) || isMetaAsk(t)) {
     return true;
   }
   if (site) return isSiteRelated(content);
   const name = norm(business?.name || "");
   if (name && t.includes(name)) return true;
+  const first = name.split(" ")[0];
+  if (first && first.length > 3 && t.includes(first)) return true;
   return /\b(service|services|price|prices|cost|hour|hours|open|opening|close|closed|book|booking|appoint|appointment|location|address|product|products|offer|package|packages|website|site|contact|phone|email|menu|how much|opening times)\b/.test(
     t,
   );
@@ -144,7 +200,7 @@ function isGreetingOnlyReply(text: string) {
 
 function isSiteRelated(content: string) {
   const t = norm(content);
-  if (isGreeting(t) || isAiAsk(t) || isHowPowered(t) || isWhatIsSclxter(t)) {
+  if (isGreeting(t) || isMetaAsk(t)) {
     return true;
   }
   return /\b(sclxter|price|cost|buy|pay|paid|month|theme|tone|notepad|scan|widget|demo|faq|custom|customise|customize|stripe|setup|assistant|dashboard|embed|colour|color|billing|subscription)\b/.test(
@@ -154,7 +210,7 @@ function isSiteRelated(content: string) {
 
 function isShopRelated(content: string, business: Business) {
   const t = norm(content);
-  if (isGreeting(t) || isAiAsk(t) || isHowPowered(t) || isWhatIsSclxter(t)) {
+  if (isGreeting(t) || isMetaAsk(t)) {
     return true;
   }
   const name = norm(business.name || "");
@@ -303,14 +359,22 @@ function shopPrompt(
 ) {
   const tone = toneById(business.tone);
   const demo = barber
-    ? "This shop is a fictional demo for sclxter.com. If asked whether the shop is real, say that."
-    : "";
+    ? `This shop is a fictional demo for sclxter.com.
+Questions about sclxter, this demo, whether Northgate is real, and whether you are an AI are on-topic.
+If asked whether Northgate or this shop is real, or whether this page is a demo: "${DEMO_REAL_LINE}"
+If asked what sclxter is: reply with this exact text only:
+${SCLXTER_WHAT_IS}
+Basic sclxter product facts are OK. Do not dump prices unless they asked.`
+    : `If asked about sclxter, who made or powers you, or whether you are an AI, reply with this exact text only:
+${shopSclxterLine(business)}
+No sales pitch, pricing, or extra product detail. Then you may help with this business.`;
   const subject = business.name?.trim() || "this business";
   return `You are an AI assistant for ${subject}. Not a human.
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Answer only about this business and this website. No general knowledge, even if you know it, even briefly.
+Answer about this business and this website. Questions about sclxter, who made you, and whether you are an AI are also allowed as above.
+No general knowledge for unrelated topics, even if you know it, even briefly.
 If they ask about anything else (camera lenses, homework, weather, coding, celebrities, news, sport, other businesses), reply with this exact text only:
 ${refuseLine(subject, contact)}
 Follow-ups that refer to the last on-topic question are still on-topic.
@@ -468,10 +532,25 @@ export async function answerChat(opts: {
   notesOnly?: boolean;
 }) {
   const asked = lastUser(opts.messages)?.content || "";
-  if (isWhatIsSclxter(asked)) return SCLXTER_WHAT_IS;
-  if (isHowPowered(asked)) return POWERED;
-  if (isAiAsk(asked)) return AI_LINE;
   if (isGreeting(asked)) return HELLO;
+  if (opts.site) {
+    if (isWhatIsSclxter(asked)) return SCLXTER_WHAT_IS;
+    if (isHowPowered(asked) || isMakerAsk(asked)) return POWERED;
+    if (isAiAsk(asked)) return AI_LINE;
+  } else if (opts.barber) {
+    if (isWhatIsSclxter(asked)) return SCLXTER_WHAT_IS;
+    if (isDemoOrRealShopAsk(asked)) return DEMO_REAL_LINE;
+    if (isAiAsk(asked)) return AI_LINE;
+    if (isHowPowered(asked) || isMakerAsk(asked)) return POWERED;
+  } else if (
+    isWhatIsSclxter(asked) ||
+    isAiAsk(asked) ||
+    isHowPowered(asked) ||
+    isMakerAsk(asked) ||
+    isSclxterAsk(asked)
+  ) {
+    return shopSclxterLine(opts.business);
+  }
 
   const related = opts.site
     ? isSiteRelated

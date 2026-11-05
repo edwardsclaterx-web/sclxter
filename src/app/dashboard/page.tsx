@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getOwnedBusiness, isAdmin } from "@/lib/access";
-import { userHasLiveAccess } from "@/lib/billing";
 import { readStore } from "@/lib/store";
 import { toClientBusiness } from "@/lib/access";
 import { normalizeInstructions } from "@/lib/instructions";
@@ -34,7 +33,6 @@ export default async function DashboardPage() {
       admin={false}
       business={toClientBusiness(biz, { admin: false })}
       instructions={normalizeInstructions(data.settings?.instructions)}
-      live={userHasLiveAccess(user)}
     />
   );
 }

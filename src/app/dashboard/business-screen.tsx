@@ -21,7 +21,6 @@ type Props = {
   admin: boolean;
   business: ClientBusiness;
   instructions: string[];
-  live?: boolean;
 };
 
 const SCAN_FAIL =
@@ -44,7 +43,6 @@ export function BusinessScreen({
   admin,
   business,
   instructions,
-  live = true,
 }: Props) {
   const router = useRouter();
   const unsaved = useUnsavedGuard();
@@ -306,13 +304,6 @@ export function BusinessScreen({
 
   return (
     <main className="dash-screen mx-auto w-full min-w-0 max-w-full flex-1 overflow-x-auto px-4 py-6 md:max-w-[96rem] md:px-8 md:py-10">
-      {!admin && !live ? (
-        <p className="mb-6 border border-line bg-surface px-5 py-4 text-sm leading-6 text-fg">
-          This account is unpaid. Your shop data is kept. Scan, notepad, and
-          Test AI still work here. The live assistant on your website stays
-          off until cover is current. Pay on Billing.
-        </p>
-      ) : null}
       <InstructionsBanner steps={instructions} admin={admin} />
       <div className="dash-grid mt-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.45fr)_minmax(0,0.9fr)]">
       <div className="order-1 min-w-0 w-full max-w-full">

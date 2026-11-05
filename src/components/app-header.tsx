@@ -1,4 +1,4 @@
-import { isAdmin, showBillingNav, userIsActive } from "@/lib/access";
+import { isAdmin, showBillingNav, userCanOpenOwnerApp } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { SiteHeader } from "./chrome";
 
@@ -9,12 +9,12 @@ export async function AppHeader({
   showBuy?: boolean;
 }) {
   const user = await getSessionUser();
-  const active = Boolean(user && userIsActive(user));
+  const signedIn = Boolean(user && userCanOpenOwnerApp(user));
   const admin = Boolean(user && isAdmin(user));
-  const purchaser = user && active ? await showBillingNav(user) : false;
+  const purchaser = user && signedIn ? await showBillingNav(user) : false;
   return (
     <SiteHeader
-      signedIn={active}
+      signedIn={signedIn}
       admin={admin}
       purchaser={purchaser}
       showPricing={showPricing}

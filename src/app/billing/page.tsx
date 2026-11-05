@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
-import { isAdmin, userIsActive } from "@/lib/access";
+import { isAdmin, userCanOpenOwnerApp } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { monthsPurchasable, userHasLiveAccess } from "@/lib/billing";
 import { checkoutReady } from "@/lib/stripe-checkout";
@@ -17,7 +17,7 @@ export default async function BillingPage({
   const user = await getSessionUser();
   if (!user) redirect("/account");
   if (isAdmin(user)) redirect("/");
-  if (!userIsActive(user)) redirect("/account");
+  if (!userCanOpenOwnerApp(user)) redirect("/account");
   const q = await searchParams;
 
   return (

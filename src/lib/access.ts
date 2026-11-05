@@ -131,15 +131,34 @@ export function userIsActive(user: User | null | undefined) {
   return false;
 }
 
+/** Previously had cover, now past paidUntil. Never-paid accounts are not lapsed. */
+export function userCoverLapsed(user: User | null | undefined) {
+  if (!user) return false;
+  if (isOwnerUser(user)) return false;
+  if (isNorthgateLogin(user.email) || user.id === NORTHGATE_USER_ID) {
+    return false;
+  }
+  if (isLeavesakeLogin(user.email) || user.id === LEAVESAKE_USER_ID) {
+    return false;
+  }
+  if (!user.paidUntil) return false;
+  const t = Date.parse(user.paidUntil);
+  return Number.isFinite(t) && t <= Date.now();
+}
+
+export function userCanOpenOwnerApp(user: User | null | undefined) {
+  return userIsActive(user) || userCoverLapsed(user);
+}
+
 export function afterAuthPath(user: User) {
   if (isAdmin(user)) return "/dashboard/businesses";
-  if (userIsActive(user)) return "/dashboard";
+  if (userCanOpenOwnerApp(user)) return "/dashboard";
   return "/account";
 }
 
 export async function showBillingNav(user: User): Promise<boolean> {
   if (isAdmin(user)) return false;
-  return userIsActive(user);
+  return userCanOpenOwnerApp(user);
 }
 
 export async function getBusinessBySeq(seq: number): Promise<Business | null> {

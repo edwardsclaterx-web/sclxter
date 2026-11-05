@@ -100,7 +100,7 @@ export async function createCoverCheckout(
     customer: customerId,
     client_reference_id: user.id,
     success_url: `${origin}/billing/return?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/billing?cancelled=1`,
+    cancel_url: `${origin}/buy?cancelled=1`,
     line_items,
     metadata: {
       userId: user.id,
@@ -142,14 +142,24 @@ export async function applyPaidCheckoutSession(sessionId: string, userId?: strin
     if (!row) return { applied: 0, already: false };
     const seen = row.processedCheckoutIds ?? [];
     if (seen.includes(session.id)) {
-      return { applied: 0, already: true, paidUntil: row.paidUntil ?? null };
+      return {
+        applied: 0,
+        already: true,
+        months,
+        paidUntil: row.paidUntil ?? null,
+      };
     }
     const next = applyPaidMonths(row.paidUntil, months);
     row.paidUntil = next.paidUntil ?? undefined;
     if (includeSetup) row.setupPaid = true;
     row.processedCheckoutIds = [...seen, session.id].slice(-SESSION_KEEP);
-    return { applied: next.applied, already: false, paidUntil: row.paidUntil };
+    return {
+      applied: next.applied,
+      already: false,
+      months,
+      paidUntil: row.paidUntil,
+    };
   });
 
-  return { ok: true as const, ...result };
+  return { ok: true as const, months, ...result };
 }

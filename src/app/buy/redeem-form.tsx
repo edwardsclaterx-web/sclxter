@@ -21,12 +21,20 @@ export function RedeemForm() {
         credentials: "same-origin",
         body: JSON.stringify({ code }),
       });
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        months?: number;
+      };
       if (!res.ok) {
         setError(body.error || "That code could not be applied.");
         return;
       }
-      window.location.assign("/dashboard");
+      const months = Number(body.months);
+      const q =
+        Number.isFinite(months) && months >= 1
+          ? `?paid=1&months=${Math.floor(months)}`
+          : "?paid=1";
+      window.location.assign(`/buy${q}`);
     } catch {
       setError("That code could not be applied.");
     } finally {

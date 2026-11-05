@@ -18,7 +18,9 @@ export default async function BillingReturnPage({
   if (!sessionId) redirect("/buy");
   const result = await applyPaidCheckoutSession(sessionId, user.id);
   if (result.ok && ((result.applied && result.applied > 0) || result.already)) {
-    redirect("/dashboard");
+    const months = result.applied || result.months || 0;
+    const q = months >= 1 ? `?paid=1&months=${months}` : "?paid=1";
+    redirect(`/buy${q}`);
   }
   redirect("/buy?error=1");
 }

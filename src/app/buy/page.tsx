@@ -2,15 +2,33 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
-import { isAdmin } from "@/lib/access";
+import { getOwnedBusiness, isAdmin, userIsActive } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
-import { monthsPurchasable, userHasLiveAccess } from "@/lib/billing";
+import { MONTH_MS, monthsPurchasable, userHasLiveAccess } from "@/lib/billing";
 import { checkoutReady } from "@/lib/stripe-checkout";
 import { BillingPanel } from "@/app/billing/billing-panel";
+import { PurchaseSuccess } from "./purchase-success";
 
 export const metadata = { title: "Buy — sclxter" };
 
-export default async function BuyPage() {
+function monthsFromUntil(paidUntil: string | null, hinted: number) {
+  if (hinted >= 1 && hinted <= 12) return hinted;
+  if (!paidUntil) return 1;
+  const left = Date.parse(paidUntil) - Date.now();
+  if (!Number.isFinite(left) || left <= 0) return 1;
+  return Math.min(12, Math.max(1, Math.round(left / MONTH_MS)));
+}
+
+export default async function BuyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    paid?: string;
+    months?: string;
+    error?: string;
+    cancelled?: string;
+  }>;
+}) {
   const user = await getSessionUser();
   if (user && isAdmin(user)) redirect("/dashboard/businesses");
 
@@ -53,18 +71,44 @@ export default async function BuyPage() {
     );
   }
 
+  const q = await searchParams;
+  const bought = q.paid === "1" && userIsActive(user);
+  const shop = bought ? await getOwnedBusiness(user) : null;
+  const months = monthsFromUntil(
+    user.paidUntil ?? null,
+    Number(q.months || 0),
+  );
+
   return (
     <div className="flex min-h-full flex-col">
       <AppHeader />
       <main className="mx-auto w-full max-w-md flex-1 px-5 py-16">
-        <h1 className="text-2xl font-medium tracking-tight">Buy</h1>
-        <BillingPanel
-          paidUntil={user.paidUntil ?? null}
-          live={userHasLiveAccess(user)}
-          setupPaid={user.setupPaid === true}
-          maxMonths={monthsPurchasable(user.paidUntil)}
-          checkoutReady={checkoutReady()}
-        />
+        {bought ? (
+          <PurchaseSuccess
+            email={user.email}
+            businessName={shop?.name}
+            months={months}
+            paidUntil={user.paidUntil ?? null}
+          />
+        ) : (
+          <>
+            <h1 className="text-2xl font-medium tracking-tight">Buy</h1>
+            <BillingPanel
+              paidUntil={user.paidUntil ?? null}
+              live={userHasLiveAccess(user)}
+              setupPaid={user.setupPaid === true}
+              maxMonths={monthsPurchasable(user.paidUntil)}
+              checkoutReady={checkoutReady()}
+              notice={
+                q.cancelled
+                  ? "Checkout was cancelled. Nothing was charged."
+                  : q.error
+                    ? "That payment could not be confirmed. If you were charged, wait a moment and refresh."
+                    : null
+              }
+            />
+          </>
+        )}
       </main>
       <SiteFooter />
     </div>

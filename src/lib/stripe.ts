@@ -5,8 +5,7 @@ import { envSecret } from "./secrets";
 
 let client: Stripe | null = null;
 
-export const SETUP_PENCE = 29999;
-export const MONTH_PENCE = 7499;
+export { SETUP_PENCE, MONTH_PENCE } from "./prices";
 
 export function stripeConfigured() {
   const secret = envSecret("STRIPE_SECRET_KEY");

@@ -115,9 +115,9 @@ export function BillingPanel({
       <section>
         <h2 className="text-xl font-medium tracking-tight">Pay</h2>
         <p className="mt-3 text-sm leading-7 text-muted">
-          {gbp(SETUP)} setup
-          {setupPaid ? " (already paid on this account)" : ""}, then {gbp(MONTH)}{" "}
-          a month. Buy 1 to 12 months, never more than 12 months ahead.
+          {setupPaid
+            ? `${gbp(MONTH)} a month. Setup is already paid on this account. Buy 1 to 12 months, never more than 12 months ahead.`
+            : `${gbp(SETUP)} setup, then ${gbp(MONTH)} a month. Buy 1 to 12 months, never more than 12 months ahead.`}
         </p>
 
         <div className="mt-6 space-y-5">

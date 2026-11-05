@@ -2,7 +2,8 @@ import "server-only";
 
 import type Stripe from "stripe";
 import { applyPaidMonths } from "./billing";
-import { getStripe, MONTH_PENCE, SETUP_PENCE, stripeConfigured } from "./stripe";
+import { coverCheckoutLines, SETUP_PENCE } from "./prices";
+import { getStripe, stripeConfigured } from "./stripe";
 import { updateStore } from "./store";
 import type { User } from "./types";
 
@@ -44,7 +45,7 @@ export async function createCoverCheckout(
     throw err;
   }
 
-  const includeSetup = user.setupPaid !== true;
+  const { includeSetup, items } = coverCheckoutLines(user.setupPaid, n);
   const stripe = getStripe();
   let customerId = user.stripeCustomerId;
   if (customerId) {
@@ -67,32 +68,14 @@ export async function createCoverCheckout(
     });
   }
 
-  const line_items: {
-    quantity: number;
+  const line_items = items.map((item) => ({
+    quantity: item.quantity,
     price_data: {
-      currency: "gbp";
-      unit_amount: number;
-      product_data: { name: string };
-    };
-  }[] = [];
-  if (includeSetup) {
-    line_items.push({
-      quantity: 1,
-      price_data: {
-        currency: "gbp",
-        unit_amount: SETUP_PENCE,
-        product_data: { name: "SCLXTER setup" },
-      },
-    });
-  }
-  line_items.push({
-    quantity: n,
-    price_data: {
-      currency: "gbp",
-      unit_amount: MONTH_PENCE,
-      product_data: { name: "SCLXTER monthly cover" },
+      currency: "gbp" as const,
+      unit_amount: item.unit_amount,
+      product_data: { name: item.name },
     },
-  });
+  }));
 
   const origin = originFromRequest(request);
   const session = await stripe.checkout.sessions.create({
@@ -112,7 +95,27 @@ export async function createCoverCheckout(
   if (!session.url) {
     throw new Error("Stripe did not return a checkout URL.");
   }
-  return { url: session.url };
+  const listed = await stripe.checkout.sessions.listLineItems(session.id, {
+    limit: 20,
+  });
+  const chargedSetup = listed.data.some(
+    (row) =>
+      row.price?.unit_amount === SETUP_PENCE ||
+      /\bsetup\b/i.test(row.description || ""),
+  );
+  if (!includeSetup && chargedSetup) {
+    await stripe.checkout.sessions.expire(session.id).catch(() => undefined);
+    throw new Error("Checkout wrongly included the setup fee.");
+  }
+  return {
+    url: session.url,
+    includeSetup,
+    lineItems: listed.data.map((row) => ({
+      description: row.description || "",
+      quantity: row.quantity ?? 1,
+      unitAmount: row.price?.unit_amount ?? null,
+    })),
+  };
 }
 
 export async function applyPaidCheckoutSession(sessionId: string, userId?: string) {
@@ -151,7 +154,7 @@ export async function applyPaidCheckoutSession(sessionId: string, userId?: strin
     }
     const next = applyPaidMonths(row.paidUntil, months);
     row.paidUntil = next.paidUntil ?? undefined;
-    if (includeSetup) row.setupPaid = true;
+    row.setupPaid = row.setupPaid === true || includeSetup;
     row.processedCheckoutIds = [...seen, session.id].slice(-SESSION_KEEP);
     return {
       applied: next.applied,

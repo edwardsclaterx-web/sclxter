@@ -43,7 +43,8 @@ export default async function BuyPage({
           </p>
           <p className="mt-4 text-sm leading-7 text-muted">
             £299.99 setup, then £74.99 a month. One site, one assistant, Scan
-            website, and the Ask anything widget.
+            website, and the Ask anything widget. A free code covers setup for
+            good; after the free months you only pay £74.99 a month.
           </p>
           <p className="mt-4 text-sm leading-7 text-muted">
             After you create an account, pay here or on Billing. If you have a

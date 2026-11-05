@@ -1,7 +1,13 @@
 import "server-only";
 
 import { id } from "./ids";
-import { isDemoBusiness, isShowcaseBusiness, listedBusinesses } from "./access";
+import {
+  isAdmin,
+  isDemoBusiness,
+  isShowcaseBusiness,
+  listedBusinesses,
+  messageableBusinesses,
+} from "./access";
 import {
   LEAVESAKE_BIZ_ID,
   LEAVESAKE_USER_ID,
@@ -103,4 +109,21 @@ export function publicThread(thread: SupportThread | null) {
   return {
     messages: thread?.messages ?? [],
   };
+}
+
+/** Nav badge: businesses get 1 if admin wrote, admin gets unread conversation count. */
+export function unreadContactCount(
+  user: User,
+  data: Awaited<ReturnType<typeof readStore>>,
+) {
+  if (isAdmin(user)) {
+    return messageableBusinesses(data).filter((b) => {
+      const thread = threadForBusiness(data, b.id);
+      return (thread?.adminUnread ?? 0) > 0;
+    }).length;
+  }
+  const biz = findOwnerBusiness(user, data);
+  if (!biz) return 0;
+  const thread = threadForBusiness(data, biz.id);
+  return (thread?.ownerUnread ?? 0) > 0 ? 1 : 0;
 }

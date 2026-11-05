@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { notifySupportUnread } from "@/components/contact-unread";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SupportMessage } from "@/lib/types";
@@ -42,6 +43,7 @@ export function SupportThread({
     setMessages(data.messages ?? []);
     if (data.businessName) setPeerName(data.businessName);
     setError(null);
+    notifySupportUnread();
   }
 
   useEffect(() => {

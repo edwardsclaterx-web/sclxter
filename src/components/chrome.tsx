@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ContactLabel } from "./contact-unread";
 
 export function Wordmark({ href = "/" }: { href?: string }) {
   return (
@@ -101,7 +102,7 @@ function ProductNavLinks({
         FAQ
       </Link>
       <Link href="/contact" className={item(onContact)}>
-        Contact
+        <ContactLabel stacked={stacked} enabled={Boolean(signedIn || admin)} />
       </Link>
       {extra}
       {admin ? (

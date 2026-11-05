@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/access";
-import { getSessionUser } from "@/lib/auth";
+import { isAdmin, listedBusinesses } from "@/lib/access";
+import { getSessionUser, setSessionCookie } from "@/lib/auth";
 import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID } from "@/lib/leavesake";
+import { verifyOwnerPassword } from "@/lib/owner-auth";
 import {
   persistEnvNames,
   persistLastError,
@@ -95,6 +96,75 @@ export async function GET(request: Request) {
   }
 
   const res = NextResponse.json(body);
+  res.headers.set("Cache-Control", "no-store");
+  return res;
+}
+
+const TEST_SHOP_EMAIL = "persistcheck1793726816@example.com";
+
+function isExampleTestOwner(email: string) {
+  const v = email.trim().toLowerCase();
+  return v === TEST_SHOP_EMAIL || v.endsWith("@example.com");
+}
+
+export async function POST(request: Request) {
+  const body = (await request.json().catch(() => ({}))) as {
+    password?: string;
+    action?: string;
+    prev?: { paidUntil?: string | null; setupPaid?: boolean };
+  };
+  if (!(await verifyOwnerPassword(body.password || ""))) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
+  const data = await readStore();
+  const user = data.users.find((u) => isExampleTestOwner(u.email));
+  if (!user) {
+    return NextResponse.json({ error: "No example test shop." }, { status: 404 });
+  }
+  const shop = listedBusinesses(data).find((b) => b.ownerId === user.id);
+
+  if (body.action === "restore") {
+    await updateStore((store) => {
+      const row = store.users.find((u) => u.id === user.id);
+      if (!row) return false;
+      const paidUntil = body.prev?.paidUntil;
+      if (typeof paidUntil === "string" && paidUntil) row.paidUntil = paidUntil;
+      else delete row.paidUntil;
+      row.setupPaid = body.prev?.setupPaid === true;
+      return true;
+    });
+    const res = NextResponse.json({
+      ok: true,
+      restored: true,
+      publicId: shop?.publicId ?? null,
+    });
+    res.headers.set("Cache-Control", "no-store");
+    return res;
+  }
+
+  if (body.action !== "lapse") {
+    return NextResponse.json({ error: "Unknown action." }, { status: 400 });
+  }
+
+  const prev = {
+    paidUntil: user.paidUntil ?? null,
+    setupPaid: user.setupPaid === true,
+  };
+  await updateStore((store) => {
+    const row = store.users.find((u) => u.id === user.id);
+    if (!row) return false;
+    row.paidUntil = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    row.setupPaid = true;
+    return true;
+  });
+  const res = NextResponse.json({
+    ok: true,
+    lapsed: true,
+    prev,
+    publicId: shop?.publicId ?? null,
+  });
+  await setSessionCookie(user.id, res, request);
   res.headers.set("Cache-Control", "no-store");
   return res;
 }

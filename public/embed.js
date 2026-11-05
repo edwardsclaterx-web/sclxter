@@ -35,7 +35,7 @@
         return r.json();
       })
       .then(function (d) {
-        if (!d || d.live === false) return;
+        if (!d || d.live !== true) return;
         if (document.getElementById(hostId)) return;
         var t = d.theme || (d.appearance && d.appearance.theme) || {};
         var theme = {

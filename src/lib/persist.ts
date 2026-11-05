@@ -298,6 +298,15 @@ async function kvGet(key: string) {
   return parseKvValue(out.result);
 }
 
+async function kvGetMany(keys: string[]) {
+  if (!keys.length) return [];
+  const out = await kvRun(["MGET", ...keys]);
+  if (out.ok && Array.isArray(out.result)) {
+    return out.result.map(parseKvValue);
+  }
+  return Promise.all(keys.map((k) => kvGet(k)));
+}
+
 async function kvSet(key: string, value: unknown) {
   const out = await kvRun(["SET", key, JSON.stringify(value)]);
   return kvWriteOk(out);
@@ -397,14 +406,19 @@ async function readKvSplit(): Promise<StoreData | null> {
   if (!Array.isArray(meta.users) || !Array.isArray(meta.businessIds)) return null;
   const businesses: Business[] = [];
   const knowledge: KnowledgeItem[] = [];
+  const keys: string[] = [];
   for (const id of meta.businessIds) {
-    const row = await kvGet(bizKey(id));
+    keys.push(bizKey(id), knowKey(id));
+  }
+  const values = await kvGetMany(keys);
+  meta.businessIds.forEach((id, i) => {
+    const row = values[i * 2];
+    const notes = values[i * 2 + 1];
     if (row && typeof row === "object") businesses.push(row as Business);
-    const notes = await kvGet(knowKey(id));
     if (Array.isArray(notes)) {
       knowledge.push(...(notes as KnowledgeItem[]));
     }
-  }
+  });
   return {
     users: meta.users,
     businesses,
@@ -512,8 +526,8 @@ function pickNewer(a: StoreData | null, b: StoreData | null) {
 }
 
 export async function readPersistedStore(): Promise<StoreData | null> {
-  const extra = await readKvThreads();
-  const fromKv = await readKv();
+  const [extra, fromKv] = await Promise.all([readKvThreads(), readKv()]);
+  if (fromKv) return withThreads(fromKv, extra);
   const fromBlob = await readBlob();
   const chosen = pickNewer(fromKv, fromBlob);
   if (chosen) return withThreads(chosen, extra);

@@ -1,3 +1,4 @@
+import { cache as reactCache } from "react";
 import { migrateOwnerIdentity } from "./owner-auth";
 import { ensureDemoIndustry, ensureLeavesakeShop, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
@@ -20,7 +21,9 @@ const empty = (): StoreData => ({
   settings: { instructions: normalizeInstructions(null) },
 });
 
-let cache: StoreData | null = null;
+let memStore: StoreData | null = null;
+let memAt = 0;
+const MEM_MS = 20_000;
 let queue: Promise<unknown> = Promise.resolve();
 
 function withLock<T>(fn: () => T | Promise<T>): Promise<T> {
@@ -164,7 +167,10 @@ function persistRev(data: StoreData | null) {
   return Number.isFinite(n) ? n : 0;
 }
 
-async function loadStore(): Promise<StoreData> {
+async function loadStore(fresh = false): Promise<StoreData> {
+  if (!fresh && memStore && Date.now() - memAt < MEM_MS) {
+    return memStore;
+  }
   let data = hydrate(await readPersistedStore());
   seedIfEmpty(data);
   migrateOwnerIdentity(data);
@@ -175,13 +181,14 @@ async function loadStore(): Promise<StoreData> {
   data.knowledgeGaps = data.knowledgeGaps ?? [];
   data.otpChallenges = data.otpChallenges ?? [];
   data = normalize(data);
-  cache = data;
+  memStore = data;
+  memAt = Date.now();
   return data;
 }
 
-export async function readStore(): Promise<StoreData> {
-  return withLock(() => loadStore());
-}
+export const readStore = reactCache(async function readStore(): Promise<StoreData> {
+  return withLock(() => loadStore(false));
+});
 
 export async function updateStore<T>(
   fn: (data: StoreData) => T,
@@ -189,18 +196,20 @@ export async function updateStore<T>(
   return withLock(async () => {
     let lastErr: unknown = new Error("Could not persist shop data.");
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      const data = await loadStore();
+      const data = await loadStore(true);
       const rev = persistRev(data);
       const result = fn(data);
       data.settings = data.settings ?? { instructions: [] };
       data.settings.persistRev = rev + 1;
-      cache = data;
+      memStore = data;
+      memAt = Date.now();
       try {
         await writePersistedStore(normalize(data));
         return result;
       } catch (err) {
         lastErr = err;
-        cache = null;
+        memStore = null;
+        memAt = 0;
       }
     }
     throw lastErr;

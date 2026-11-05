@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
@@ -140,7 +141,7 @@ export async function getUserIdFromToken(token: string | undefined) {
   }
 }
 
-export async function getSessionUser(): Promise<User | null> {
+export const getSessionUser = cache(async function getSessionUser(): Promise<User | null> {
   await connection();
   const jar = await cookies();
   const userId = await getUserIdFromToken(jar.get(COOKIE)?.value);
@@ -156,7 +157,7 @@ export async function getSessionUser(): Promise<User | null> {
     return data.users.find((u) => isLeavesakeLogin(u.email)) ?? null;
   }
   return null;
-}
+});
 
 export async function requireUser() {
   const user = await getSessionUser();

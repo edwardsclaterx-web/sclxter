@@ -16,9 +16,9 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const seqRaw = url.searchParams.get("seq");
   const seq = seqRaw ? Number(seqRaw) : null;
+  const data = await readStore();
   const biz = await resolveBusiness(user, seq && Number.isFinite(seq) ? seq : null);
   if (!biz) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  const data = await readStore();
   const owner = data.users.find((u) => u.id === biz.ownerId);
   const admin = isAdmin(user);
   const res = NextResponse.json({

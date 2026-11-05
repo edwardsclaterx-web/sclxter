@@ -74,6 +74,13 @@ export default async function BuyPage({
 
   const q = await searchParams;
   const bought = q.paid === "1" && userIsActive(user);
+  if (userIsActive(user) && !bought) {
+    const next = new URLSearchParams();
+    if (q.cancelled) next.set("cancelled", "1");
+    if (q.error) next.set("error", "1");
+    const qs = next.toString();
+    redirect(qs ? `/billing?${qs}` : "/billing");
+  }
   const shop = bought ? await getOwnedBusiness(user) : null;
   const months = monthsFromUntil(
     user.paidUntil ?? null,

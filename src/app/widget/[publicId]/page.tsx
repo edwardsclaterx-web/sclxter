@@ -4,7 +4,6 @@ import { isDemoBusiness } from "@/lib/access";
 import { businessHasLiveAccess } from "@/lib/billing";
 import {
   EMBED_OFF_SITE,
-  EMBED_UNAVAILABLE,
   embedPageAllowed,
   parsePageOrigin,
 } from "@/lib/embed-host";
@@ -101,7 +100,7 @@ export default async function WidgetPage({
   const business = data.businesses.find((b) => b.publicId === publicId);
   if (!business) notFound();
   if (!businessHasLiveAccess(business, data)) {
-    return <Unavailable text={EMBED_UNAVAILABLE} />;
+    return <div className="h-dvh bg-transparent" />;
   }
   if (
     !embedPageAllowed({

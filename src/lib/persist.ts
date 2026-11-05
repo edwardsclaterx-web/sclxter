@@ -382,17 +382,14 @@ function mergeThreads(a: SupportThread[] = [], b: SupportThread[] = []) {
   return [...byBiz.values()];
 }
 
-async function readKvThreads(): Promise<SupportThread[] | null> {
-  const raw = await kvGet(SUPPORT_KEY);
-  return asThreads(raw);
-}
-
 async function writeKvThreads(threads: SupportThread[]) {
   return kvSet(SUPPORT_KEY, threads);
 }
 
-async function readKvSplit(): Promise<StoreData | null> {
-  const metaRaw = await kvGet(META_KEY);
+function storeFromMeta(
+  metaRaw: unknown,
+  values: unknown[],
+): StoreData | null {
   if (!metaRaw || typeof metaRaw !== "object") return null;
   const meta = metaRaw as {
     users?: StoreData["users"];
@@ -406,11 +403,6 @@ async function readKvSplit(): Promise<StoreData | null> {
   if (!Array.isArray(meta.users) || !Array.isArray(meta.businessIds)) return null;
   const businesses: Business[] = [];
   const knowledge: KnowledgeItem[] = [];
-  const keys: string[] = [];
-  for (const id of meta.businessIds) {
-    keys.push(bizKey(id), knowKey(id));
-  }
-  const values = await kvGetMany(keys);
   meta.businessIds.forEach((id, i) => {
     const row = values[i * 2];
     const notes = values[i * 2 + 1];
@@ -432,14 +424,19 @@ async function readKvSplit(): Promise<StoreData | null> {
   };
 }
 
-async function readKvMonolith(): Promise<StoreData | null> {
-  return asStore(await kvGet(KEY));
-}
-
-async function readKv(): Promise<StoreData | null> {
-  const split = await readKvSplit();
-  if (split) return split;
-  return readKvMonolith();
+async function readKv(): Promise<{ store: StoreData | null; extra: SupportThread[] | null }> {
+  const head = await kvGetMany([META_KEY, SUPPORT_KEY, KEY]);
+  const extra = asThreads(head[1]);
+  const meta = head[0];
+  if (meta && typeof meta === "object" && Array.isArray((meta as { businessIds?: string[] }).businessIds)) {
+    const ids = (meta as { businessIds: string[] }).businessIds;
+    const keys: string[] = [];
+    for (const id of ids) keys.push(bizKey(id), knowKey(id));
+    const values = keys.length ? await kvGetMany(keys) : [];
+    const store = storeFromMeta(meta, values);
+    if (store) return { store, extra };
+  }
+  return { store: asStore(head[2]), extra };
 }
 
 async function writeKvSplit(data: StoreData) {
@@ -520,17 +517,11 @@ function withThreads(data: StoreData | null, extra: SupportThread[] | null) {
   return data;
 }
 
-function pickNewer(a: StoreData | null, b: StoreData | null) {
-  if (a && b) return persistRev(b) > persistRev(a) ? b : a;
-  return a || b;
-}
-
 export async function readPersistedStore(): Promise<StoreData | null> {
-  const [extra, fromKv] = await Promise.all([readKvThreads(), readKv()]);
+  const { store: fromKv, extra } = await readKv();
   if (fromKv) return withThreads(fromKv, extra);
   const fromBlob = await readBlob();
-  const chosen = pickNewer(fromKv, fromBlob);
-  if (chosen) return withThreads(chosen, extra);
+  if (fromBlob) return withThreads(fromBlob, extra);
   if (!onVercel()) {
     const local = readFile(FILE_LOCAL);
     if (local) return withThreads(local, extra);

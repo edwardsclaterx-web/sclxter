@@ -71,7 +71,7 @@ function ProductNavLinks({
     <nav
       className={
         wrap ||
-        "flex flex-wrap items-baseline justify-end gap-x-6 gap-y-2 text-sm text-muted"
+        "flex w-full min-w-[28rem] max-w-[40rem] flex-nowrap items-center justify-evenly gap-x-1 text-sm text-muted"
       }
       onClick={(e) => {
         if (!onNavigate) return;
@@ -190,7 +190,7 @@ export function ProductNav({
 
   return (
     <>
-      <div className="hidden min-w-0 lg:block">
+      <div className="hidden min-w-0 flex-1 justify-end lg:flex">
         <ProductNavLinks {...links} />
       </div>
       <button
@@ -289,7 +289,7 @@ export function SiteHeader({
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-line px-5 py-8 md:px-10">
-      <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+      <nav className="flex flex-wrap items-center justify-evenly gap-x-10 gap-y-2 text-sm text-muted sm:max-w-md sm:justify-start">
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/refunds">Refunds</Link>

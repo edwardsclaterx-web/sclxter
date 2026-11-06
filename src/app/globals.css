@@ -78,13 +78,18 @@ textarea {
 }
 
 a.nav-item {
-  display: inline;
+  display: inline-flex;
   position: static;
-  padding: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.7rem;
   margin: 0;
   border: none;
   line-height: inherit;
   transform: none;
+  white-space: nowrap;
+  text-align: center;
   vertical-align: baseline;
 }
 

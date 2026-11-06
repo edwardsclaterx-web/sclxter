@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 type CodeRow = {
   code: string;
   months: number;
+  percentOff?: number;
   createdAt: string;
   usedAt?: string;
   usedByBusinessName?: string;
@@ -26,6 +27,7 @@ function when(iso?: string) {
 export function FreeCodesPanel() {
   const [codes, setCodes] = useState<CodeRow[]>([]);
   const [months, setMonths] = useState(1);
+  const [percentOff, setPercentOff] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [made, setMade] = useState<string | null>(null);
@@ -56,7 +58,10 @@ export function FreeCodesPanel() {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ months }),
+        body: JSON.stringify({
+          months,
+          percentOff: percentOff === 99 ? 99 : undefined,
+        }),
       });
       const body = (await res.json().catch(() => ({}))) as {
         code?: CodeRow;
@@ -103,9 +108,10 @@ export function FreeCodesPanel() {
     <section className="mt-16 border-t border-line pt-10">
       <h2 className="text-2xl font-medium tracking-tight">Free codes</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-        One-time codes for a signed-in business. They skip card payment, mark
-        setup as paid, and add 1 to 12 months of cover, still capped at 12
-        months ahead.
+        One-time codes for a signed-in business. Free codes skip card payment,
+        mark setup as paid, and add 1 to 12 months of cover. A 99% Stripe code
+        still opens live Checkout (setup and the months on the code at 99%
+        off), then grants cover after Stripe records the payment.
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -122,6 +128,18 @@ export function FreeCodesPanel() {
                 {n} {n === 1 ? "month" : "months"}
               </option>
             ))}
+          </select>
+        </div>
+        <div>
+          <Label htmlFor="code-kind">Kind</Label>
+          <select
+            id="code-kind"
+            value={percentOff}
+            onChange={(e) => setPercentOff(Number(e.target.value))}
+            className="mt-1.5 h-10 border border-line bg-surface px-3 text-sm text-fg outline-none focus:border-fg"
+          >
+            <option value={0}>Free (skip card)</option>
+            <option value={99}>99% Stripe (live test)</option>
           </select>
         </div>
         <Button type="button" disabled={busy} onClick={() => void generate()}>
@@ -146,6 +164,7 @@ export function FreeCodesPanel() {
               <tr className="border-b border-line text-xs uppercase tracking-[0.14em] text-muted">
                 <th className="py-3 pr-4 font-normal">Code</th>
                 <th className="py-3 pr-4 font-normal">Months</th>
+                <th className="py-3 pr-4 font-normal">Kind</th>
                 <th className="py-3 pr-4 font-normal">Status</th>
                 <th className="py-3 font-normal" />
               </tr>
@@ -155,6 +174,9 @@ export function FreeCodesPanel() {
                 <tr key={row.code} className="border-b border-line">
                   <td className="py-3 pr-4 font-mono text-fg">{row.code}</td>
                   <td className="py-3 pr-4 text-muted">{row.months}</td>
+                  <td className="py-3 pr-4 text-muted">
+                    {row.percentOff === 99 ? "99% Stripe" : "Free"}
+                  </td>
                   <td className="py-3 pr-4 text-muted">
                     {row.usedAt
                       ? `Used by ${row.usedByBusinessName || "a business"} on ${when(row.usedAt)}`

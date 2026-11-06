@@ -24,6 +24,8 @@ export type FreeCode = {
   code: string;
   months: number;
   createdAt: string;
+  /** 99 = one-time Stripe Checkout at 99% off. Omitted = skip-card free code. */
+  percentOff?: number;
   usedAt?: string;
   usedByUserId?: string;
   usedByBusinessId?: string;
@@ -89,6 +91,8 @@ function asCode(raw: unknown): FreeCode | null {
   if (typeof row.code !== "string" || !row.code) return null;
   const months = Number(row.months);
   if (!Number.isFinite(months) || months < 1 || months > 12) return null;
+  const percentOff =
+    Number(row.percentOff) === 99 ? 99 : undefined;
   return {
     code: row.code,
     months: Math.floor(months),
@@ -96,6 +100,7 @@ function asCode(raw: unknown): FreeCode | null {
       typeof row.createdAt === "string"
         ? row.createdAt
         : new Date().toISOString(),
+    percentOff,
     usedAt: typeof row.usedAt === "string" ? row.usedAt : undefined,
     usedByUserId:
       typeof row.usedByUserId === "string" ? row.usedByUserId : undefined,
@@ -161,11 +166,52 @@ export async function listFreeCodes(): Promise<FreeCode[]> {
   return rows;
 }
 
-export async function createFreeCode(months: number): Promise<FreeCode> {
+export function isStripeDiscountCode(row: FreeCode) {
+  return row.percentOff === 99;
+}
+
+export async function readAccessCode(codeRaw: string) {
+  const code = normalizeFreeCode(codeRaw);
+  if (!/^SCLX-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
+    throw fail("That code is not valid.", 400);
+  }
+  const row = await readCode(code);
+  if (!row) throw fail("That code is not valid.", 400);
+  if (row.usedAt) throw fail("That code has already been used.", 409);
+  return row;
+}
+
+export async function markPromoCodeUsed(
+  userId: string,
+  codeRaw: string,
+  usedByName?: string,
+) {
+  const code = normalizeFreeCode(codeRaw);
+  const row = await readCode(code);
+  if (!row || row.usedAt) return row;
+  const used: FreeCode = {
+    ...row,
+    usedAt: new Date().toISOString(),
+    usedByUserId: userId,
+    usedByBusinessName: usedByName || undefined,
+  };
+  await writeCode(used);
+  if (persistConfigured()) {
+    await persistKvSetNx(claimKey(code), userId);
+  }
+  return used;
+}
+
+export async function createFreeCode(
+  months: number,
+  options?: { percentOff?: number },
+): Promise<FreeCode> {
   const n = Math.floor(Number(months) || 0);
   if (n < 1 || n > 12) {
     throw fail("Choose between 1 and 12 months.", 400);
   }
+  const percentOff =
+    Number(options?.percentOff) === 99 ? 99 : undefined;
   for (let i = 0; i < 12; i += 1) {
     const code = mintFreeCode();
     if (await readCode(code)) continue;
@@ -173,6 +219,7 @@ export async function createFreeCode(months: number): Promise<FreeCode> {
       code,
       months: n,
       createdAt: new Date().toISOString(),
+      percentOff,
     };
     if (persistConfigured()) {
       const created = await persistKvSetNx(codeKey(code), row);
@@ -222,6 +269,9 @@ export async function redeemFreeCode(user: User, codeRaw: string) {
   }
   const row = await readCode(code);
   if (!row) throw fail("That code is not valid.", 400);
+  if (isStripeDiscountCode(row)) {
+    throw fail("This code is for card checkout, not free cover.", 400);
+  }
   if (row.usedAt) throw fail("That code has already been used.", 409);
   const preview = applyPaidMonths(user.paidUntil, row.months);
   if (preview.applied !== row.months) {

@@ -24,9 +24,14 @@ export function RedeemForm() {
       const body = (await res.json().catch(() => ({}))) as {
         error?: string;
         months?: number;
+        url?: string;
       };
       if (!res.ok) {
         setError(body.error || "That code could not be applied.");
+        return;
+      }
+      if (body.url) {
+        window.location.assign(body.url);
         return;
       }
       const months = Number(body.months);

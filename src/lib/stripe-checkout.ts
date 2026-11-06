@@ -2,6 +2,7 @@ import "server-only";
 
 import type Stripe from "stripe";
 import { applyPaidMonths } from "./billing";
+import { markPromoCodeUsed } from "./free-codes";
 import { coverCheckoutLines, SETUP_PENCE } from "./prices";
 import { getStripe, stripeConfigured } from "./stripe";
 import { updateStore } from "./store";
@@ -29,6 +30,7 @@ export async function createCoverCheckout(
   user: User,
   months: number,
   request: Request,
+  promo?: { code: string; percentOff: number },
 ) {
   if (!checkoutReady()) {
     throw new Error("Stripe is not configured on this server.");
@@ -45,7 +47,11 @@ export async function createCoverCheckout(
     throw err;
   }
 
-  const { includeSetup, items } = coverCheckoutLines(user.setupPaid, n);
+  const { includeSetup, items } = coverCheckoutLines(
+    user.setupPaid,
+    n,
+    promo?.percentOff,
+  );
   const stripe = getStripe();
   let customerId = user.stripeCustomerId;
   if (customerId) {
@@ -89,6 +95,9 @@ export async function createCoverCheckout(
       userId: user.id,
       months: String(n),
       includeSetup: includeSetup ? "1" : "0",
+      ...(promo?.code
+        ? { promoCode: promo.code, percentOff: String(promo.percentOff) }
+        : {}),
     },
     managed_payments: { enabled: false },
   } as Parameters<Stripe["checkout"]["sessions"]["create"]>[0]);
@@ -140,6 +149,8 @@ export async function applyPaidCheckoutSession(sessionId: string, userId?: strin
     return { ok: false as const, reason: "months" };
   }
 
+  const promoCode = session.metadata?.promoCode || "";
+
   const result = await updateStore((data) => {
     const row = data.users.find((u) => u.id === metaUser);
     if (!row) return { applied: 0, already: false };
@@ -164,5 +175,12 @@ export async function applyPaidCheckoutSession(sessionId: string, userId?: strin
     };
   });
 
+  if (promoCode && metaUser) {
+    await markPromoCodeUsed(
+      metaUser,
+      promoCode,
+      session.customer_details?.email || session.customer_email || undefined,
+    );
+  }
   return { ok: true as const, months, ...result };
 }

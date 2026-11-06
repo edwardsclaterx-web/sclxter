@@ -29,9 +29,14 @@ export async function GET() {
 export async function POST(request: Request) {
   const gate = await requireAdmin();
   if (gate.error) return gate.error;
-  const body = (await request.json().catch(() => ({}))) as { months?: number };
+  const body = (await request.json().catch(() => ({}))) as {
+    months?: number;
+    percentOff?: number;
+  };
   try {
-    const code = await createFreeCode(body.months ?? 0);
+    const code = await createFreeCode(body.months ?? 0, {
+      percentOff: body.percentOff,
+    });
     return NextResponse.json({ code });
   } catch (err) {
     const status = (err as Error & { status?: number }).status || 500;

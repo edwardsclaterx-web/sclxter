@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { PlatformId } from "@/lib/detect-platform";
 
 type Guide = {
@@ -200,11 +199,21 @@ function GuideBody({ guide, snippet }: { guide: Guide; snippet: string }) {
   );
 }
 
-function AllGuides({ snippet }: { snippet: string }) {
+function AllGuides({
+  snippet,
+  highlight,
+}: {
+  snippet: string;
+  highlight?: string | null;
+}) {
   return (
     <div className="mt-6 divide-y divide-line border border-line">
       {TYPES.map((t) => (
-        <details key={t.name} className="group bg-bg">
+        <details
+          key={highlight === t.name ? `${t.name}-hint` : t.name}
+          className="group bg-bg"
+          defaultOpen={highlight === t.name}
+        >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm text-fg marker:content-none [&::-webkit-details-marker]:hidden">
             <span>{t.name}</span>
             <span
@@ -221,10 +230,6 @@ function AllGuides({ snippet }: { snippet: string }) {
       ))}
     </div>
   );
-}
-
-function guideForLabel(name: string) {
-  return TYPES.find((t) => t.name === name) ?? null;
 }
 
 type DetectJson = {
@@ -248,153 +253,96 @@ export function EmbedGuide({
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
   const [guessLabel, setGuessLabel] = useState<string | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
-  const [wrong, setWrong] = useState(false);
-  const [checkUrl, setCheckUrl] = useState("");
-  const [checkNote, setCheckNote] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
-  const selected = picked ?? guessLabel;
-  const selectedGuide = useMemo(
-    () => (selected ? guideForLabel(selected) : null),
-    [selected],
-  );
+  const shown = picked ?? guessLabel;
 
-  async function runDetect(url?: string) {
+  async function identify() {
     setStatus("loading");
-    setCheckNote(null);
+    setNote(null);
+    setGuessLabel(null);
+    setPicked(null);
+    if (!savedUrl) {
+      setStatus("done");
+      setNote(
+        "Save your shop website URL on this page first, then try Identify my site.",
+      );
+      return;
+    }
     try {
       const res = await fetch("/api/detect-platform", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          seq,
-          url: url?.trim() || undefined,
-        }),
+        body: JSON.stringify({ seq }),
       });
       const data = (await res.json()) as DetectJson;
       if (!res.ok) {
-        setGuessLabel(null);
         setStatus("done");
-        setCheckNote("Could not check that site.");
+        setNote("Could not check that site.");
         return;
       }
       setGuessLabel(data.label);
-      if (data.label) setPicked(null);
       setStatus("done");
-      if (url?.trim() && !data.label) {
-        setCheckNote("Could not tell from that address. Use the lists below.");
+      if (!data.label) {
+        setNote("Could not tell from the saved shop URL. Use the lists below.");
       }
     } catch {
-      setGuessLabel(null);
       setStatus("done");
-      setCheckNote("Could not check that site.");
+      setNote("Could not check that site.");
     }
-  }
-
-  useEffect(() => {
-    if (!savedUrl) {
-      setStatus("done");
-      return;
-    }
-    void runDetect();
-    // Detect from the saved shop URL once per change of that URL.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedUrl, seq]);
-
-  const picker = (
-    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-      <label className="text-sm text-muted" htmlFor="platform-pick">
-        {wrong || guessLabel ? "That’s not right" : "This site is built with"}
-      </label>
-      <select
-        id="platform-pick"
-        className="h-10 border border-line bg-surface px-3 text-sm text-fg outline-none focus:border-fg"
-        value={selected ?? ""}
-        onChange={(e) => {
-          setWrong(true);
-          setPicked(e.target.value || null);
-        }}
-      >
-        <option value="">Choose…</option>
-        {TYPES.map((t) => (
-          <option key={t.name} value={t.name}>
-            {t.name}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-
-  const pasteCheck =
-    !savedUrl ? (
-      <form
-        className="mt-4 space-y-3 border border-line p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!checkUrl.trim()) return;
-          void runDetect(checkUrl);
-        }}
-      >
-        <p className="text-sm text-fg">
-          Not sure what you use? Paste your site URL and we&apos;ll check.
-        </p>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            value={checkUrl}
-            onChange={(e) => setCheckUrl(e.target.value)}
-            placeholder="https://your-shop.com"
-            aria-label="Website URL to check"
-          />
-          <Button type="submit" variant="ghost" disabled={status === "loading"}>
-            Check
-          </Button>
-        </div>
-        {checkNote ? <p className="text-sm text-muted">{checkNote}</p> : null}
-      </form>
-    ) : null;
-
-  if (status === "loading" && !selectedGuide) {
-    return (
-      <div className="mt-6 space-y-3">
-        <p className="text-sm text-muted">Looking at your site to guess how it is built…</p>
-        {pasteCheck}
-        <AllGuides snippet={snippet} />
-      </div>
-    );
-  }
-
-  if (selectedGuide) {
-    const looks =
-      !wrong && guessLabel && selected === guessLabel
-        ? `Your site looks like ${guessLabel}`
-        : `Install on ${selectedGuide.name}`;
-    return (
-      <div className="mt-6 space-y-4">
-        <p className="text-sm text-fg">{looks}</p>
-        <p className="text-sm text-muted">
-          Paste this code using the {selectedGuide.name} steps below.
-        </p>
-        {picker}
-        <div className="border border-line p-4">
-          <GuideBody guide={selectedGuide} snippet={snippet} />
-        </div>
-      </div>
-    );
   }
 
   return (
     <div className="mt-6 space-y-4">
-      {status === "done" && savedUrl ? (
-        <p className="text-sm text-muted">
-          Could not tell what this site is built with. Use the matching steps
-          below, or pick a platform.
-        </p>
+      <p className="text-sm leading-6 text-muted">
+        You still need to log in to the website builder that made the site — use
+        the email from when the site was set up (often GoDaddy, Wix, or similar).
+        Identify only suggests which steps to follow; it cannot log you in. If
+        you cannot get in,{" "}
+        <a href="/contact#support" className="text-fg underline-offset-2 hover:underline">
+          Contact us
+        </a>{" "}
+        and we will walk you through it.
+      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => void identify()}
+          disabled={status === "loading"}
+        >
+          {status === "loading" ? "Checking your site…" : "Identify my site"}
+        </Button>
+        {guessLabel && !picked ? (
+          <p className="text-sm text-fg">
+            Your site likely functions with {guessLabel}
+          </p>
+        ) : null}
+        {picked ? (
+          <p className="text-sm text-fg">Using the {picked} steps below.</p>
+        ) : null}
+      </div>
+      {guessLabel ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="text-sm text-muted" htmlFor="platform-pick">
+            That’s not right
+          </label>
+          <select
+            id="platform-pick"
+            className="h-10 border border-line bg-surface px-3 text-sm text-fg outline-none focus:border-fg"
+            value={shown ?? ""}
+            onChange={(e) => setPicked(e.target.value || null)}
+          >
+            {TYPES.map((t) => (
+              <option key={t.name} value={t.name}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
       ) : null}
-      {picker}
-      {pasteCheck}
-      {checkNote && savedUrl ? (
-        <p className="text-sm text-muted">{checkNote}</p>
-      ) : null}
-      <AllGuides snippet={snippet} />
+      {note ? <p className="text-sm text-muted">{note}</p> : null}
+      <AllGuides snippet={snippet} highlight={shown} />
     </div>
   );
 }

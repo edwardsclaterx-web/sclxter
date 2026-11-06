@@ -59,6 +59,18 @@ export function normalizeTheme(raw?: Partial<WidgetTheme> | null): WidgetTheme {
   return { outline, primary, text };
 }
 
+export function themeFromQuery(q?: {
+  outline?: string;
+  primary?: string;
+  text?: string;
+} | null): WidgetTheme | null {
+  const outline = canonColor(q?.outline || "");
+  const primary = canonColor(q?.primary || "");
+  const text = canonColor(q?.text || "");
+  if (!outline || !primary || !text || primary === text) return null;
+  return { outline, primary, text };
+}
+
 export function parseThemeInput(raw: unknown): WidgetTheme | "same" | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;

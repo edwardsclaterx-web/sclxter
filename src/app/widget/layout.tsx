@@ -8,6 +8,12 @@ export default function WidgetLayout({
 }) {
   return (
     <div className="widget-frame h-dvh overflow-visible bg-transparent">
+      <style
+        dangerouslySetInnerHTML={{
+          __html:
+            "html,body{background:transparent!important;color:inherit}",
+        }}
+      />
       {children}
     </div>
   );

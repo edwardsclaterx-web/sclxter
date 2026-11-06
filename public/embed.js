@@ -19,8 +19,8 @@
     var hostId = "sclxter-ask-host-" + id;
     if (document.getElementById(hostId)) return;
 
-    function hex(v, fallback) {
-      return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
+    function hex(v) {
+      return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : "";
     }
 
     fetch(
@@ -38,12 +38,11 @@
         if (!d || d.live !== true) return;
         if (document.getElementById(hostId)) return;
         var t = d.theme || (d.appearance && d.appearance.theme) || {};
-        var theme = {
-          outline: hex(t.outline, "#222222"),
-          primary: hex(t.primary, "#ffffff"),
-          text: hex(t.text, "#000000"),
-        };
-        mount(theme);
+        var outline = hex(t.outline);
+        var primary = hex(t.primary);
+        var text = hex(t.text);
+        if (!outline || !primary || !text) return;
+        mount({ outline: outline, primary: primary, text: text });
       })
       .catch(function () {});
 
@@ -72,7 +71,10 @@
       iframe.name = "sclxter-ask-frame-" + id;
       iframe.setAttribute("allowtransparency", "true");
       iframe.style.cssText =
-        "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;";
+        "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;opacity:0;";
+      iframe.addEventListener("load", function () {
+        iframe.style.opacity = "1";
+      });
       iframe.src =
         origin +
         "/widget/" +

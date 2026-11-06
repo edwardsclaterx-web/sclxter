@@ -9,7 +9,7 @@ import {
 } from "@/lib/embed-host";
 import { SCLXTER_SITE_ID } from "@/lib/groq";
 import { readStore } from "@/lib/store";
-import { normalizeTheme } from "@/lib/widget-theme";
+import { normalizeTheme, themeFromQuery } from "@/lib/widget-theme";
 import { WidgetForm } from "./widget-form";
 
 export const dynamic = "force-dynamic";
@@ -114,7 +114,8 @@ export default async function WidgetPage({
     return <Unavailable text={EMBED_OFF_SITE} />;
   }
 
-  const theme = normalizeTheme(business.appearance?.theme);
+  const theme =
+    themeFromQuery(q) || normalizeTheme(business.appearance?.theme);
   const welcome =
     business.appearance?.welcome || "Ask about hours, prices, or how to book.";
   const assistantName = business.appearance?.assistantName || "Assistant";

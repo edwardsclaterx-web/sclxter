@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { PlatformId } from "@/lib/detect-platform";
 
 type Guide = {
   name: string;
@@ -113,6 +116,23 @@ const TYPES: Guide[] = [
       "Starter / free hosting will not run this code. If you already pasted it in Footer code, do not also add it on a single page’s custom code or you will get two buttons. After a cookie-banner change, allow this script.",
   },
   {
+    name: "GoDaddy",
+    intro:
+      "You need access to the GoDaddy account that owns this website. Website Builder and Managed WordPress look different — use the path that matches what you see after you click Edit.",
+    steps: [
+      "Copy the code in the box below. Keep the data-id as it is — that is this business’s assistant.",
+      "Sign in to GoDaddy and open Websites (sometimes labelled Websites + Marketing) for this domain.",
+      "Click Edit Website (or Open). Wait until the builder loads.",
+      "If you see a WordPress dashboard (Plugins, Appearance), follow the WordPress steps instead — use That’s not right and pick WordPress.",
+      "In Website Builder, open Settings (gear). Look for Tracking, Additional code, Head and footer, or Custom code.",
+      "Paste the code into the footer or “before </body>” box if there is one. If the builder only offers a header / tracking box, paste it there instead.",
+      "Click Save or Publish. Wait until GoDaddy says the site is live.",
+      "Open the public https address in a new tab — not the editor. Look at the bottom for Ask anything. Click it and send a test question.",
+    ],
+    check:
+      "If there is no custom-code box, the plan may not include it, or this site is Managed WordPress (pick WordPress above). After publishing, hard-refresh the live URL. Do not paste the code twice.",
+  },
+  {
     name: "Google Sites",
     intro:
       "Google Sites has no site-wide footer script. You add the same code to each page where you want Ask anything.",
@@ -165,7 +185,22 @@ function SnippetBox({ snippet }: { snippet: string }) {
   );
 }
 
-export function EmbedGuide({ snippet }: { snippet: string }) {
+function GuideBody({ guide, snippet }: { guide: Guide; snippet: string }) {
+  return (
+    <div className="space-y-4 text-sm leading-6 text-muted">
+      <p>{guide.intro}</p>
+      <SnippetBox snippet={snippet} />
+      <ol className="list-decimal space-y-3 pl-5 text-fg">
+        {guide.steps.map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ol>
+      <p>{guide.check}</p>
+    </div>
+  );
+}
+
+function AllGuides({ snippet }: { snippet: string }) {
   return (
     <div className="mt-6 divide-y divide-line border border-line">
       {TYPES.map((t) => (
@@ -179,18 +214,187 @@ export function EmbedGuide({ snippet }: { snippet: string }) {
               ▾
             </span>
           </summary>
-          <div className="space-y-4 px-4 pb-6 text-sm leading-6 text-muted">
-            <p>{t.intro}</p>
-            <SnippetBox snippet={snippet} />
-            <ol className="list-decimal space-y-3 pl-5 text-fg">
-              {t.steps.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ol>
-            <p>{t.check}</p>
+          <div className="px-4 pb-6">
+            <GuideBody guide={t} snippet={snippet} />
           </div>
         </details>
       ))}
+    </div>
+  );
+}
+
+function guideForLabel(name: string) {
+  return TYPES.find((t) => t.name === name) ?? null;
+}
+
+type DetectJson = {
+  platform: PlatformId | null;
+  label: string | null;
+  checkedUrl: string | null;
+  savedUrl?: boolean;
+  error?: string;
+};
+
+export function EmbedGuide({
+  snippet,
+  websiteUrl,
+  seq,
+}: {
+  snippet: string;
+  websiteUrl: string;
+  seq?: number;
+}) {
+  const savedUrl = websiteUrl.trim();
+  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const [guessLabel, setGuessLabel] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [wrong, setWrong] = useState(false);
+  const [checkUrl, setCheckUrl] = useState("");
+  const [checkNote, setCheckNote] = useState<string | null>(null);
+
+  const selected = picked ?? guessLabel;
+  const selectedGuide = useMemo(
+    () => (selected ? guideForLabel(selected) : null),
+    [selected],
+  );
+
+  async function runDetect(url?: string) {
+    setStatus("loading");
+    setCheckNote(null);
+    try {
+      const res = await fetch("/api/detect-platform", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          seq,
+          url: url?.trim() || undefined,
+        }),
+      });
+      const data = (await res.json()) as DetectJson;
+      if (!res.ok) {
+        setGuessLabel(null);
+        setStatus("done");
+        setCheckNote("Could not check that site.");
+        return;
+      }
+      setGuessLabel(data.label);
+      if (data.label) setPicked(null);
+      setStatus("done");
+      if (url?.trim() && !data.label) {
+        setCheckNote("Could not tell from that address. Use the lists below.");
+      }
+    } catch {
+      setGuessLabel(null);
+      setStatus("done");
+      setCheckNote("Could not check that site.");
+    }
+  }
+
+  useEffect(() => {
+    if (!savedUrl) {
+      setStatus("done");
+      return;
+    }
+    void runDetect();
+    // Detect from the saved shop URL once per change of that URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedUrl, seq]);
+
+  const picker = (
+    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <label className="text-sm text-muted" htmlFor="platform-pick">
+        {wrong || guessLabel ? "That’s not right" : "This site is built with"}
+      </label>
+      <select
+        id="platform-pick"
+        className="h-10 border border-line bg-surface px-3 text-sm text-fg outline-none focus:border-fg"
+        value={selected ?? ""}
+        onChange={(e) => {
+          setWrong(true);
+          setPicked(e.target.value || null);
+        }}
+      >
+        <option value="">Choose…</option>
+        {TYPES.map((t) => (
+          <option key={t.name} value={t.name}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  const pasteCheck =
+    !savedUrl ? (
+      <form
+        className="mt-4 space-y-3 border border-line p-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!checkUrl.trim()) return;
+          void runDetect(checkUrl);
+        }}
+      >
+        <p className="text-sm text-fg">
+          Not sure what you use? Paste your site URL and we&apos;ll check.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={checkUrl}
+            onChange={(e) => setCheckUrl(e.target.value)}
+            placeholder="https://your-shop.com"
+            aria-label="Website URL to check"
+          />
+          <Button type="submit" variant="ghost" disabled={status === "loading"}>
+            Check
+          </Button>
+        </div>
+        {checkNote ? <p className="text-sm text-muted">{checkNote}</p> : null}
+      </form>
+    ) : null;
+
+  if (status === "loading" && !selectedGuide) {
+    return (
+      <div className="mt-6 space-y-3">
+        <p className="text-sm text-muted">Looking at your site to guess how it is built…</p>
+        {pasteCheck}
+        <AllGuides snippet={snippet} />
+      </div>
+    );
+  }
+
+  if (selectedGuide) {
+    const looks =
+      !wrong && guessLabel && selected === guessLabel
+        ? `Your site looks like ${guessLabel}`
+        : `Install on ${selectedGuide.name}`;
+    return (
+      <div className="mt-6 space-y-4">
+        <p className="text-sm text-fg">{looks}</p>
+        <p className="text-sm text-muted">
+          Paste this code using the {selectedGuide.name} steps below.
+        </p>
+        {picker}
+        <div className="border border-line p-4">
+          <GuideBody guide={selectedGuide} snippet={snippet} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 space-y-4">
+      {status === "done" && savedUrl ? (
+        <p className="text-sm text-muted">
+          Could not tell what this site is built with. Use the matching steps
+          below, or pick a platform.
+        </p>
+      ) : null}
+      {picker}
+      {pasteCheck}
+      {checkNote && savedUrl ? (
+        <p className="text-sm text-muted">{checkNote}</p>
+      ) : null}
+      <AllGuides snippet={snippet} />
     </div>
   );
 }

@@ -543,7 +543,7 @@ export function BusinessScreen({
           >
             Copy snippet
           </Button>
-          <EmbedGuide snippet={snippet} />
+          <EmbedGuide snippet={snippet} websiteUrl={websiteUrl} seq={seq} />
         </section>
       </div>
 

@@ -191,14 +191,27 @@ html:has(.widget-frame) body {
 
 .ask-log,
 #wa-log {
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: #6a6a6a transparent;
 }
 
+#wa-log [data-wa-msg],
+.ask-log > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
 #wa-log [data-wa-body],
 .ask-log [data-wa-body] {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: min(90%, 100%);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   opacity: 1 !important;
   color: var(--wa-ink, #f4f4f4) !important;
   -webkit-text-fill-color: var(--wa-ink, #f4f4f4) !important;

@@ -228,7 +228,7 @@ export function ChatPanel({
             </p>
             <p
               data-wa-body="1"
-              className="inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6"
+              className="inline-block max-w-[90%] overflow-hidden whitespace-pre-wrap px-3 py-2 text-sm leading-6 [overflow-wrap:anywhere] [word-break:break-word]"
               style={messagePaint(m.role)}
             >
               {m.content}

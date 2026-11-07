@@ -91,6 +91,11 @@ export function WidgetForm({
     var body=document.createElement('p');
     body.setAttribute('data-wa-body','1');
     body.className='inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6';
+    body.style.maxWidth='90%';
+    body.style.overflow='hidden';
+    body.style.overflowWrap='anywhere';
+    body.style.wordBreak='break-word';
+    body.style.boxSizing='border-box';
     var paper, ink;
     if(theme){
       if(role==='user'){ paper=theme.text; ink=pairInk(paper, theme.primary); }

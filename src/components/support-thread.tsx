@@ -104,7 +104,7 @@ export function SupportThread({
 
   return (
     <div id="support" className="flex min-h-[28rem] flex-col border border-line">
-      <div ref={box} className="min-h-[22rem] flex-1 space-y-4 overflow-y-auto p-4">
+      <div ref={box} className="ask-log min-h-[22rem] flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="text-sm text-muted">No messages yet.</p>
         ) : (
@@ -116,7 +116,7 @@ export function SupportThread({
                 <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-muted">
                   {fromOwner ? rightLabel : "Administrator"}
                 </p>
-                <p className="mt-1 inline-block max-w-[90%] whitespace-pre-wrap border border-line bg-surface px-3 py-2 text-sm leading-6">
+                <p className="mt-1 inline-block max-w-[90%] overflow-hidden whitespace-pre-wrap border border-line bg-surface px-3 py-2 text-sm leading-6 [overflow-wrap:anywhere] [word-break:break-word]">
                   {m.content}
                 </p>
               </div>

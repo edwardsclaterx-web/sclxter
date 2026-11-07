@@ -13,7 +13,6 @@ import {
   NORTHGATE_USER_ID,
   isNorthgateLogin,
 } from "./northgate";
-import { KBARBERS_BIZ_ID, KBARBERS_PUBLIC_ID } from "./k-barbers";
 import { readStore, updateStore } from "./store";
 import { id, publicId } from "./ids";
 import type { Business, ClientBusiness, StoreData, User } from "./types";
@@ -27,12 +26,8 @@ export function isDemoBusiness(b: Business) {
   return b.publicId === DEMO_PUBLIC_ID || b.id === NORTHGATE_BIZ_ID;
 }
 
-export function isKBarbersDemo(b: Business) {
-  return b.publicId === KBARBERS_PUBLIC_ID || b.id === KBARBERS_BIZ_ID;
-}
-
 export function isShowcaseBusiness(b: Business) {
-  if (isDemoBusiness(b) || isKBarbersDemo(b)) return true;
+  if (isDemoBusiness(b)) return true;
   return b.publicId === LEAVESAKE_PUBLIC_ID || b.id === LEAVESAKE_BIZ_ID;
 }
 

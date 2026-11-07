@@ -1,4 +1,4 @@
-import { isDemoBusiness, isKBarbersDemo } from "./access";
+import { isDemoBusiness } from "./access";
 import { businessHasLiveAccess } from "./billing";
 import { CLARIFY } from "./chat-copy";
 import type { Business, StoreData } from "./types";
@@ -113,7 +113,7 @@ export function publicEmbedGate(
     websiteUrl: business.websiteUrl,
     pageOrigin,
     appOrigin,
-    demo: isDemoBusiness(business) || isKBarbersDemo(business),
+    demo: isDemoBusiness(business),
   });
   if (!allowed) {
     return { ok: false, status: 403, error: EMBED_OFF_SITE };

@@ -60,8 +60,6 @@ const SCLXTER_CONTACT = "sclxter@outlook.com";
 const POWERED = "I am powered by sclxter.com";
 const AI_LINE = "Yes. I am an AI, not a real person.";
 const DEMO_REAL_LINE = "Yes. This is a demo page for sclxter.com.";
-const LOOKALIKE_LINE =
-  "This is a preview by sclxter, not the live K Barbers website. It does not take bookings. Get the assistant for your own site at https://sclxter.com/buy";
 const HELLO = "Hi, what can I help you with?";
 const OUTPUT_RULE = `Output only the composed answer the visitor should read. Never think out loud. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.
 Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last on-topic question.
@@ -94,21 +92,6 @@ function isDemoOrRealShopAsk(content: string) {
   if (
     /\bnorthgate\b/.test(t) &&
     /\b(real|fake|fictional|demo|actual|genuine|made up)\b/.test(t)
-  ) {
-    return true;
-  }
-  if (
-    /\bk ?barbers?\b/.test(t) &&
-    /\b(real|fake|fictional|demo|actual|genuine|made up|live site|their site)\b/.test(
-      t,
-    )
-  ) {
-    return true;
-  }
-  if (
-    /\b(live (site|website)|their (real |live )?(site|website)|kbarbers\.co\.uk)\b/.test(
-      t,
-    )
   ) {
     return true;
   }
@@ -396,18 +379,9 @@ function shopPrompt(
   retrieved: string,
   contact: string,
   barber: boolean,
-  lookalike: boolean,
 ) {
   const tone = toneById(business.tone);
-  const demo = lookalike
-    ? `This page is a sclxter preview lookalike of K Barbers Emporium, not kbarbers.co.uk and not their live shop.
-Questions about the scanned shop facts, barbering, Koffee Club, the team, hours, and sclxter are on-topic.
-If asked whether this is their live site, whether they embedded this, or whether this page is a demo: "${LOOKALIKE_LINE}"
-If asked what sclxter is: reply with this exact text only:
-${SCLXTER_WHAT_IS}
-Do not take bookings. Do not sell products here. Direct people who want this assistant on their website to https://sclxter.com/buy
-Stay in the barbershop / grooming / Koffee Club domain for other questions. Do not invent prices.`
-    : barber
+  const demo = barber
     ? `This shop is a fictional demo for sclxter.com.
 Questions about sclxter, this demo, whether Northgate is real, and whether you are an AI are on-topic.
 If asked whether Northgate or this shop is real, or whether this page is a demo: "${DEMO_REAL_LINE}"
@@ -580,7 +554,6 @@ export async function answerChat(opts: {
   knowledge?: KnowledgeItem[];
   messages: ChatMessage[];
   barber?: boolean;
-  lookalike?: boolean;
   site?: boolean;
   notesOnly?: boolean;
 }) {
@@ -590,11 +563,6 @@ export async function answerChat(opts: {
     if (isWhatIsSclxter(asked)) return SCLXTER_WHAT_IS;
     if (isHowPowered(asked) || isMakerAsk(asked)) return POWERED;
     if (isAiAsk(asked)) return AI_LINE;
-  } else if (opts.lookalike) {
-    if (isWhatIsSclxter(asked)) return SCLXTER_WHAT_IS;
-    if (isDemoOrRealShopAsk(asked)) return LOOKALIKE_LINE;
-    if (isAiAsk(asked)) return AI_LINE;
-    if (isHowPowered(asked) || isMakerAsk(asked)) return POWERED;
   } else if (opts.barber) {
     if (isWhatIsSclxter(asked)) return SCLXTER_WHAT_IS;
     if (isDemoOrRealShopAsk(asked)) return DEMO_REAL_LINE;
@@ -692,7 +660,6 @@ export async function answerChat(opts: {
       retrievedNotes,
       contact,
       Boolean(opts.barber),
-      Boolean(opts.lookalike),
     );
   }
 

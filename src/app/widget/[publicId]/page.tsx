@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { isDemoBusiness, isKBarbersDemo } from "@/lib/access";
+import { isDemoBusiness } from "@/lib/access";
 import { businessHasLiveAccess } from "@/lib/billing";
 import {
   EMBED_OFF_SITE,
@@ -111,7 +111,7 @@ export default async function WidgetPage({
       websiteUrl: business.websiteUrl,
       pageOrigin: from,
       appOrigin: origin,
-      demo: isDemoBusiness(business) || isKBarbersDemo(business),
+      demo: isDemoBusiness(business),
     })
   ) {
     return <Unavailable text={EMBED_OFF_SITE} />;

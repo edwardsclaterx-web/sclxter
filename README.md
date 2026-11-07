@@ -25,7 +25,6 @@ App: [http://127.0.0.1:4731](http://127.0.0.1:4731)
 - Sign up `/signup`
 - Dashboard `/dashboard`
 - Demo `/demo` — fictional Northgate Barbers (not the homepage)
-- Lookalike preview `/demo/k-barbers` — K Barbers Emporium, not their live site
 - FAQ `/faq` and Contact `/contact` (`sclxter@outlook.com`)
 - Privacy `/privacy`, Terms `/terms`, DPA `/dpa` (plain English, UK GDPR-flavoured; not legal advice)
 - Admin free codes: Businesses → Free codes. Buyers: sign in, then Buy (or Billing) → Have a code?

@@ -13,7 +13,6 @@ const BOOT_FLAG = "__sclxterDemoAskBoot";
 
 function onDemo() {
   const p = location.pathname || "";
-  if (p.indexOf("/demo/k-barbers") === 0) return false;
   return p.indexOf("/demo") === 0;
 }
 

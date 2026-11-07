@@ -1,10 +1,9 @@
 import { cache as reactCache } from "react";
 import { migrateOwnerIdentity } from "./owner-auth";
-import { ensureDemoIndustry, ensureKBarbersShop, ensureLeavesakeShop, ensureNorthgateShop, seedIfEmpty } from "./seed";
+import { dropKBarbersShop, ensureDemoIndustry, ensureLeavesakeShop, ensureNorthgateShop, seedIfEmpty } from "./seed";
 import { DEMO_PUBLIC_ID } from "./seed";
 import { LEAVESAKE_BIZ_ID, LEAVESAKE_PUBLIC_ID, LEAVESAKE_USER_ID } from "./leavesake";
 import { NORTHGATE_BIZ_ID } from "./northgate";
-import { KBARBERS_BIZ_ID, KBARBERS_PUBLIC_ID } from "./k-barbers";
 import { normalizeInstructions } from "./instructions";
 import { readPersistedStore, writePersistedStore } from "./persist";
 import type { Appearance, Business, StoreData } from "./types";
@@ -125,9 +124,7 @@ function normalize(data: StoreData): StoreData {
       b.publicId !== DEMO_PUBLIC_ID &&
       b.id !== NORTHGATE_BIZ_ID &&
       b.publicId !== LEAVESAKE_PUBLIC_ID &&
-      b.id !== LEAVESAKE_BIZ_ID &&
-      b.publicId !== KBARBERS_PUBLIC_ID &&
-      b.id !== KBARBERS_BIZ_ID,
+      b.id !== LEAVESAKE_BIZ_ID,
   );
   listed.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const claimed = new Set<number>();
@@ -177,9 +174,9 @@ async function loadStore(fresh = false): Promise<StoreData> {
   let data = hydrate(await readPersistedStore());
   seedIfEmpty(data);
   migrateOwnerIdentity(data);
+  dropKBarbersShop(data);
   ensureNorthgateShop(data);
   ensureLeavesakeShop(data);
-  ensureKBarbersShop(data);
   ensureDemoIndustry(data);
   data.supportThreads = data.supportThreads ?? [];
   data.knowledgeGaps = data.knowledgeGaps ?? [];

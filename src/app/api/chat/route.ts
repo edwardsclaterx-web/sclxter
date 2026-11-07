@@ -13,7 +13,6 @@ import { recordKnowledgeGap } from "@/lib/knowledge-gaps";
 import { groqKeyPresent } from "@/lib/secrets";
 import { id } from "@/lib/ids";
 import { DEMO_PUBLIC_ID } from "@/lib/seed";
-import { KBARBERS_BIZ_ID, KBARBERS_PUBLIC_ID } from "@/lib/k-barbers";
 import { readStore, updateStore } from "@/lib/store";
 import { TEST_AI_BLOCKED, businessReadyForTest } from "@/lib/test-ai";
 import type { ChatMessage } from "@/lib/types";
@@ -136,15 +135,11 @@ export async function POST(request: Request) {
     const barber =
       !ownerTest &&
       (shop.publicId === DEMO_PUBLIC_ID || shop.id === "biz_northgate");
-    const lookalike =
-      !ownerTest &&
-      (shop.publicId === KBARBERS_PUBLIC_ID || shop.id === KBARBERS_BIZ_ID);
     const raw = await answerChat({
       business: shop,
       knowledge,
       messages,
       barber,
-      lookalike,
       notesOnly: ownerTest,
     });
     const { text, lead, gap } = parseLeadFromReply(raw);

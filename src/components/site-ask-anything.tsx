@@ -43,7 +43,38 @@ function readOpen() {
   }
 }
 
+function placeLauncher(host: HTMLElement, panel: HTMLElement) {
+  const mobile = window.matchMedia("(max-width: 767px)").matches;
+  if (mobile) {
+    host.style.left = "12px";
+    host.style.right = "12px";
+    host.style.bottom = "max(12px, env(safe-area-inset-bottom, 0px))";
+    host.style.width = "auto";
+    panel.style.left = "0";
+    panel.style.right = "0";
+    panel.style.width = "auto";
+    panel.style.bottom = "64px";
+    panel.style.height =
+      "min(560px, calc(100dvh - 92px - env(safe-area-inset-bottom, 0px)))";
+    panel.style.maxHeight =
+      "calc(100dvh - 92px - env(safe-area-inset-bottom, 0px))";
+  } else {
+    host.style.left = "";
+    host.style.right = "20px";
+    host.style.bottom = "20px";
+    host.style.width = "";
+    panel.style.left = "";
+    panel.style.right = "0";
+    panel.style.width = "min(380px, calc(100vw - 32px))";
+    panel.style.bottom = "60px";
+    panel.style.height = "min(520px, calc(100vh - 96px))";
+    panel.style.maxHeight = "";
+  }
+}
+
 function applyOpen(panel: HTMLElement, btn: HTMLElement, open: boolean) {
+  const host = document.getElementById(HOST_ID);
+  if (host) placeLauncher(host, panel);
   panel.style.border = "0";
   panel.style.background = "transparent";
   panel.style.overflow = "visible";
@@ -51,8 +82,6 @@ function applyOpen(panel: HTMLElement, btn: HTMLElement, open: boolean) {
   panel.style.visibility = open ? "visible" : "hidden";
   panel.style.opacity = open ? "1" : "0";
   panel.style.pointerEvents = open ? "auto" : "none";
-  panel.style.bottom = "60px";
-  panel.style.height = "min(520px, calc(100vh - 96px))";
   btn.setAttribute("aria-expanded", open ? "true" : "false");
   btn.textContent = open ? "Minimise" : "Ask anything";
   btn.setAttribute("aria-label", open ? "Minimise" : "Ask anything");

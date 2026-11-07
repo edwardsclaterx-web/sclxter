@@ -211,7 +211,7 @@ export function ChatPanel({
                   : `inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 ${
                       m.role === "user"
                         ? "bg-fg text-bg"
-                        : "border border-line bg-surface"
+                        : "border border-line bg-surface text-fg"
                     }`
               }
               style={

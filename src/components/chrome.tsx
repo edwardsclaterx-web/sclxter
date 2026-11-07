@@ -288,7 +288,7 @@ export function SiteHeader({
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-line px-5 py-8 md:px-10">
+    <footer className="mt-auto border-t border-line px-5 py-8 pb-28 md:px-10 md:pb-8">
       <nav className="flex flex-wrap items-center justify-evenly gap-x-10 gap-y-2 text-sm text-muted sm:max-w-md sm:justify-start">
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>

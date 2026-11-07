@@ -113,6 +113,30 @@ a.nav-item.here {
   #sclxter-site-ask-hint {
     display: none !important;
   }
+
+  #sclxter-site-ask-host,
+  #northgate-ask-host,
+  .sclxter-ask-host {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+  }
+
+  #sclxter-site-ask-panel,
+  #northgate-ask-panel,
+  .sclxter-ask-panel {
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    bottom: 64px !important;
+    height: min(560px, calc(100dvh - 92px - env(safe-area-inset-bottom, 0px))) !important;
+    max-height: calc(100dvh - 92px - env(safe-area-inset-bottom, 0px)) !important;
+  }
 }
 
 @media (max-width: 1279px) {

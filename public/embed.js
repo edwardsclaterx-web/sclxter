@@ -51,6 +51,7 @@
       btn.type = "button";
       btn.setAttribute("aria-label", "Ask anything");
       btn.textContent = "Ask anything";
+      btn.className = "sclxter-ask-btn";
       btn.style.cssText =
         "position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;height:52px;min-width:52px;padding:0 28px;box-sizing:border-box;border:2px solid " +
         theme.outline +
@@ -63,6 +64,7 @@
 
       var frameWrap = document.createElement("div");
       frameWrap.id = hostId + "-panel";
+      frameWrap.className = "sclxter-ask-panel";
       frameWrap.style.cssText =
         "position:fixed;right:20px;bottom:84px;z-index:2147483000;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));max-width:calc(100vw - 24px);border:0;background:transparent;overflow:visible;";
 
@@ -97,7 +99,35 @@
         }
       }
 
+      function placeLauncher() {
+        var mobile = window.matchMedia("(max-width: 767px)").matches;
+        var safe = "max(12px, env(safe-area-inset-bottom, 0px))";
+        if (mobile) {
+          btn.style.left = "auto";
+          btn.style.right = "12px";
+          btn.style.bottom = safe;
+          frameWrap.style.left = "12px";
+          frameWrap.style.right = "12px";
+          frameWrap.style.width = "auto";
+          frameWrap.style.maxWidth = "none";
+          frameWrap.style.bottom = "calc(" + safe + " + 64px)";
+          frameWrap.style.height =
+            "min(560px, calc(100dvh - 92px - env(safe-area-inset-bottom, 0px)))";
+        } else {
+          btn.style.left = "";
+          btn.style.right = "20px";
+          btn.style.bottom = "20px";
+          frameWrap.style.left = "";
+          frameWrap.style.right = "20px";
+          frameWrap.style.width = "min(380px,calc(100vw - 32px))";
+          frameWrap.style.maxWidth = "calc(100vw - 24px)";
+          frameWrap.style.bottom = "84px";
+          frameWrap.style.height = "min(560px,calc(100vh - 120px))";
+        }
+      }
+
       function applyOpen(open) {
+        placeLauncher();
         frameWrap.style.visibility = open ? "visible" : "hidden";
         frameWrap.style.opacity = open ? "1" : "0";
         frameWrap.style.pointerEvents = open ? "auto" : "none";
@@ -118,6 +148,7 @@
 
       var host = document.createElement("div");
       host.id = hostId;
+      host.className = "sclxter-ask-host";
       host.addEventListener("mousedown", function (e) {
         e.stopPropagation();
       });
@@ -135,6 +166,9 @@
       root.appendChild(btn);
       document.body.appendChild(host);
       applyOpen(readOpen());
+      window.addEventListener("resize", function () {
+        applyOpen(btn.getAttribute("aria-expanded") === "true");
+      });
     }
   } catch (e) {}
 })();

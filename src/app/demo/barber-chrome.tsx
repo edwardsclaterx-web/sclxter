@@ -14,7 +14,7 @@ export async function BarberHeader() {
 
 export function BarberFooter() {
   return (
-    <footer className="border-t border-line px-5 py-5 text-xs text-muted md:px-10">
+    <footer className="border-t border-line px-5 py-5 pb-28 text-xs text-muted md:px-10 md:pb-5">
       <p>Northgate Barbers · 14 Northgate, York YO1 7HH · 01904 555 018</p>
       <nav className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         <Link href="/demo/cuts">Cuts</Link>

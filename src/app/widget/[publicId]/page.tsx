@@ -84,7 +84,7 @@ export default async function WidgetPage({
     }
     return (
       <WidgetShell background="#050505" outline="#222222">
-        <div className="min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <WidgetForm
             publicId={SCLXTER_SITE_ID}
             welcome="Ask about sclxter, pricing, or the demo."
@@ -126,7 +126,7 @@ export default async function WidgetPage({
       outline={theme.outline}
       color={theme.text}
     >
-      <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <WidgetForm
           publicId={publicId}
           welcome={welcome}

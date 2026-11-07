@@ -69,26 +69,31 @@ export function WidgetForm({
   }
   function bubble(role,text){
     var wrap=document.createElement('div');
+    wrap.setAttribute('data-wa-msg','1');
     if(role==='user') wrap.style.textAlign='right';
     var who=document.createElement('p');
     who.className='mb-1 text-[10px] uppercase tracking-[0.16em] text-muted';
+    who.style.color='#8a8a8a';
     who.textContent=role==='user'?'You':name;
     var body=document.createElement('p');
-    body.className='inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6';
+    body.className='inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 text-fg';
+    var ink=theme&&theme.text?theme.text:'#f4f4f4';
     if(theme){
       if(role==='user'){
         body.style.background=theme.text;
         body.style.color=theme.primary;
       }else{
         body.style.border='1px solid '+theme.outline;
-        body.style.color=theme.text;
+        body.style.background=theme.primary;
+        body.style.color=ink;
       }
     }else{
       body.className=role==='user'
         ? 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 bg-fg text-bg'
-        : 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 border border-line bg-surface';
+        : 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 border border-line bg-surface text-fg';
+      body.style.color=role==='user'?'#050505':'#f4f4f4';
     }
-    body.textContent=text;
+    body.textContent=String(text==null?'':text);
     wrap.appendChild(who); wrap.appendChild(body);
     if(welcome) welcome.style.display='none';
     log.appendChild(wrap);
@@ -99,6 +104,7 @@ export function WidgetForm({
     }
   }
   history=load();
+  log.querySelectorAll('[data-wa-msg]').forEach(function(n){ n.remove(); });
   history.forEach(function(m){ bubble(m.role,m.content); });
   try{ input.value=sessionStorage.getItem(draftKey)||''; }catch(e){}
   function go(){
@@ -129,6 +135,8 @@ export function WidgetForm({
         }else{
           reply=(x.d&&x.d.reply)||clarify;
         }
+        reply=String(reply||clarify);
+        if(!reply.replace(/\\s+/g,'')) reply=clarify;
         history.push({role:'assistant', content:reply});
         save();
         bubble('assistant', reply);
@@ -155,7 +163,7 @@ export function WidgetForm({
     conversationId='';
     save();
     try{ sessionStorage.removeItem(draftKey); sessionStorage.removeItem(cidKey); }catch(e2){}
-    log.querySelectorAll('div').forEach(function(n){n.remove();});
+    log.querySelectorAll('[data-wa-msg]').forEach(function(n){n.remove();});
     if(welcome) welcome.style.display='';
     input.value='';
     busy=false; send.removeAttribute('disabled'); send.textContent='Send';
@@ -174,7 +182,7 @@ export function WidgetForm({
   const ink = theme?.text;
 
   return (
-    <div className="flex h-full flex-col" style={ink ? { color: ink } : undefined}>
+    <div className="flex h-full min-h-0 flex-1 flex-col" style={{ color: ink || "#f4f4f4" }}>
       <div
         className={`mb-3 flex items-center justify-between gap-3 border-b pb-3 ${theme ? "" : "border-line"}`}
         style={line ? { borderColor: line } : undefined}

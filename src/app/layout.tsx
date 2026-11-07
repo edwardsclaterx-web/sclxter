@@ -30,11 +30,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const primary = h.get("x-sclxter-theme-primary");
   const text = h.get("x-sclxter-theme-text");
   const outline = h.get("x-sclxter-theme-outline");
+  const ink = text || "#f4f4f4";
   const widgetCss =
     isWidget &&
-    `html,body{background:transparent!important;color:${
-      text || "transparent"
-    }!important}`;
+    `html,body{background:transparent!important;color:${ink}!important}`;
 
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
@@ -53,10 +52,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           isWidget
             ? {
                 background: "transparent",
-                color: text || "transparent",
-                ["--widget-primary" as string]: primary || "transparent",
-                ["--widget-text" as string]: text || "transparent",
-                ["--widget-outline" as string]: outline || "transparent",
+                color: ink,
+                ["--widget-primary" as string]: primary || "#050505",
+                ["--widget-text" as string]: ink,
+                ["--widget-outline" as string]: outline || "#222222",
               }
             : undefined
         }

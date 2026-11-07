@@ -218,7 +218,7 @@ function isShopRelated(content: string, business: Business) {
   const industry = norm(business.industry || "");
   if (name && t.includes(name)) return true;
   if (industry && t.includes(industry)) return true;
-  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you|pound|£|article|articles|pace|cadence|run|running|post|posts|tool|tools|km|5k|watch|race|sick|injured)\b/.test(
+  return /\b(hour|open|close|closed|price|cost|book|booking|appoint|cut|haircut|hair|recommend|suggest|style|trim|fade|beard|shave|service|menu|contact|phone|email|address|where|when|how much|walk in|walk-in|offer|do you|pound|£|article|articles|pace|cadence|run|running|post|posts|tool|tools|km|5k|10k|parkrun|marathon|training|interval|pb|watch|race|sick|injured)\b/.test(
     t,
   );
 }
@@ -393,11 +393,13 @@ Mention sclxter.com only if they ask who made you or what powers you. Then reply
 ${shopSclxterLine(business)}
 No sales pitch, pricing, or extra product detail. Then you may help with this business.`;
   const subject = business.name?.trim() || "this business";
-  return `You are an AI assistant for ${subject}. Not a human.
+  const industry = (business.industry || "").trim() || "this trade";
+  const briefing = (business.industryBriefing || "").trim();
+  return `You are an AI assistant for ${subject} (${industry}). Not a human.
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Answer about this business and this website. Stay on this business.
+Stay in this business’s domain (${industry} / ${subject}). Related questions in that domain are on-topic even if the exact fact is not on their pages.
 Questions about whether you are an AI are allowed. Mention sclxter.com only if they asked who made you.
 No general knowledge for clearly unrelated topics (football, weather, coding, camera lenses), even if you know it, even briefly.
 If they ask about those unrelated topics, reply with this exact text only:
@@ -405,20 +407,19 @@ ${refuseLine(subject, contact)}
 Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Answer them using that context. Do not refuse them. Do not ask what they meant.
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
-Use only the retrieved notes. Do not use general industry knowledge. Do not write generic genre advice.
-Do not invent prices, hours, names, policies, article titles, paths, or URLs.
-Only mention a URL or page path if it appears verbatim in the notes. If it is not in the notes, do not invent one.
-If the notes have the answer, answer with those specific facts (titles, quotes, paths that are written there).
-If the notes do not have the fact, say you do not have that on this site. Do not fill the gap with typical running, barber, or other industry waffle.
-If they already asked a follow-up, give a best-effort answer from the notes and prior turn. Ask at most one clarifying question in the whole conversation.
+When the retrieved notes have the shop fact, ground the answer in those notes. Do not invent prices, hours, names, policies, article titles, paths, or URLs.
+Only mention a URL or page path if it appears verbatim in the notes.
+If the notes do not have the exact fact but the question is still about ${industry} or ${subject}, give a short useful answer (a few sentences). Say it is not from their pages. Do not dump generic web trivia or a long essay. Prefix [[GAP]].
+If they already asked a follow-up, give a best-effort answer from the notes, the domain, and the prior turn. Ask at most one clarifying question in the whole conversation.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
 ${demo}
 
-Retrieved notes:
+Retrieved notes (from their pages):
 ${retrieved || "(None for this question.)"}
+${briefing ? `\nIndustry briefing (not from their pages; use only for related ${industry} questions when notes lack the fact):\n${briefing.slice(0, 1800)}` : ""}
 
-If they are clearly about to buy or book, prefix [[LEAD]]. If a shop fact was missing, prefix [[GAP]]. Not for greetings or off-topic.`;
+If they are clearly about to buy or book, prefix [[LEAD]]. If a shop fact was missing and you used domain knowledge, prefix [[GAP]]. Not for greetings or off-topic.`;
 }
 
 function sitePrompt() {
@@ -688,6 +689,18 @@ export async function answerChat(opts: {
   ) {
     content = await complete(
       "Give a best-effort answer from the conversation. Never ask for clarification.",
+    );
+  }
+  if (
+    !opts.site &&
+    !isClearlyOffTopic(asked) &&
+    (onThisBusiness || followUp) &&
+    /do not have that on this site|not (listed|on) (this|their) (site|pages)|haven'?t got that on/i.test(
+      content,
+    )
+  ) {
+    content = await complete(
+      `The question is in this business’s domain. Give a short useful answer. Say it is not from their pages. Prefix [[GAP]]. Do not say you do not have that on this site as the whole reply.`,
     );
   }
   if (

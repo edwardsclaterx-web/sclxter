@@ -56,13 +56,13 @@ function ProductNavLinks({
   const owner = Boolean(signedIn) && !admin;
   const showBuy = !admin && !signedIn;
   const wrap = stacked
-    ? "flex flex-col items-stretch gap-0 font-sans text-[22px] font-medium leading-snug tracking-tight text-muted"
+    ? "flex flex-col items-stretch gap-0 font-sans text-[17px] font-medium leading-snug tracking-tight text-muted"
     : undefined;
 
   function item(active?: boolean) {
     if (!stacked) return navClass(undefined, active);
     return [
-      "block border-b border-line py-3.5 text-[22px] font-medium tracking-tight",
+      "block border-b border-line py-3.5 text-[17px] font-medium tracking-tight",
       active ? "text-fg" : "text-muted",
     ].join(" ");
   }

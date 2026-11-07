@@ -52,7 +52,7 @@ export function ContactLabel({
     };
   }, [enabled]);
 
-  const label = stacked ? "text-[22px] font-medium tracking-tight" : "";
+  const label = stacked ? "text-[17px] font-medium tracking-tight" : "";
 
   return (
     <span className={`relative inline-block pr-3 ${label}`}>

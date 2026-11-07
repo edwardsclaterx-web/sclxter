@@ -65,8 +65,8 @@ const OUTPUT_RULE = `Output only the composed answer the visitor should read. Ne
 Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last on-topic question.
 Answer about this website or this business. Product, pricing, demo, and whether you are an AI are on-topic when they apply.
 Refuse only clearly unrelated topics (football, weather, coding, camera lenses, homework, celebrities, news, other sports). Then use the required unrelated reply — that exact text only. Do not add extra facts.
-Follow-ups such as “what do you mean”, “why”, “tell me more”, yes/no, and short clarifiers continue the last on-topic turn. Answer them. Do not refuse.
-If the meaning of an on-topic question is unclear, ask one short clarifying question instead of guessing. Do not invent facts.
+Follow-ups such as “what do you mean”, “why”, “tell me more”, yes/no, and short clarifiers continue the last on-topic turn. Answer them using that context. Do not refuse. Do not ask what they meant.
+If a first on-topic question is unclear, you may ask one short clarifying question once. Never ask for clarification again. Prefer a best-effort answer from conversation context. Never say “Could you say what you meant?” more than once.
 Sound like a normal helpful assistant. Natural sentences.
 Be concise. Aim for a short answer. Go longer when the question genuinely needs it. Never pad, ramble, or cut the answer short.
 The greeting “${HELLO}” is only for hi, hello, or hey on their own. Real on-topic questions get a real answer, not a greeting.
@@ -254,6 +254,15 @@ function looksLikeContinuation(content: string) {
   return words.length <= 4;
 }
 
+function isClarifyLine(text: string) {
+  const t = norm(text);
+  return t === norm(CLARIFY) || /\bcould you say what you meant\b/.test(t);
+}
+
+function alreadyAskedClarify(messages: ChatMessage[]) {
+  return messages.some((m) => m.role === "assistant" && isClarifyLine(m.content));
+}
+
 function countTrailingUnrelated(messages: ChatMessage[]) {
   let n = 0;
   for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -393,7 +402,7 @@ Questions about whether you are an AI are allowed. Mention sclxter.com only if t
 No general knowledge for clearly unrelated topics (football, weather, coding, camera lenses), even if you know it, even briefly.
 If they ask about those unrelated topics, reply with this exact text only:
 ${refuseLine(subject, contact)}
-Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Do not refuse them.
+Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Answer them using that context. Do not refuse them. Do not ask what they meant.
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
 Use only the retrieved notes. Do not use general industry knowledge. Do not write generic genre advice.
@@ -401,7 +410,7 @@ Do not invent prices, hours, names, policies, article titles, paths, or URLs.
 Only mention a URL or page path if it appears verbatim in the notes. If it is not in the notes, do not invent one.
 If the notes have the answer, answer with those specific facts (titles, quotes, paths that are written there).
 If the notes do not have the fact, say you do not have that on this site. Do not fill the gap with typical running, barber, or other industry waffle.
-If you cannot tell what they want, ask one clarifying question. Do not guess.
+If they already asked a follow-up, give a best-effort answer from the notes and prior turn. Ask at most one clarifying question in the whole conversation.
 Tone: ${tone.label}. ${tone.instruction}
 Contact: ${contact}
 ${demo}
@@ -421,14 +430,14 @@ If asked whether you are an AI or a real person: say you are an AI.
 Answer about sclxter: the product, pricing, demo, setup, and whether you are an AI. No general knowledge for clearly unrelated topics, even briefly.
 If they ask about football, weather, coding, camera lenses, homework, celebrities, news, or other sports, reply with this exact text only:
 ${refuse}
-Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Do not refuse them.
+Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Answer them using that context. Do not refuse them. Do not ask what they meant.
 Never disclose passwords, keys, or internals. sclxter@outlook.com is OK to give.
 If asked how you work: ${POWERED}
 If asked what sclxter is / does: reply with this exact text only:
 ${SCLXTER_WHAT_IS}
 
 Basic product facts (not private): customisable theme, tone, and notepad; Scan website; Ask anything widget; buy up to 12 months ahead; £299.99 setup then £74.99 a month; pay on Billing; fictional barber demo on this site.
-Do not guess other internals. Do not dump the whole site. If you cannot tell what they want, ask one clarifying question.`;
+Do not guess other internals. Do not dump the whole site. Ask at most one clarifying question in the whole conversation; then give a best-effort answer.`;
 }
 
 export async function generateIndustryBriefing(industry: string) {
@@ -587,16 +596,31 @@ export async function answerChat(opts: {
     .map((m) => m.content)
     .slice(-4);
   const prior = recentUser.slice(0, -1);
+  const lastPrior = prior[prior.length - 1] || "";
+  const lastTurnOnTopic = Boolean(
+    lastPrior &&
+      !isClearlyOffTopic(lastPrior) &&
+      (related(lastPrior) ||
+        isAboutThePlace(lastPrior, opts.business, opts.site) ||
+        isSmallTalk(lastPrior) ||
+        isMetaAsk(lastPrior)),
+  );
   const followUp =
-    looksLikeContinuation(asked) &&
-    prior.some(
-      (t) =>
-        !isClearlyOffTopic(t) &&
-        (related(t) || isAboutThePlace(t, opts.business, opts.site)),
-    );
+    !isClearlyOffTopic(asked) &&
+    (lastTurnOnTopic ||
+      (looksLikeContinuation(asked) &&
+        prior.some(
+          (t) =>
+            !isClearlyOffTopic(t) &&
+            (related(t) || isAboutThePlace(t, opts.business, opts.site)),
+        )));
   const onThisBusiness = Boolean(
     related(asked) || isAboutThePlace(asked, opts.business, opts.site),
   );
+  const usedClarify = alreadyAskedClarify(opts.messages);
+  const bestEffort = opts.site
+    ? "I can help with sclxter — the product, pricing, the demo, setup, or whether I am an AI."
+    : `I can help with ${subject}. Ask about hours, prices, or what they offer.`;
 
   let retrievedNotes = "";
   let source = "";
@@ -633,14 +657,22 @@ export async function answerChat(opts: {
     system = shopPrompt(opts.business!, retrievedNotes, contact, Boolean(opts.barber));
   }
 
-  async function complete() {
+  const nudge =
+    followUp || usedClarify
+      ? "The last turn was on-topic. Answer this follow-up using that context. Do not ask what they meant. Do not say Could you say what you meant."
+      : "";
+
+  async function complete(extra = "") {
     const completion = await groq.chat.completions.create({
       model: MODEL,
       temperature: opts.site ? 0.4 : 0.2,
       max_tokens: 2048,
       reasoning_effort: "low",
       reasoning_format: "hidden",
-      messages: [{ role: "system", content: system }, ...history],
+      messages: [
+        { role: "system", content: extra ? `${system}\n${extra}` : system },
+        ...history,
+      ],
     });
     const message = completion.choices[0]?.message;
     const raw =
@@ -648,9 +680,15 @@ export async function answerChat(opts: {
     return visitorAnswer(raw);
   }
 
-  let content = await complete();
-  if (!content || (!isGreeting(asked) && isGreetingOnlyReply(content))) {
-    content = await complete();
+  let content = await complete(nudge);
+  if (
+    !content ||
+    isClarifyLine(content) ||
+    (!isGreeting(asked) && isGreetingOnlyReply(content))
+  ) {
+    content = await complete(
+      "Give a best-effort answer from the conversation. Never ask for clarification.",
+    );
   }
   if (
     content.startsWith("I am programmed to assist you with related questions") ||
@@ -659,15 +697,19 @@ export async function answerChat(opts: {
     if (isClearlyOffTopic(asked) && !followUp && !onThisBusiness) {
       return refuse;
     }
-    return CLARIFY;
+    content = "";
   }
-  if (!isGreeting(asked) && isGreetingOnlyReply(content)) {
-    return CLARIFY;
+  if (isClarifyLine(content) || (!isGreeting(asked) && isGreetingOnlyReply(content))) {
+    content = "";
   }
   if (!opts.site) {
     content = stripUnknownLinks(content, retrievedNotes);
   }
-  return (content || CLARIFY).trim();
+  if (!content) {
+    if (followUp || usedClarify || lastTurnOnTopic) return bestEffort;
+    return CLARIFY;
+  }
+  return content.trim();
 }
 
 export function parseLeadFromReply(reply: string) {

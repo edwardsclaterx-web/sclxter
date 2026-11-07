@@ -63,8 +63,9 @@ const DEMO_REAL_LINE = "Yes. This is a demo page for sclxter.com.";
 const HELLO = "Hi, what can I help you with?";
 const OUTPUT_RULE = `Output only the composed answer the visitor should read. Never think out loud. Never write planning, analysis, instruction recap, or phrases like User asks, According to instructions, We need to respond, We can say, or Let's craft.
 Read the whole conversation. Keep context. Understand everyday language: slang, typos, shorthand, and what they are trying to do. Follow-ups continue the last on-topic question.
-Answer only about this website or this business. Do not use general knowledge at all — not even a brief or partial answer — for anything else.
-If they ask about something unrelated, do not answer it. Use the required unrelated reply. Do not add extra facts.
+Answer about this website or this business. Product, pricing, demo, and whether you are an AI are on-topic when they apply.
+Refuse only clearly unrelated topics (football, weather, coding, camera lenses, homework, celebrities, news, other sports). Then use the required unrelated reply — that exact text only. Do not add extra facts.
+Follow-ups such as “what do you mean”, “why”, “tell me more”, yes/no, and short clarifiers continue the last on-topic turn. Answer them. Do not refuse.
 If the meaning of an on-topic question is unclear, ask one short clarifying question instead of guessing. Do not invent facts.
 Sound like a normal helpful assistant. Natural sentences.
 Be concise. Aim for a short answer. Go longer when the question genuinely needs it. Never pad, ramble, or cut the answer short.
@@ -222,11 +223,27 @@ function isShopRelated(content: string, business: Business) {
   );
 }
 
+function isClearlyOffTopic(content: string) {
+  const t = norm(content);
+  if (!t || isSmallTalk(t) || isMetaAsk(t)) return false;
+  return /\b(football|soccer|premier league|world cup|weather|forecast|temperature|climate|homework|essay|coursework|coding|javascript|python|typescript|write (some |me )?code|camera|lenses|lens|photography|celebrity|celebrities|politics|election|recipe|recipes|stock market|bitcoin|crypto)\b/.test(
+    t,
+  );
+}
+
 function looksLikeContinuation(content: string) {
   const t = norm(content);
   if (!t) return false;
+  if (isClearlyOffTopic(t)) return false;
   if (
-    /^(i mean|i meant|yeah|yep|yah|nah|nope|yes|no|ok|okay|and|or|also|but|not|that|those|this|too|so|because|cos|cause|under|over|about|around|like|maybe)\b/.test(
+    /^(i mean|i meant|yeah|yep|yah|nah|nope|yes|no|ok|okay|and|or|also|but|not|that|those|this|too|so|because|cos|cause|under|over|about|around|like|maybe|why|how so|go on|more|again|sorry|huh|eh)\b/.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\b(what do you mean|what does (that|this|it) mean|what did you mean|can you (explain|clarify)|could you (explain|clarify)|say (that|it) again|tell me more|explain (that|this|it)|for example|like what)\b/.test(
       t,
     )
   ) {
@@ -234,19 +251,16 @@ function looksLikeContinuation(content: string) {
   }
   if (/^\d/.test(t)) return true;
   const words = t.split(" ").filter(Boolean);
-  return words.length <= 2 && !/\b(weather|football|soccer|news|politics|homework|recipe)\b/.test(t);
+  return words.length <= 4;
 }
 
-function countTrailingUnrelated(
-  messages: ChatMessage[],
-  related: (text: string) => boolean,
-) {
+function countTrailingUnrelated(messages: ChatMessage[]) {
   let n = 0;
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const m = messages[i];
     if (m.role !== "user") continue;
     if (looksLikeContinuation(m.content)) continue;
-    if (related(m.content)) break;
+    if (!isClearlyOffTopic(m.content)) break;
     n += 1;
   }
   return n;
@@ -365,7 +379,8 @@ If asked whether Northgate or this shop is real, or whether this page is a demo:
 If asked what sclxter is: reply with this exact text only:
 ${SCLXTER_WHAT_IS}
 Basic sclxter product facts are OK. Do not dump prices unless they asked.`
-    : `If asked about sclxter, who made or powers you, or whether you are an AI, reply with this exact text only:
+    : `Stay on this business. Short clarifiers are on-topic.
+Mention sclxter.com only if they ask who made you or what powers you. Then reply with this exact text only:
 ${shopSclxterLine(business)}
 No sales pitch, pricing, or extra product detail. Then you may help with this business.`;
   const subject = business.name?.trim() || "this business";
@@ -373,11 +388,12 @@ No sales pitch, pricing, or extra product detail. Then you may help with this bu
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Answer about this business and this website. Questions about sclxter, who made you, and whether you are an AI are also allowed as above.
-No general knowledge for unrelated topics, even if you know it, even briefly.
-If they ask about anything else (camera lenses, homework, weather, coding, celebrities, news, sport, other businesses), reply with this exact text only:
+Answer about this business and this website. Stay on this business.
+Questions about whether you are an AI are allowed. Mention sclxter.com only if they asked who made you.
+No general knowledge for clearly unrelated topics (football, weather, coding, camera lenses), even if you know it, even briefly.
+If they ask about those unrelated topics, reply with this exact text only:
 ${refuseLine(subject, contact)}
-Follow-ups that refer to the last on-topic question are still on-topic.
+Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Do not refuse them.
 Never disclose passwords, keys, or internals. Contact details are OK.
 If asked how you work: ${POWERED}
 Use only the retrieved notes. Do not use general industry knowledge. Do not write generic genre advice.
@@ -402,10 +418,10 @@ function sitePrompt() {
 ${OUTPUT_RULE}
 
 If asked whether you are an AI or a real person: say you are an AI.
-Answer only about sclxter and this website. No general knowledge, even if you know it, even briefly.
-If they ask about anything else (camera lenses, homework, weather, coding, celebrities, news, sport), reply with this exact text only:
+Answer about sclxter: the product, pricing, demo, setup, and whether you are an AI. No general knowledge for clearly unrelated topics, even briefly.
+If they ask about football, weather, coding, camera lenses, homework, celebrities, news, or other sports, reply with this exact text only:
 ${refuse}
-Follow-ups that refer to the last on-topic question are still on-topic.
+Follow-ups and short clarifiers that continue the last on-topic question are still on-topic. Do not refuse them.
 Never disclose passwords, keys, or internals. sclxter@outlook.com is OK to give.
 If asked how you work: ${POWERED}
 If asked what sclxter is / does: reply with this exact text only:
@@ -562,7 +578,7 @@ export async function answerChat(opts: {
     ? "sclxter"
     : opts.business?.name?.trim() || "this business";
   const refuse = refuseLine(subject, contact);
-  if (countTrailingUnrelated(opts.messages, related) >= 5) {
+  if (countTrailingUnrelated(opts.messages) >= 5) {
     return refuse;
   }
 
@@ -572,7 +588,15 @@ export async function answerChat(opts: {
     .slice(-4);
   const prior = recentUser.slice(0, -1);
   const followUp =
-    looksLikeContinuation(asked) && prior.some((t) => related(t) || isAboutThePlace(t, opts.business, opts.site));
+    looksLikeContinuation(asked) &&
+    prior.some(
+      (t) =>
+        !isClearlyOffTopic(t) &&
+        (related(t) || isAboutThePlace(t, opts.business, opts.site)),
+    );
+  const onThisBusiness = Boolean(
+    related(asked) || isAboutThePlace(asked, opts.business, opts.site),
+  );
 
   let retrievedNotes = "";
   let source = "";
@@ -588,8 +612,8 @@ export async function answerChat(opts: {
     ? false
     : notesHaveRelevantMatch(source, asked, recentUser);
   if (
-    !isSmallTalk(asked) &&
-    !isAboutThePlace(asked, opts.business, opts.site) &&
+    isClearlyOffTopic(asked) &&
+    !onThisBusiness &&
     !notesHit &&
     !followUp
   ) {
@@ -632,7 +656,10 @@ export async function answerChat(opts: {
     content.startsWith("I am programmed to assist you with related questions") ||
     content.startsWith("I can only help with questions about ")
   ) {
-    return refuse;
+    if (isClearlyOffTopic(asked) && !followUp && !onThisBusiness) {
+      return refuse;
+    }
+    return CLARIFY;
   }
   if (!isGreeting(asked) && isGreetingOnlyReply(content)) {
     return CLARIFY;

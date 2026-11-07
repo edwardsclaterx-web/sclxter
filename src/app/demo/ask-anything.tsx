@@ -113,7 +113,7 @@ function boot() {
   iframe.src = `/widget/${PUBLIC_ID}?from=${encodeURIComponent(location.origin)}`;
   iframe.setAttribute("allowtransparency", "true");
   iframe.style.cssText =
-    "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;pointer-events:auto;";
+    "width:100%;height:100%;border:0;background:#ffffff;color-scheme:light;opacity:1;pointer-events:auto;";
   panel.appendChild(iframe);
   const btn = document.createElement("button");
   btn.id = BTN_ID;

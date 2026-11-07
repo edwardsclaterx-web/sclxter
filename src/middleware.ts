@@ -17,11 +17,9 @@ export function middleware(request: NextRequest) {
   const outline = hex(q.get("outline"));
   const primary = hex(q.get("primary"));
   const text = hex(q.get("text"));
-  if (outline && primary && text) {
-    requestHeaders.set("x-sclxter-theme-outline", outline);
-    requestHeaders.set("x-sclxter-theme-primary", primary);
-    requestHeaders.set("x-sclxter-theme-text", text);
-  }
+  requestHeaders.set("x-sclxter-theme-outline", outline || "#222222");
+  requestHeaders.set("x-sclxter-theme-primary", primary || "#050505");
+  requestHeaders.set("x-sclxter-theme-text", text || "#f4f4f4");
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

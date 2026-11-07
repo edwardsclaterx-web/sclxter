@@ -83,7 +83,7 @@ export default async function WidgetPage({
       return <Unavailable text={EMBED_OFF_SITE} />;
     }
     return (
-      <WidgetShell background="#050505" outline="#222222">
+      <WidgetShell background="#050505" outline="#222222" color="#f4f4f4">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <WidgetForm
             publicId={SCLXTER_SITE_ID}

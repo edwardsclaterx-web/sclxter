@@ -73,10 +73,9 @@
       iframe.name = "sclxter-ask-frame-" + id;
       iframe.setAttribute("allowtransparency", "true");
       iframe.style.cssText =
-        "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;opacity:0;";
-      iframe.addEventListener("load", function () {
-        iframe.style.opacity = "1";
-      });
+        "width:100%;height:100%;border:0;background:" +
+        theme.primary +
+        ";color-scheme:normal;opacity:1;";
       iframe.src =
         origin +
         "/widget/" +

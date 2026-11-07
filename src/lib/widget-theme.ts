@@ -71,6 +71,23 @@ export function themeFromQuery(q?: {
   return { outline, primary, text };
 }
 
+export function pairInk(paper: string, preferred?: string) {
+  const p = (paper || "").toLowerCase();
+  const want = (preferred || "").toLowerCase();
+  if (want && want !== p) return preferred as string;
+  return luminance(p) > 0.55 ? "#000000" : "#ffffff";
+}
+
+function luminance(hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return 0;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
+
 export function parseThemeInput(raw: unknown): WidgetTheme | "same" | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;

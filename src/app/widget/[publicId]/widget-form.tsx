@@ -67,33 +67,50 @@ export function WidgetForm({
   function save(){
     try{ sessionStorage.setItem(msgKey, JSON.stringify(history)); }catch(e){}
   }
+  function pairInk(paper, preferred){
+    var p=(paper||'').toLowerCase();
+    var want=(preferred||'').toLowerCase();
+    if(want && want!==p) return preferred;
+    function lum(hex){
+      var m=/^#?([0-9a-f]{6})$/i.exec(hex||'');
+      if(!m) return 0;
+      var n=parseInt(m[1],16);
+      return (0.2126*((n>>16)&255)+0.7152*((n>>8)&255)+0.0722*(n&255))/255;
+    }
+    return lum(p)>0.55?'#000000':'#ffffff';
+  }
   function bubble(role,text){
     var wrap=document.createElement('div');
     wrap.setAttribute('data-wa-msg','1');
     if(role==='user') wrap.style.textAlign='right';
     var who=document.createElement('p');
-    who.className='mb-1 text-[10px] uppercase tracking-[0.16em] text-muted';
-    who.style.color='#8a8a8a';
+    who.className='mb-1 text-[10px] uppercase tracking-[0.16em]';
+    who.style.setProperty('color','#8a8a8a','important');
+    who.style.setProperty('-webkit-text-fill-color','#8a8a8a','important');
     who.textContent=role==='user'?'You':name;
     var body=document.createElement('p');
-    body.className='inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 text-fg';
-    var ink=theme&&theme.text?theme.text:'#f4f4f4';
+    body.setAttribute('data-wa-body','1');
+    body.className='inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6';
+    var paper, ink;
     if(theme){
-      if(role==='user'){
-        body.style.background=theme.text;
-        body.style.color=theme.primary;
-      }else{
-        body.style.border='1px solid '+theme.outline;
-        body.style.background=theme.primary;
-        body.style.color=ink;
-      }
+      if(role==='user'){ paper=theme.text; ink=pairInk(paper, theme.primary); }
+      else { paper=theme.primary; ink=pairInk(paper, theme.text); }
+      body.style.border='1px solid '+(theme.outline||'#222222');
+    }else if(role==='user'){
+      paper='#f4f4f4'; ink='#050505';
     }else{
-      body.className=role==='user'
-        ? 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 bg-fg text-bg'
-        : 'inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 border border-line bg-surface text-fg';
-      body.style.color=role==='user'?'#050505':'#f4f4f4';
+      paper='#111111'; ink='#f4f4f4';
+      body.style.border='1px solid #222222';
     }
-    body.textContent=String(text==null?'':text);
+    body.style.setProperty('--wa-paper', paper);
+    body.style.setProperty('--wa-ink', ink);
+    body.style.setProperty('background-color', paper, 'important');
+    body.style.setProperty('color', ink, 'important');
+    body.style.setProperty('-webkit-text-fill-color', ink, 'important');
+    body.style.setProperty('opacity', '1', 'important');
+    var shown=String(text==null?'':text);
+    if(!shown.replace(/\\s+/g,'')) shown=${JSON.stringify(CLARIFY)};
+    body.textContent=shown;
     wrap.appendChild(who); wrap.appendChild(body);
     if(welcome) welcome.style.display='none';
     log.appendChild(wrap);

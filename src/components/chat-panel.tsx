@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { CLARIFY } from "@/lib/chat-copy";
 import type { ChatMessage, WidgetTheme } from "@/lib/types";
+import { pairInk } from "@/lib/widget-theme";
 
 type Props = {
   endpoint: string;
@@ -158,6 +159,27 @@ export function ChatPanel({
   const box = theme?.primary;
   const line = theme?.outline;
 
+  function messagePaint(role: ChatMessage["role"]) {
+    const user = role === "user";
+    const paper = themed
+      ? user
+        ? ink || "#000000"
+        : box || "#111111"
+      : user
+        ? "#f4f4f4"
+        : "#111111";
+    const fill = pairInk(paper, themed ? (user ? box : ink) : undefined);
+    return {
+      border: user ? undefined : `1px solid ${line || "#222222"}`,
+      ["--wa-paper" as string]: paper,
+      ["--wa-ink" as string]: fill,
+      backgroundColor: paper,
+      color: fill,
+      WebkitTextFillColor: fill,
+      opacity: 1,
+    };
+  }
+
   return (
     <div
       className={`flex min-h-0 flex-col overflow-visible ${compact ? "h-full p-3" : "h-[28rem]"}`}
@@ -205,22 +227,9 @@ export function ChatPanel({
               {m.role === "user" ? "You" : assistantName}
             </p>
             <p
-              className={
-                themed
-                  ? "inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6"
-                  : `inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6 ${
-                      m.role === "user"
-                        ? "bg-fg text-bg"
-                        : "border border-line bg-surface text-fg"
-                    }`
-              }
-              style={
-                themed
-                  ? m.role === "user"
-                    ? { background: ink, color: box }
-                    : { border: `1px solid ${line}`, color: ink }
-                  : undefined
-              }
+              data-wa-body="1"
+              className="inline-block max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm leading-6"
+              style={messagePaint(m.role)}
             >
               {m.content}
             </p>

@@ -12,6 +12,13 @@ import {
   NORTHGATE_USER_ID,
   isNorthgateLogin,
 } from "./northgate";
+import {
+  KBARBERS_BIZ_ID,
+  KBARBERS_PATH,
+  KBARBERS_PUBLIC_ID,
+  KBARBERS_USER_ID,
+} from "./k-barbers";
+import { KBARBERS_NOTEPAD, KBARBERS_SCAN_NOTES, KBARBERS_SCAN_TEXT } from "./k-barbers-scan";
 import type { StoreData } from "./types";
 
 export const DEMO_PUBLIC_ID = "northgate";
@@ -267,7 +274,117 @@ export function ensureLeavesakeShop(data: StoreData) {
   ensureLeavesakeKnowledge(data);
 }
 
+function kBarbersBusiness(seq: number) {
+  return {
+    id: KBARBERS_BIZ_ID,
+    seq,
+    ownerId: KBARBERS_USER_ID,
+    name: "K Barbers Emporium",
+    websiteUrl: KBARBERS_PATH,
+    industry: "Barber",
+    contactPhone: "01277 652272",
+    contactEmail: "info@kbarbers.co.uk",
+    contactOther: "129 High Street, Billericay, Essex CM12 9AH",
+    tone: "warm",
+    notepad: KBARBERS_NOTEPAD,
+    lastScanText: KBARBERS_SCAN_TEXT,
+    scannedAt: now,
+    industryBriefing: "",
+    industryBriefingFor: "",
+    publicId: KBARBERS_PUBLIC_ID,
+    appearance: {
+      assistantName: "K Barbers",
+      colour: "#1a140c",
+      welcome: "Ask about hours, the team, Koffee Club, or how to visit.",
+      theme: {
+        outline: "#c9a227",
+        primary: "#1a140c",
+        text: "#f4ead4",
+      },
+    },
+    widgetConnectedAt: null,
+    createdAt: now,
+  };
+}
+
+function ensureKBarbersKnowledge(data: StoreData) {
+  for (const note of KBARBERS_SCAN_NOTES) {
+    const kid = `know_kbarbers_${note.title.toLowerCase().replace(/\s+/g, "_")}`;
+    const existing = data.knowledge.find((k) => k.id === kid);
+    if (existing) {
+      existing.body = note.body;
+      existing.url = note.url;
+      existing.source = "scan";
+      existing.title = note.title;
+      continue;
+    }
+    data.knowledge.push({
+      id: kid,
+      businessId: KBARBERS_BIZ_ID,
+      source: "scan",
+      title: note.title,
+      body: note.body,
+      url: note.url,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+}
+
+export function ensureKBarbersShop(data: StoreData) {
+  let user = data.users.find((u) => u.id === KBARBERS_USER_ID);
+  if (!user) {
+    user = {
+      id: KBARBERS_USER_ID,
+      email: "k-barbers-demo",
+      passwordHash: "!",
+      createdAt: now,
+    };
+    data.users.push(user);
+  } else {
+    user.email = "k-barbers-demo";
+    user.passwordHash = "!";
+  }
+  if (!user.paidUntil) {
+    user.paidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  let shop = data.businesses.find(
+    (b) => b.publicId === KBARBERS_PUBLIC_ID || b.id === KBARBERS_BIZ_ID,
+  );
+  if (!shop) {
+    data.businesses.push(kBarbersBusiness(nextUnusedSeq(data, KBARBERS_BIZ_ID)));
+  } else {
+    shop.ownerId = KBARBERS_USER_ID;
+    shop.publicId = KBARBERS_PUBLIC_ID;
+    shop.name = "K Barbers Emporium";
+    shop.websiteUrl = KBARBERS_PATH;
+    shop.industry = "Barber";
+    shop.notepad = KBARBERS_NOTEPAD;
+    shop.lastScanText = KBARBERS_SCAN_TEXT;
+    shop.scannedAt = shop.scannedAt || now;
+    shop.contactPhone = "01277 652272";
+    shop.contactEmail = "info@kbarbers.co.uk";
+    shop.contactOther = "129 High Street, Billericay, Essex CM12 9AH";
+    shop.appearance = {
+      assistantName: "K Barbers",
+      colour: "#1a140c",
+      welcome: "Ask about hours, the team, Koffee Club, or how to visit.",
+      theme: {
+        outline: "#c9a227",
+        primary: "#1a140c",
+        text: "#f4ead4",
+      },
+    };
+    if (typeof shop.seq !== "number" || shop.seq < 0) {
+      shop.seq = nextUnusedSeq(data, KBARBERS_BIZ_ID);
+    }
+  }
+  ensureKBarbersKnowledge(data);
+}
+
 export function seedIfEmpty(data: StoreData) {
   ensureNorthgateShop(data);
   ensureLeavesakeShop(data);
+  ensureKBarbersShop(data);
 }

@@ -116,6 +116,7 @@ a.nav-item.here {
 
   #sclxter-site-ask-host,
   #northgate-ask-host,
+  #kbarbers-ask-host,
   .sclxter-ask-host {
     left: 12px !important;
     right: 12px !important;
@@ -128,6 +129,7 @@ a.nav-item.here {
 
   #sclxter-site-ask-panel,
   #northgate-ask-panel,
+  #kbarbers-ask-panel,
   .sclxter-ask-panel {
     left: 0 !important;
     right: 0 !important;
@@ -167,6 +169,7 @@ input[name="message"] {
 }
 
 #northgate-ask-btn,
+#kbarbers-ask-btn,
 #sclxter-site-ask-btn {
   appearance: none !important;
   -webkit-appearance: none !important;

@@ -212,7 +212,7 @@ function AllGuides({
         <details
           key={highlight === t.name ? `${t.name}-hint` : t.name}
           className="group bg-bg"
-          defaultOpen={highlight === t.name}
+          {...(highlight === t.name ? { open: true } : {})}
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm text-fg marker:content-none [&::-webkit-details-marker]:hidden">
             <span>{t.name}</span>

@@ -60,6 +60,7 @@ function applyOpen(panel: HTMLElement, btn: HTMLElement, open: boolean) {
   panel.style.background = "transparent";
   panel.style.overflow = "visible";
   panel.style.borderRadius = "0";
+  panel.style.colorScheme = "normal";
   panel.style.visibility = open ? "visible" : "hidden";
   panel.style.opacity = open ? "1" : "0";
   panel.style.pointerEvents = open ? "auto" : "none";
@@ -113,7 +114,7 @@ function boot() {
   iframe.src = `/widget/${PUBLIC_ID}?from=${encodeURIComponent(location.origin)}`;
   iframe.setAttribute("allowtransparency", "true");
   iframe.style.cssText =
-    "width:100%;height:100%;border:0;background:transparent;color-scheme:light;opacity:1;overflow:visible;pointer-events:auto;";
+    "width:100%;height:100%;border:0;background:transparent;color-scheme:normal;opacity:1;overflow:visible;pointer-events:auto;";
   panel.appendChild(iframe);
   const btn = document.createElement("button");
   btn.id = BTN_ID;

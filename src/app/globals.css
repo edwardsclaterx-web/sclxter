@@ -184,6 +184,7 @@ input[name="message"] {
 html:has(.widget-frame),
 html:has(.widget-frame) body {
   background: transparent !important;
+  color-scheme: only light;
   overflow: hidden;
   scrollbar-gutter: auto;
 }

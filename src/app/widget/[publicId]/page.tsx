@@ -26,14 +26,17 @@ function WidgetShell({
   color?: string;
 }) {
   return (
-    <div className="box-border h-dvh bg-transparent p-[6px]">
+    <div className="box-border h-dvh bg-transparent p-3">
       <div
-        className="flex h-full min-h-0 flex-col overflow-visible"
+        className="flex h-full min-h-0 flex-col overflow-hidden"
         style={{
           background,
           color,
           border: `3px solid ${outline}`,
           borderRadius: 24,
+          overflow: "hidden",
+          isolation: "isolate",
+          backgroundClip: "padding-box",
         }}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">

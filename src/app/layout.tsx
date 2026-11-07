@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const ink = text || "#f4f4f4";
   const widgetCss =
     isWidget &&
-    `html,body{background:transparent!important;color:${ink}!important}`;
+    `html,body{background:transparent!important;color:${ink}!important;color-scheme:only light}`;
 
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>

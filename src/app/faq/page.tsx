@@ -107,7 +107,7 @@ const items: { q: ReactNode; a: ReactNode }[] = [
     q: <>How much does it cost?</>,
     a: (
       <>
-        £299.99 setup, then £74.99 a month.
+        £100.00 setup, then £74.99 a month.
       </>
     ),
   },

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { formatRemaining, remainingMs } from "@/lib/cover";
 import { RedeemForm } from "@/app/buy/redeem-form";
 
-const SETUP = 299.99;
+const SETUP = 100.00;
 const MONTH = 74.99;
 
 function gbp(n: number) {

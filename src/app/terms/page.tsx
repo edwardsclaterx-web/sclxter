@@ -26,7 +26,7 @@ export default function TermsPage() {
         One site, one assistant. After setup and while cover is current you
         get a dashboard, Scan website, notepad notes, Change colour, Test AI,
         and the Ask anything widget to put on your website. Pricing is
-        £299.99 setup, then £74.99 a month. The barber page on this site is a
+        £100.00 setup, then £74.99 a month. The barber page on this site is a
         demo, not a live shop.
       </p>
 

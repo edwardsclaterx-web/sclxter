@@ -1,4 +1,4 @@
-export const SETUP_PENCE = 29999;
+export const SETUP_PENCE = 10000;
 export const MONTH_PENCE = 7499;
 
 export function setupFeeDue(setupPaid?: boolean) {

@@ -12,7 +12,7 @@ export default function RefundsPage() {
         <a href="mailto:sclxter@outlook.com">sclxter@outlook.com</a>.
       </p>
 
-      <h2>Setup fee (£299.99)</h2>
+      <h2>Setup fee (£100.00)</h2>
       <p>
         This pays for preparing your assistant: scanning your website,
         setting up your notes, and getting the widget ready. If you change

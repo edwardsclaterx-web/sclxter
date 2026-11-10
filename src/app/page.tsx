@@ -112,7 +112,7 @@ export default async function Home() {
             <article className="mt-10 max-w-md border border-line p-6">
               <p className="text-sm tracking-[0.16em] text-muted">sclxter</p>
               <p className="mt-6 text-3xl font-medium tracking-tight">
-                £299.99
+                £100.00
                 <span className="text-sm font-normal text-muted"> setup</span>
               </p>
               <p className="mt-2 text-3xl font-medium tracking-tight">
